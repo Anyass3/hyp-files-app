@@ -1,0 +1,18 @@
+<script>
+	import store from '$store';
+	const serverStore = store.g('serverStore');
+	const dkey = store.g('dkey');
+	$: drives = [...($serverStore?.drives || []), { name: 'file system', key: 'fs' }];
+</script>
+
+<div class="p-1">
+	<label class=" text-indigo-900 dark:text-blue-300" for="select">storage</label>
+	<select
+		bind:value={$dkey}
+		class="w-full border bg-blue-200 focus:bg-gray-100 rounded px-3 py-2 outline-none"
+	>
+		{#each drives as { key, name }}
+			<option class="py-1" value={key}>{name}</option>
+		{/each}
+	</select>
+</div>
