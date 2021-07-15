@@ -7,14 +7,13 @@
 	import { truncate } from '$lib/utils';
 	import { api } from '$lib/getAPi';
 	const dkey = store.g('dkey');
-	let show_hidden = true;
+	const show_hidden = store.g('show_hidden');
+	// let show_hidden = true;
 	$: dir = store.g('currentdirs')($dkey, '/');
 	$: storage = $dkey !== 'fs' ? 'drive' : 'fs';
 
-	const { state, dispatch } = store;
-
-	const socket = state.socket;
-	const files = state.folder;
+	const socket = store.g('socket');
+	const files = store.g('folder');
 	// console.log('store', store, socket, socket.signal);
 	const open = async ({ path, isFile, size }: any = {}) => {
 		console.log('path', path);
@@ -22,6 +21,7 @@
 			const resp = await api.post('/get-file-type', { storage, path, dkey: $dkey });
 
 			if (resp.ok) {
+				path = escape(path);
 				console.log('resp', resp); // @ts-ignore
 				const ctype = resp.body.ctype || '';
 				console.log({ storage, path, dkey: $dkey, ctype, size });
@@ -40,6 +40,8 @@
 			if (path) {
 				$dir = path;
 			}
+			$dir = $dir || '/';
+			if (!socket) return;
 			if (storage === 'fs') {
 				socket.on('ready', () => {
 					socket.signal('fs-list', $dir);
@@ -104,10 +106,10 @@
 				for="#show-hidden"
 				class="text-indigo-400 dark:text-indigo-100 dark:active:text-indigo-300 active:text-indigo-500 cursor-pointer px-1"
 				>hidden</label
-			><input id="show-hidden" type="checkbox" bind:checked={show_hidden} /></button
+			><input id="show-hidden" type="checkbox" bind:checked={$show_hidden} /></button
 		>
 		<StorageSelect />
 		<!-- <ConnectDrive /> -->
 	</div>
-	<Files files={$files} on:open={(ev) => open(ev.detail.kwargs)} {show_hidden} />
+	<Files files={$files} on:open={(ev) => open(ev.detail.kwargs)} show_hidden={$show_hidden} />
 </div>

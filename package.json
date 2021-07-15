@@ -34,6 +34,7 @@
 	"type": "module",
 	"dependencies": {
 		"@fontsource/fira-mono": "^4.4.2",
+		"adm-zip": "^0.5.5",
 		"axios": "^0.21.1",
 		"body-parser": "^1.19.0",
 		"chalk": "^4.1.0",
@@ -51,7 +52,7 @@
 		"prompt-sync": "^4.2.0",
 		"read-chunk": "^3.2.0",
 		"sidebar-swipe": "^0.8.81",
-		"stores-x": "^0.0.83",
+		"stores-x": "^0.0.86",
 		"svelte-feather-icons": "^3.3.0",
 		"uuid": "^8.3.2"
 	}

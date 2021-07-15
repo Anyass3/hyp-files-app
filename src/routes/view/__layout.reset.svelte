@@ -19,7 +19,7 @@
 	import { getStores, navigating, page, session } from '$app/stores';
 	const colorScheme = store.state.colorScheme;
 	console.log($page.path.includes('media'));
-	store.dispatch('initColorScheme');
+	// store.dispatch('initColorScheme');
 
 	$: ((theme) => {
 		if (browser) {

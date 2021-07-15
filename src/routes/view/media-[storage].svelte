@@ -5,7 +5,7 @@
 	export async function load({ page, fetch, session, context }) {
 		const args = {
 			storage: page.params.storage,
-			path: page.query.get('path'),
+			path: escape(page.query.get('path')),
 			ctype: page.query.get('ctype') || 'video',
 			dkey: page.query.get('dkey'),
 			size: page.query.get('size')

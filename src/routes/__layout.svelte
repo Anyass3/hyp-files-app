@@ -17,8 +17,7 @@
 	import store from '$store';
 	import Prompt from '$components/prompt.svelte';
 	import { dev, browser } from '$app/env';
-	const colorScheme = store.state.colorScheme;
-	store.dispatch('initColorScheme');
+	const colorScheme = store.g('colorScheme');
 	import { NavInterObserver } from '$lib/utils';
 
 	$: ((theme) => {

@@ -40,6 +40,23 @@ export default class {
 				: '/' + item
 		}));
 	}
+	async readAllDirFiles(drive_src, desc = '/') {
+		let files = [];
+		let dirList;
+		if (typeof drive_src === 'string') dirList = await this.readDir(drive_src, { desc });
+		else dirList = drive_src;
+		for (let item of dirList) {
+			const isdir = (await this.drive.promises.stat(item.path)).isDirectory();
+			const _desc = path.join(desc, item.new_path);
+			if (isdir) {
+				const items = await this.readDir(item.path);
+				if (items.length) files = [...files, ...(await this.readAllDirFiles(item.path, desc))];
+			} else {
+				files = [...files, _desc];
+			}
+		}
+		return files;
+	}
 	async fsMakeDir(desc) {
 		if (!fs.existsSync(path.resolve(desc))) fs.mkdirSync(path.resolve(desc));
 	}
@@ -81,11 +98,16 @@ export default class {
 		let list = await this.drive.promises.readdir(dir, { recursive, includeStats: true });
 		list = list.map((item) => ({
 			name: item.name,
-			path: path.join(dir, recursive ? item.path : item.name),
+			path: path.join(dir, item.name),
 			stat: { isFile: item.stat.isFile(), size: item.stat.size }
 		}));
 		console.log('\tListing:', list);
 		return list;
+	}
+	async listAllFiles(dir = '/') {
+		let list = await this.list(dir, true);
+		list = list.filter((item) => item.stat.isFile);
+		return list.map((item) => item.path);
 	}
 	async listfs(dir = '/') {
 		let list = fs.readdirSync(dir);
@@ -110,7 +132,7 @@ export default class {
 	async put(...args) {
 		await this.write(...args);
 	}
-	async read(file, endcoding = 'utf-8') {
+	async read(file, endcoding) {
 		const content = await this.drive.promises.readFile(file, endcoding);
 		console.log('\tContent:', content);
 		return content;

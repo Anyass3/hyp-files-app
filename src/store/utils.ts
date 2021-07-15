@@ -1,5 +1,4 @@
 import { derived, Subscriber, writable } from 'svelte/store';
-import { safe_not_equal } from 'svelte/internal';
 import { browser } from '$app/env';
 
 export const debounced = (store, timeout = 100) => {
@@ -31,7 +30,7 @@ export const sessionStore = (_key, value, start?) => {
 	if (browser) value = sessionStorage.getItem(key) || value;
 	let { subscribe, set: _set, update } = writable(value, start);
 	const set = (val, session = true) => {
-		if (session) sessionStorage.setItem(key, val);
+		if (browser && session) sessionStorage.setItem(key, val);
 		_set(val);
 		console.log('sessionStore^', _key, value);
 		console.log('sessionStore', key, val);

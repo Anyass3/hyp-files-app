@@ -3,13 +3,15 @@ import { sessionStoreObj } from './utils';
 
 export default {
 	noStore: ['api', 'socket', 'serverStore', 'currentdirs'],
+	storeType: { dkey: 'sessionPersistantStore', show_hidden: 'sessionPersistantStore' },
 	state: {
 		api: null,
 		socket: null,
 		serverStore: null,
 		drives: [],
-		dkey: null,
+		dkey: 'fs',
 		folder: [],
+		show_hidden: true,
 		currentdirs: sessionStoreObj('currentdirs', { fs: '/' })
 	},
 	actions: {

@@ -4,8 +4,10 @@ import { MirroringStore } from 'connectome/stores';
 import hyperspace from './hyperspace.js';
 import { getDriveFileType, getFileType, makeApi } from './utils.js';
 import fs from 'fs';
-import mime from 'mime-types';
-import path from 'path';
+// import mime from 'mime-types';
+// import path from 'path';
+import zlib from 'zlib';
+import AdmZip from 'adm-zip';
 import bodyParser from 'body-parser';
 import express from 'express';
 import http from 'http';
@@ -33,7 +35,7 @@ async function serveRoutes(app, api = makeApi()) {
 	app.post('/get-file-type', async function (req, res) {
 		console.log('/get-file-type');
 		const storage = req.body.storage || 'fs'; //drive || fs
-		const filePath = req.body.path;
+		const filePath = unescape(req.body.path);
 		const dkey = req.body.dkey;
 		let ctype;
 		if (storage === 'fs') ctype = await getFileType(filePath);
@@ -52,16 +54,54 @@ async function serveRoutes(app, api = makeApi()) {
 		console.log({ storage, filePath, dkey, ctype });
 		res.send({ ctype });
 	});
-	app.post('/test', async (req, res) => {
-		console.log(req.body);
-		res.json(req.body);
+	app.get('/download', async (req, res) => {
+		console.log('/download');
+		const size = req.query.size;
+		const type = req.query.type;
+		const storage = req.query.storage || 'fs'; //drive || fs
+		const path = unescape(req.query.path);
+		const dkey = req.query.dkey;
+		console.log('download', { size, path, storage, type, dkey });
+
+		if (type === 'file') {
+			if (storage === 'fs') {
+				console.log('/download/sendFile');
+				const filename = path.split('/').reverse()[0];
+				res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+				fs.createReadStream(path).pipe(res);
+			} else {
+				const Drive = api.drives.get(dkey);
+				const filename = path.split('/').reverse()[0];
+				res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+				if (Drive) {
+					Drive.drive.createReadStream(path).pipe(res);
+				}
+			}
+		} else if (type === 'dir') {
+			res.setHeader('Content-Type', 'application/zip');
+			const filename = path.split('/').reverse()[0];
+			res.setHeader('Content-Disposition', `attachment; filename=${filename}.zip`);
+			const zip = AdmZip();
+			if (storage === 'fs') {
+				zip.addLocalFolder(path, filename);
+			} else {
+				const Drive = api.drives.get(dkey);
+				if (Drive) {
+					const files = await Drive.listAllFiles(path);
+					for (const file of files) {
+						zip.addFile(file, await Drive.read(file));
+					}
+				}
+			}
+			res.send(zip.toBuffer());
+		}
 	});
 	app.get('/image', async function (req, res) {
 		console.log('/image');
 		const imgsize = req.query.size;
 		const ctype = req.query.ctype;
 		const storage = req.query.storage || 'fs'; //drive || fs
-		const imgPath = req.query.path;
+		const imgPath = unescape(req.query.path);
 		const dkey = req.query.dkey;
 
 		res.setHeader('Content-Length', imgsize);
@@ -82,7 +122,7 @@ async function serveRoutes(app, api = makeApi()) {
 		const filesize = req.query.size;
 		const ctype = req.query.ctype;
 		const storage = req.query.storage || 'fs'; //drive || fs
-		const filePath = req.query.path;
+		const filePath = unescape(req.query.path);
 		const dkey = req.query.dkey;
 
 		res.setHeader('Content-Length', filesize);
@@ -105,7 +145,7 @@ async function serveRoutes(app, api = makeApi()) {
 		const pdfSize = req.query.size;
 		const ctype = req.query.ctype;
 		const storage = req.query.storage || 'fs'; //drive || fs
-		const pdfPath = req.query.path;
+		const pdfPath = unescape(req.query.path);
 		const dkey = req.query.dkey;
 		let filename = pdfPath.split('/').reverse()[0];
 		if (!filename?.split?.('.')?.[1]) filename += '.pdf';
@@ -118,7 +158,7 @@ async function serveRoutes(app, api = makeApi()) {
 		} else {
 			const Drive = api.drives.get(dkey);
 			if (Drive) {
-				const pdf = await Drive.read(pdfPath, undefined);
+				const pdf = await Drive.read(pdfPath);
 				res.send(pdf);
 			}
 		}
@@ -135,7 +175,7 @@ async function serveRoutes(app, api = makeApi()) {
 		const mediaSize = req.query.size;
 		const ctype = req.query.ctype;
 		const storage = req.query.storage || 'fs'; //drive || fs
-		const mediaPath = req.query.path;
+		const mediaPath = unescape(req.query.path);
 		const dkey = req.query.dkey;
 
 		// range: "bytes=32324-"
