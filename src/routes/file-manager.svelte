@@ -103,7 +103,7 @@
 		</div>
 		<button
 			><label
-				for="#show-hidden"
+				for="show-hidden"
 				class="text-indigo-400 dark:text-indigo-100 dark:active:text-indigo-300 active:text-indigo-500 cursor-pointer px-1"
 				>hidden</label
 			><input id="show-hidden" type="checkbox" bind:checked={$show_hidden} /></button
