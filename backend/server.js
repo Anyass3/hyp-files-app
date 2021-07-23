@@ -12,6 +12,13 @@ import bodyParser from 'body-parser';
 import express from 'express';
 import http from 'http';
 
+const stdin = process.stdin;
+stdin.resume();
+stdin.setEncoding('utf8');
+const _h = process.argv.indexOf('-h');
+let HOST = 'localhost';
+if (process.argv[_h] === '-h') HOST = process.argv[_h + 1];
+console.log('process.argv', process.argv, 'host=' + HOST);
 async function serveRoutes(app, api = makeApi()) {
 	// ROUTES
 
@@ -244,7 +251,7 @@ async function start() {
 		chalk.green(`Connectome → Running websocket connections acceptor on port ${port} ...`)
 	);
 
-	server.listen(port);
+	server.listen(port, HOST);
 	process.on('SIGINT', async () => {
 		console.log(chalk.cyan('cleaning up ...'));
 		for (let cleanup of api.cleanups) await cleanup();
