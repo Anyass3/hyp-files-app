@@ -5,21 +5,60 @@ import child_process from 'child_process';
 import mime from 'mime-types';
 import { extname } from 'path';
 
-export const emitter = {
-	events: {},
+export const debounce = (fn, delay = 500) => {
+	let timeout;
+	return (...args) => {
+		if (timeout) clearTimeout(timeout);
+		timeout = setTimeout(() => {
+			fn(...args);
+		}, delay);
+	};
+};
+
+export class Emitter {
+	constructor() {
+		this.events = {};
+	}
+
 	emit(event, ...data) {
 		this.events[event]?.forEach?.(async (fn) => {
 			try {
+				if (event === 'broadcast') console.log('broadcast', data[0]);
 				return await fn(...data);
 			} catch (error) {
-				console.log(chalk.red('error: ' + error.message));
+				console.log(chalk.red('error: this' + error.message));
+				this.broadcast('notify-danger', error.message);
 			}
 		});
-	},
+	}
+
 	on(event, fn) {
 		const fns = this.events[event] || [];
 		this.events[event] = fns.concat(fn);
 	}
+	off(event, fn) {
+		let fns = this.events[event] || [];
+		this.events[event] = fns.filter((f) => f != fn);
+	}
+
+	broadcast(event, data) {
+		this.emit('broadcast', event, data);
+	}
+	onbroadcast(fn) {
+		this.on('broadcast', fn);
+	}
+}
+export const handleError = (fn, emitter) => {
+	return async (...args) => {
+		// console.log('handling');
+		try {
+			// console.log('handling fn');
+			return await fn(...args);
+		} catch (error) {
+			emitter.broadcast('notify-danger', error.message);
+			console.log(chalk.red('error: handle'), error.stack);
+		}
+	};
 };
 
 export const getState = async (bee) => {
@@ -40,6 +79,7 @@ export const runChildProcess = async (command) => {
 export const getRandomStr = () => {
 	return Math.floor(2147483648 * Math.random()).toString(36);
 };
+
 export const getFileType = async (path) => {
 	const buffer = readChunk.sync(path, 0, 4100);
 	let _type = (await fileType.fromBuffer(buffer))?.mime;
@@ -124,8 +164,8 @@ export function makeApi(store = { state: {} }) {
 			store.announceStateChange();
 		},
 		/// state.drives
-		async addDrive(key, name, drive) {
-			state.drives.push({ key, name });
+		async addDrive({ key, name, host }, drive) {
+			state.drives.push({ key, name, host });
 			store.announceStateChange();
 			if (drive) drives.set(key, drive);
 			connectedDrives.push(key);
