@@ -179,50 +179,50 @@ async function setupDrive(store, dkey = null) {
 	console.log(chalk.gray('Drive Writable: ' + drive.writable)); // do we possess the private key of this drive?
 
 	// some useful funtions
-	const readDir = async (dir, { desc = '/', isdrive = true } = {}) => {
+	const readDir = async (dir, { dest = '/', isdrive = true } = {}) => {
 		let items;
 		if (isdrive) items = await drive.promises.readdir(dir);
 		else items = fs.readdirSync(dir);
 		return items.map((item) => ({
 			name: item,
 			path: path.join(dir, item),
-			new_path: desc.endsWith('/')
+			new_path: dest.endsWith('/')
 				? path.join(lodash.last(dir.split('/')) || '/', item)
 				: '/' + item
 		}));
 	};
-	const fsMakeDir = async (desc) => {
-		if (!fs.existsSync(path.resolve(desc))) fs.mkdirSync(path.resolve(desc));
+	const fsMakeDir = async (dest) => {
+		if (!fs.existsSync(path.resolve(dest))) fs.mkdirSync(path.resolve(dest));
 	};
 	const driveMakeDir = async (dir) => {
 		const exists = await drive.promises.exists(dir);
 		if (!exists) await drive.promises.mkdir(dir);
 	};
-	const fsWriteDir = async (dirList, fs_desc) => {
+	const fsWriteDir = async (dirList, fs_dest) => {
 		for (let item of dirList) {
 			const isdir = (await drive.promises.stat(item.path)).isDirectory();
-			const _fs_desc = path.resolve(path.join(fs_desc, item.new_path));
+			const _fs_dest = path.resolve(path.join(fs_dest, item.new_path));
 			if (isdir) {
-				await fsMakeDir(_fs_desc);
+				await fsMakeDir(_fs_dest);
 				const items = await readDir(item.path);
-				if (items.length) await fsWriteDir(items, fs_desc);
+				if (items.length) await fsWriteDir(items, fs_dest);
 			} else {
-				const descFile = fs.createWriteStream(_fs_desc);
-				drive.createReadStream(item.path).pipe(descFile);
+				const destFile = fs.createWriteStream(_fs_dest);
+				drive.createReadStream(item.path).pipe(destFile);
 			}
 		}
 	};
-	const driveWriteDir = async (dirList, drive_desc) => {
+	const driveWriteDir = async (dirList, drive_dest) => {
 		for (let item of dirList) {
 			const isdir = fs.statSync(item.path).isDirectory();
-			const _drive_desc = path.join(drive_desc, item.new_path);
+			const _drive_dest = path.join(drive_dest, item.new_path);
 			if (isdir) {
-				await driveMakeDir(_drive_desc);
+				await driveMakeDir(_drive_dest);
 				const items = await readDir(item.path, { isdrive: false });
-				if (items.length) await driveWriteDir(items, drive_desc);
+				if (items.length) await driveWriteDir(items, drive_dest);
 			} else {
-				const descFile = drive.createWriteStream(_drive_desc);
-				fs.createReadStream(item.path).pipe(descFile);
+				const destFile = drive.createWriteStream(_drive_dest);
+				fs.createReadStream(item.path).pipe(destFile);
 			}
 		}
 	};
@@ -265,9 +265,9 @@ async function setupDrive(store, dkey = null) {
 			console.log(chalk.green('\t✓ mkdir ' + dir));
 		}
 	});
-	emitter.on('drive:cp', async (source, desc) => {
-		drive.createReadStream(source).pipe(drive.createWriteStream(desc));
-		console.log(chalk.green('\t copied: ' + source + ' ' + desc));
+	emitter.on('drive:cp', async (source, dest) => {
+		drive.createReadStream(source).pipe(drive.createWriteStream(dest));
+		console.log(chalk.green('\t copied: ' + source + ' ' + dest));
 	});
 	emitter.on('drive:rmdir', async (...dirs) => {
 		for (let dir of dirs) {
@@ -281,37 +281,37 @@ async function setupDrive(store, dkey = null) {
 			console.log(chalk.green('\t✓ rm ' + file));
 		}
 	});
-	emitter.on('drive:export', async (drive_src = './', fs_desc = './') => {
+	emitter.on('drive:export', async (drive_src = './', fs_dest = './') => {
 		const isFile = (await drive.promises.stat(drive_src)).isFile();
 		if (isFile) {
-			if (fs_desc.endsWith('/') || fs_desc === '.') {
+			if (fs_dest.endsWith('/') || fs_dest === '.') {
 				const filename = lodash.last(drive_src.split('/'));
-				fs_desc = path.join(fs_desc, filename);
+				fs_dest = path.join(fs_dest, filename);
 			}
-			const descFile = fs.createWriteStream(path.resolve(fs_desc));
-			drive.createReadStream(drive_src).pipe(descFile);
+			const destFile = fs.createWriteStream(path.resolve(fs_dest));
+			drive.createReadStream(drive_src).pipe(destFile);
 		} else {
-			const items = await readDir(drive_src, { desc: fs_desc });
-			await fsMakeDir(fs_desc);
-			await fsWriteDir(items, fs_desc);
+			const items = await readDir(drive_src, { dest: fs_dest });
+			await fsMakeDir(fs_dest);
+			await fsWriteDir(items, fs_dest);
 		}
-		console.log(chalk.green('\t✓ exported drive:' + drive_src + ' to fs:' + fs_desc));
+		console.log(chalk.green('\t✓ exported drive:' + drive_src + ' to fs:' + fs_dest));
 	});
-	emitter.on('drive:import', async (fs_src = './', drive_desc = './') => {
+	emitter.on('drive:import', async (fs_src = './', drive_dest = './') => {
 		const isFile = fs.statSync(fs_src).isFile();
 		if (isFile) {
-			if (drive_desc.endsWith('/') || drive_desc === '.') {
+			if (drive_dest.endsWith('/') || drive_dest === '.') {
 				const filename = lodash.last(fs_src.split('/'));
-				drive_desc = path.join(drive_desc, filename);
+				drive_dest = path.join(drive_dest, filename);
 			}
-			const descFile = drive.createWriteStream(drive_desc);
-			fs.createReadStream(fs_src).pipe(descFile);
+			const destFile = drive.createWriteStream(drive_dest);
+			fs.createReadStream(fs_src).pipe(destFile);
 		} else {
-			const items = await readDir(fs_src, { desc: drive_desc, isdrive: false });
-			await driveMakeDir(drive_desc);
-			await driveWriteDir(items, drive_desc);
+			const items = await readDir(fs_src, { dest: drive_dest, isdrive: false });
+			await driveMakeDir(drive_dest);
+			await driveWriteDir(items, drive_dest);
 		}
-		console.log(chalk.green('\t✓ imported fs:' + fs_src + ' to drive' + drive_desc));
+		console.log(chalk.green('\t✓ imported fs:' + fs_src + ' to drive' + drive_dest));
 	});
 }
 
