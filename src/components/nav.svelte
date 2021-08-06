@@ -7,7 +7,7 @@
 	$: console.log('opened', $opened);
 </script>
 
-<div id="nav-sm" class="mobile mb-1 p-3 sticky-top">
+<div id="nav-sm" class="mobile mb-1 p-2 sticky-top">
 	<div class="flex justify-between">
 		<div>
 			<a href="/" sveltekit:prefetch class:active={$page.path === '/'} class="btn lead3 anchor"
@@ -15,7 +15,7 @@
 			>
 		</div>
 		<button class="" on:click={toggle}>
-			<MenuIcon size="2x" />
+			<MenuIcon size="2x" class="dark:text-blue-100" />
 		</button>
 	</div>
 </div>
@@ -29,6 +29,7 @@
 	class="rounded"
 	><NavItems />
 </SideBarSwipe>
-<div id="nav-md" class="desktop md:px-10 py-3 sticky-top">
+
+<div id="nav-md" class="desktop bg-transparent select-none md:px-10 py-2 sticky-top">
 	<NavItems />
 </div>

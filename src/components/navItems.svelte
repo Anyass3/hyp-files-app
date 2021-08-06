@@ -9,12 +9,7 @@
 
 <div class="md:flex md:justify-between {cls}">
 	<div class="hidden md:block">
-		<a
-			href="/"
-			sveltekit:prefetch
-			class:active={$page.path === '/'}
-			class="nav-link p-3 font-bold lead3 anchor">Hyp</a
-		>
+		<a href="/" sveltekit:prefetch class:active={$page.path === '/'} class="anchor text-3xl">Hyp</a>
 	</div>
 	<div class="flex justify-between flex-md-row flex-col">
 		{#each ['file-manager', 'chat'] as navLink}
@@ -28,20 +23,22 @@
 			</div>
 		{/each}
 	</div>
-	<div class="nav-link">
+	<div>
 		{#if $colorScheme === 'light'}
 			<button
-				class="p-1 border rounded-full border-gray-300 hover:bg-gray-400"
+				class=" p-2 text-blue-500 border rounded-full border-gray-300 hover:bg-gray-400 flex justify-between ml-6 md:ml-0"
 				on:click={() => store.commit('setColorScheme', 'dark')}
 			>
 				<img src={dark_mode} alt="dark" />
+				<span class="inline-block">dark mode</span>
 			</button>
 		{:else}
 			<button
-				class="p-1 border rounded-full dark:bg-gray-500 border-gray-400 hover:bg-gray-300"
+				class="p-2 text-blue-50 border rounded-full dark:bg-gray-500 border-gray-400 hover:bg-gray-300 flex justify-between ml-6 md:ml-0"
 				on:click={() => store.commit('setColorScheme', 'light')}
 			>
 				<img src={light_mode} alt="light" />
+				<span class="inline-block">light mode</span>
 			</button>
 		{/if}
 	</div>

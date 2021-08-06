@@ -114,7 +114,7 @@ button:focus:not(:focus-visible) {
 }
 
 .anchor {
-	@apply text-indigo-800 dark:text-indigo-100 inline-block relative transition-colors ease-out duration-[0.4s];
+	@apply text-blue-800 dark:text-blue-50 inline-block relative transition-colors ease-out duration-[0.4s];
 }
 
 .button:hover {
@@ -127,7 +127,7 @@ button:focus:not(:focus-visible) {
 }
 
 .anchor::after {
-	@apply border-indigo-600 dark:border-indigo-200 rounded-sm left-[0] absolute right-[100%];
+	@apply border-blue-600 dark:border-blue-200 rounded-sm left-[0] absolute right-[100%];
 	content: '';
 	border-top: 4px solid;
 	transition: border-color 0.4s ease-out, right 0.4s cubic-bezier(0, 0.5, 0, 1);
@@ -155,12 +155,12 @@ button:focus:not(:focus-visible) {
 .anchor:hover,
 .anchor.active {
 	text-decoration: none;
-	@apply text-indigo-600 dark:text-indigo-50;
+	@apply text-blue-600 dark:text-white;
 }
 
 .anchor:hover::after,
 .anchor.active::after {
-	@apply border-indigo-600 dark:border-indigo-100 right-[0];
+	@apply border-blue-600 dark:border-blue-100 right-[0];
 }
 
 .list-unstyled {
@@ -244,7 +244,7 @@ button:focus:not(:focus-visible) {
 }
 
 /* .active {
-	@apply border-indigo-500 dark:border-indigo-50 border-2 rounded;
+	@apply border-blue-500 dark:border-blue-50 border-2 rounded;
 } */
 .desktop {
 	@apply hidden md:block;
@@ -252,4 +252,8 @@ button:focus:not(:focus-visible) {
 
 .mobile {
 	@apply md:hidden block;
+}
+
+body {
+	@apply transition-colors overflow-x-hidden;
 }

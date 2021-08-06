@@ -18,46 +18,6 @@ export const debounced = (store, timeout = 100) => {
 		};
 	});
 };
-export const sessionStoreObj = (key = '', obj = {}, start?) => {
-	// const store = sessionStore(key, '');
-	const set = (_key, val) => sessionStore(key + _key, val, start);
-	for (let k in obj) set(k, obj[k]);
-	return set;
-};
-
-export const sessionStore = (_key, value, start?) => {
-	const key = 'sessionStore-' + _key;
-	if (browser) value = sessionStorage.getItem(key) || value;
-	let { subscribe, set: _set, update } = writable(value, start);
-	const set = (val, session = true) => {
-		if (browser && session) sessionStorage.setItem(key, val);
-		_set(val);
-		console.log('sessionStore^', _key, value);
-		console.log('sessionStore', key, val);
-	};
-	// function subscribe(run: Subscriber<any>, invalidate?: any) {
-	// 	value
-	// 		//@ts-ignore
-	// 		_subscribe(run,invalidate);
-	// };
-
-	const get = () => {
-		let value;
-		subscribe((val) => {
-			value = val;
-			return value;
-		})();
-
-		return value;
-	};
-
-	return {
-		subscribe,
-		set,
-		update,
-		get
-	};
-};
 
 export const debouncedStore = (initial_value, delay = 1000) => {
 	const store = writable(initial_value);

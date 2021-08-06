@@ -1,12 +1,17 @@
 <script lang="ts">
+	// import store from '$store';
 	import { createEventDispatcher } from 'svelte';
-	import { truncate, debounce } from '$lib/utils';
-	import Options from '$components/options.svelte';
-	import { FolderIcon, FileIcon } from 'svelte-feather-icons';
+	import { truncate, debounce, getPosition } from '$lib/utils';
+	import { scale, fade, slide, crossfade } from 'svelte/transition';
+	import { backOut, quadIn, quintOut } from 'svelte/easing';
+	import { flip } from 'svelte/animate';
+	// import contextMenu from '$lib/context-menu';
+	// import Options from '$components/options.svelte';
+	import FolderIcon from 'icons/FolderIcon.svelte';
+	import FileIcon from 'icons/FileIcon.svelte';
 	export let files = [];
 	export let show_hidden = false;
-	$: _files = files;
-	let active;
+	$: _files = files || [];
 
 	$: (async (show_hidden) => {
 		console.log('show-hidden', show_hidden);
@@ -17,39 +22,73 @@
 	const dispatch = createEventDispatcher();
 
 	function open(path, stat) {
+		// if (path && !stat.isFile) $dir = path;
 		dispatch('open', {
-			kwargs: { ...stat, path }
+			...stat,
+			path
 		});
-		debounce(() => (active = null), 500)();
+		// debounce(() => (active = null), 500)();
 	}
-	function options(path) {
-		active = path;
+	function contextMenu(ev, name, path, stat) {
+		const pos = getPosition(ev);
+		dispatch('contextmenu', { ...stat, path, name, pos });
+		// debounce(() => (active = null), 500)();
 	}
-	$: console.log('active', active);
+	const [send, receive] = crossfade({
+		duration: (d) => Math.sqrt(d * 200),
+
+		fallback(node, params) {
+			const style = getComputedStyle(node);
+			const transform = style.transform === 'none' ? '' : style.transform;
+
+			return {
+				duration: 600,
+				easing: quintOut,
+				css: (t) => `
+					transform: ${transform} scale(${t});
+					opacity: ${t}
+				`
+			};
+		}
+	});
+	// function options(path) {
+	// 	if (active === path) active = '';
+	// 	else active = path;
+	// }
+	// $: console.log('active', active);
 </script>
 
-<div>
-	<div class="flex justify-start gap-2 flex-wrap pt-1 border-t-2 border-gray-400">
-		{#if files.length > 0}
-			{#each _files as { name, path, stat }}
-				<div class="group anchor-tooltip" tabindex="-1" on:click={debounce(() => (active = path))}>
+<div data-main-menu={true}>
+	<div data-main-menu={true} class="flex justify-between gap-2 flex-wrap pt-1">
+		{#if files?.length > 0}
+			{#each _files as { name, path, stat } (path)}
+				<div
+					in:receive|local={{ key: path }}
+					out:send|local={{ key: path }}
+					animate:flip={{ duration: 200 }}
+					on:contextmenu|preventDefault={(ev) => contextMenu(ev, name, path, stat)}
+					class="group anchor-tooltip context-menu__item"
+					tabindex="-1"
+				>
 					<div class="relative">
 						<button
-							class="bg-gray-400 group-hover:bg-gray-300 rounded-[3px]  dark:group-hover:bg-gray-500 active:ring cursor-pointer w-36 h-24 overflow-hidden"
+							class="bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white group-hover:bg-gray-300 rounded-[3px]  dark:group-hover:bg-gray-500 active:ring cursor-pointer w-36 h-24 overflow-hidden"
 							on:dblclick={() => open(path, stat)}
 						>
 							<div class="flex justify-center">
-								{#if stat.isFile}
+								{#if stat.isFile === true || (stat.isFile !== false && stat.isFile !== 'dir')}
 									<FileIcon size="4x" />
 								{:else}
 									<FolderIcon size="4x" />
 								{/if}
 							</div>
-							<p class="text-semibold text-center select-none">{truncate(name)}</p>
+							<p class="text-semibold text-center select-none dark:text-white">
+								{truncate(name)}
+							</p>
 						</button>
-						{#if active === path}
+						<!-- {#if active === path}
 							<Options {path} {stat} class="hidden group-hover:block" />
-						{/if}
+						{/if} -->
 					</div>
 					<div class="tooltip">
 						<div class="flex flex-col">
@@ -61,7 +100,9 @@
 				</div>
 			{/each}
 		{:else}
-			<div class="text-3xl text-indigo-400 dark:text-indigo-300">this folder is empty</div>
+			<div class="text-4xl md:text-7xl text-blue-400 dark:text-blue-300 p-3 md:p-4 lg:p-6">
+				this folder is empty
+			</div>
 		{/if}
 	</div>
 </div>

@@ -32,7 +32,7 @@
 				out:scale={{ start: 0.9, easing: quadIn, duration: 200 }}
 				class="w-96 max-w-full rounded-lg h-auto bg-gray-100 px-4"
 			>
-				<div class="p-4 font-semibold text-indigo-700">{$prompt.message}</div>
+				<div class="p-4 font-semibold text-blue-700">{$prompt.message}</div>
 				<div class="border-gray-300 p-4 flex justify-between border-t-1">
 					<button
 						on:click={dismiss}
@@ -41,7 +41,7 @@
 					>
 					<button
 						on:click={accept}
-						class="hover:ring active:ring-4 capitalize active:bg-indigo-300 hover:text-indigo-600  focus:outline-transparent hover:ring-indigo-300 border-2 p-2 font-bold rounded-md border-indigo-500 hover:opacity-80"
+						class="hover:ring active:ring-4 capitalize active:bg-blue-300 hover:text-blue-600  focus:outline-transparent hover:ring-blue-300 border-2 p-2 font-bold rounded-md border-blue-500 hover:opacity-80"
 						>{$prompt.acceptText}</button
 					>
 				</div>

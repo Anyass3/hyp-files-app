@@ -23,13 +23,19 @@
 
 <script>
 	export let url, ctype, filename;
+	import { scale, fade, slide, crossfade } from 'svelte/transition';
+	import { backOut, quadIn, quintOut } from 'svelte/easing';
 	// {path,size,ctype,storage,dkey}
 </script>
 
 <svelte:head>
 	<title>{filename}</title>
 </svelte:head>
-<div class="flex-grow flex justify-center items-center">
+<div
+	in:scale={{ delay: 100, start: 0.8, easing: backOut, duration: 200 }}
+	out:scale={{ start: 0.9, easing: quintOut, duration: 200 }}
+	class="flex-grow flex justify-center items-center"
+>
 	{#if ctype?.includes('audio')}
 		<!-- svelte-ignore a11y-media-has-caption -->
 		<audio id="media" controls autoplay alt={filename}>

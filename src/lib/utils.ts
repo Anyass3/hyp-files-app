@@ -1,5 +1,6 @@
 export const is_array = (arr) => {
 	if (!arr) return false;
+	//@ts-ignore
 	return [].__proto__ === arr.__proto__ || NodeList === arr.__proto__.constructor;
 };
 export const is_html = (el, arr = true) => {
@@ -11,13 +12,23 @@ export const is_html = (el, arr = true) => {
 	} else return is_html(el);
 };
 
-export const debounce = (fn: CallableFunction, delay = 500) => {
+export const debounce = (fn: CallableFunction, delay = 5000) => {
 	let timeout;
 	return (...args) => {
 		if (!!timeout) clearTimeout(timeout);
 		timeout = setTimeout(() => {
 			fn(...args);
 		}, delay);
+	};
+};
+
+export const throttle = (fn: CallableFunction, delay = 5000) => {
+	let record = 0;
+	return (...args) => {
+		const now = new Date().getTime();
+		if (now - record < delay) return;
+		record = now;
+		return fn(...args);
 	};
 };
 
@@ -133,6 +144,30 @@ export const axiosFetch = async (instance, path: string, ...args) => {
 			body: error.response.data
 		};
 	}
+};
+
+/**
+ * Get's exact position of event.
+ *
+ * @param {Object} e The event passed in
+ * @return {Object} Returns the x and y position
+ */
+export const getPosition = (e) => {
+	let pos = { x: 0, y: 0 };
+
+	if (!e) e = window.event;
+
+	// if (e.pageX || e.pageY) {
+	// 	pos.x = e.pageX;
+	// 	pos.y = e.pageY;
+	// } else if (e.clientX || e.clientY) {
+	// 	pos.x = e.clientX + document.body.scrollLeft + document.documentElement.scrollLeft;
+	// 	pos.y = e.clientY + document.body.scrollTop + document.documentElement.scrollTop;
+	// }
+	pos.x = e.clientX;
+	pos.y = e.clientY;
+
+	return pos;
 };
 export const gotoExtenal = (href) => {};
 

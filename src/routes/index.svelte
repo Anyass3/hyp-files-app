@@ -5,16 +5,20 @@
 </script>
 
 <div
-	class="flex justify-between h-full mx-2 gap-2 flex-grow flex-wrap bg-gray-200 dark:bg-gray-700 rounded-md"
+	class="flex justify-between h-full mx-2 gap-2 flex-grow flex-wrap bg-gray-50 dark:bg-gray-800 rounded-sm dark:text-blue-100 select-none"
 >
-	<div class="w-full h-full  p-3 ">
-		<h3 class="dark:text-blue-400 text-semibold text-3xl">Drive Manager</h3>
-		<div class="flex justify-between flex-wrap">
+	<div class="w-full h-full  mt-2 p-2 border-gray-200 dark:border-t-0">
+		<h3 class="text-blue-500 dark:text-white text-5xl">Drive Manager</h3>
+		<div class="flex justify-between flex-wrap text-gray-900">
 			<StorageSelect />
 			<!-- <ConnectDrive /> -->
 		</div>
-		<Drives />
-		<div class=" mt-2  p-2 rounded-sm bg-blue-200 dark:bg-gray-600 dark:text-blue-300">
+		<Drives
+			class="mt-2 p-2 rounded-lg border-gray-500 shadow-sm border-[.3px] text-gray-800 text-xl  dark:text-blue-100"
+		/>
+		<div
+			class=" mt-2  p-2 rounded-lg border-gray-500 shadow-sm border-[.3px] text-gray-800 text-xl  dark:text-blue-100"
+		>
 			<ConnectDrive />
 		</div>
 	</div>

@@ -1,9 +1,12 @@
 import connection from '$lib/socket';
-import { sessionStoreObj } from './utils';
 
 export default {
-	noStore: ['api', 'socket', 'serverStore', 'currentdirs'],
-	storeType: { dkey: 'sessionPersistantStore', show_hidden: 'sessionPersistantStore' },
+	noStore: ['api', 'socket', 'serverStore'],
+	storeType: {
+		dkey: 'sessionPersistantStore',
+		show_hidden: 'sessionPersistantStore',
+		dirs: 'sessionPersistantStore'
+	},
 	state: {
 		api: null,
 		socket: null,
@@ -11,11 +14,11 @@ export default {
 		drives: [],
 		dkey: 'fs',
 		folder: [],
-		show_hidden: true,
-		currentdirs: sessionStoreObj('currentdirs', { fs: '/' })
+		dirs: { fs: '/' },
+		show_hidden: true
 	},
 	actions: {
-		async startConnection({ state, commit, dispatch }) {
+		async startConnection({ state, commit, dispatch, g }) {
 			console.log('starting connection');
 			if (state.socket && state.api) return;
 			const { socket, api, serverStore } = connection();
@@ -30,11 +33,28 @@ export default {
 			});
 			socket.on('signal-connect', (settings) => {
 				console.log('settings', settings);
+				state.notify.info('connections ready');
 				// socket.signal('get-drives');
 			});
 			socket.on('folder', (items) => {
 				console.log('folder', items);
-				commit('folder', items);
+				commit('folder', items || []);
+			});
+			socket.on('notify-danger', async (msg) => {
+				console.log(msg);
+				state.notify.danger(msg);
+			});
+			socket.on('notify-info', async (msg) => {
+				console.log(msg);
+				state.notify.info(msg);
+			});
+			socket.on('notify-warn', async (msg) => {
+				console.log(msg);
+				state.notify.warning(msg);
+			});
+			socket.on('notify-success', async (msg) => {
+				console.log(msg);
+				state.notify.success(msg);
 			});
 			// socket.on('drives', (savedDrives: Array<{ key; name }>) => {
 			// 	console.log('drives', savedDrives);
@@ -65,6 +85,14 @@ export default {
 				// 	return drive;
 				// });
 				// commit('drives', drives);
+			});
+			socket.on('storage-updated', (_dkey) => {
+				const dkey = state.dkey.get();
+				if (dkey === dkey) {
+					const dir = g('dirs', dkey, true);
+					const storage = dkey !== 'fs' ? 'drive' : 'fs';
+					dispatch('open', { dir, dkey, storage });
+				}
 			});
 			serverStore.subscribe((data) => {
 				console.log('server-store', data);

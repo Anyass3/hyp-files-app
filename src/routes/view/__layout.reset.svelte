@@ -11,6 +11,7 @@
 </script>
 
 <script>
+	import { NotificationDisplay } from '@beyonk/svelte-notifications';
 	import 'tailwindcss/tailwind.css';
 	import '$lib/app.css';
 	import Header from '$components/view-nav.svelte';
@@ -40,3 +41,5 @@
 		<slot />
 	</div>
 </div>
+
+<NotificationDisplay />

@@ -6,10 +6,10 @@
 </script>
 
 <div class="p-1">
-	<label class=" text-indigo-900 dark:text-blue-300" for="select">storage</label>
+	<label class=" text-blue-700 dark:text-blue-300" for="select">storage</label>
 	<select
 		bind:value={$dkey}
-		class="w-full border bg-blue-200 focus:bg-gray-100 rounded px-3 py-2 outline-none"
+		class="w-full border bg-gray-100 focus:bg-gray-50 rounded px-3 py-2 outline-none"
 	>
 		{#each drives as { key, name }}
 			<option class="py-1" value={key}>{name}</option>
