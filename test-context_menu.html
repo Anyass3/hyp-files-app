@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="UTF-8" />
+		<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Document</title>
+	</head>
+
+	<body>
+		<div
+			style="
+				width: 100%;
+				height: 1500px;
+				background: lightblue;
+				display: flex;
+				justify-content: center;
+			"
+		>
+			<div id="main" style="width: 90vw; background: aqua; height: 150vh; margin: auto"></div>
+		</div>
+		<div
+			id="hmm"
+			style="
+				position: fixed;
+				height: 200px;
+				width: 200px;
+				background-color: red;
+				z-index: 40;
+				top: 0;
+			"
+		></div>
+
+		<script>
+			const $ = (q) => document.querySelector(q);
+
+			const getLimits = () => {
+				const m = $('#main').offsetWidth;
+				const l1 = (document.body.clientWidth - m) / 2;
+				const l2 = (document.body.clientWidth + m) / 2;
+				return { l1, l2 };
+			};
+
+			const getX = (x, dx = 200, c = 3) => {
+				const { l1, l2 } = getLimits();
+				if (x + c + dx < l2) {
+					console.log('x==>', l1);
+					return x + c + 'px';
+				} else if (l1 < x - c - dx) {
+					console.log('x<==', l1);
+					return x - c - dx + 'px';
+				}
+				//return x + 'px'
+			};
+			const getY = (y, dy = 200, c = 3) => {
+				if (y - c - dy > 50) {
+					console.log('y=UP');
+					return y - c - dy + 'px';
+				} else if (innerHeight > y + c + dy) {
+					console.log('y=DOWN');
+					return Math.max(y + c, 50) + 'px';
+				}
+				//return y + 'px'
+			};
+			document.body.onclick = (ev) => {
+				console.log(ev);
+				x = getX(ev.clientX);
+				y = getY(ev.clientY);
+				console.log({ x, y });
+				$('#hmm').style.top = y;
+				$('#hmm').style.left = x;
+			};
+		</script>
+	</body>
+</html>

@@ -2,58 +2,54 @@ import { ConnectionsAcceptor, newServerKeypair as newKeypair } from 'connectome/
 import chalk from 'chalk';
 import { MirroringStore } from 'connectome/stores';
 import hyperspace from './hyperspace.js';
-import { getDriveFileType, getFileType, makeApi } from './utils.js';
+import { getDriveFileType, getFileType, handleError, makeApi } from './utils.js';
+import { getEmitter } from './state.js';
 import fs from 'fs';
-// import mime from 'mime-types';
-// import path from 'path';
-import zlib from 'zlib';
-import AdmZip from 'adm-zip';
+import mime from 'mime-types';
+import Path from 'path';
+import archiver from 'archiver';
+// import AdmZip from 'adm-zip';
 import bodyParser from 'body-parser';
 import express from 'express';
 import http from 'http';
+import compression from 'compression';
+import { Settings } from './settings.js';
+
+const config = Settings();
 
 const stdin = process.stdin;
 stdin.resume();
 stdin.setEncoding('utf8');
-const _h = process.argv.indexOf('-h');
 let HOST = 'localhost';
+const _h = process.argv.indexOf('-h');
 if (process.argv[_h] === '-h') HOST = process.argv[_h + 1];
 console.log('process.argv', process.argv, 'host=' + HOST);
+
+const emitter = getEmitter();
+
 async function serveRoutes(app, api = makeApi()) {
 	// ROUTES
 
 	app.use(bodyParser.json());
-
-	app.get('/pipe', async function (req, res) {
-		const file = '/home/abdoulie/projects/tella/frontend/src/icons/hmm';
-		res.setHeader('Content-Length', fs.statSync(file).size);
-		res.setHeader('Content-Type', await getFileType(file));
-		fs.createReadStream(file).pipe(res);
-		// res.sendFile(file);
-	});
-
-	app.get('/send', async function (req, res) {
-		const file = '/home/abdoulie/MEGAsync Downloads/mufti2';
-		console.log(await getFileType(file));
-		console.log(await getFileType('/home/abdoulie/projects/tella/frontend/src/icons/hmm'));
-		res.sendFile(file);
-	});
+	app.use(compression());
 
 	app.post('/get-file-type', async function (req, res) {
-		console.log('/get-file-type');
-		const storage = req.body.storage || 'fs'; //drive || fs
+		console.log('/get-file-type', req?.body);
+		let storage = req?.body?.storage; //drive || fs
 		const filePath = unescape(req.body.path);
-		const dkey = req.body.dkey;
+		const fsFilePath = Path.join(config.fs, filePath);
+		const dkey = req?.body?.dkey;
+		if (!storage) storage = dkey?.match(/[a-z0-9]{64}/) ? 'drive' : 'fs';
 		let ctype;
-		if (storage === 'fs') ctype = await getFileType(filePath);
+		if (storage === 'fs') ctype = await handleError(getFileType, emitter)(fsFilePath);
 		else {
-			const Drive = api.drives.get(dkey);
+			const drive = api.drives.get(dkey);
 			console.log('/get-file-type', dkey, filePath, storage);
-			console.log('/get-file-type', Drive.key);
-			if (Drive) {
-				// ctype = mime.lookup(path.extname(filePath));
+			console.log('/get-file-type', drive.$key);
+			if (drive) {
+				ctype = mime.lookup(Path.extname(filePath));
 				if (!ctype) {
-					const stream = await Drive.drive.createReadStream(filePath);
+					const stream = await drive.createReadStream(filePath);
 					ctype = await getDriveFileType(stream);
 				}
 			}
@@ -74,33 +70,45 @@ async function serveRoutes(app, api = makeApi()) {
 			if (storage === 'fs') {
 				console.log('/download/sendFile');
 				const filename = path.split('/').reverse()[0];
-				res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-				fs.createReadStream(path).pipe(res);
+				try {
+					res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+				} catch (error) {
+					emitter.broadcast('notify-danger', error.message);
+				}
+				fs.createReadStream(Path.join(config.fs, path)).pipe(res);
 			} else {
-				const Drive = api.drives.get(dkey);
+				const drive = api.drives.get(dkey);
 				const filename = path.split('/').reverse()[0];
-				res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-				if (Drive) {
-					Drive.drive.createReadStream(path).pipe(res);
+				try {
+					res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+				} catch (error) {
+					emitter.broadcast('notify-danger', error.message);
+				}
+				if (drive) {
+					drive.createReadStream(path).pipe(res);
 				}
 			}
 		} else if (type === 'dir') {
 			res.setHeader('Content-Type', 'application/zip');
 			const filename = path.split('/').reverse()[0];
 			res.setHeader('Content-Disposition', `attachment; filename=${filename}.zip`);
-			const zip = AdmZip();
+			// const zip = AdmZip();
+			const zip = archiver('zip', {
+				zlib: { level: 9 } // Sets the compression level.
+			});
 			if (storage === 'fs') {
-				zip.addLocalFolder(path, filename);
+				zip.directory(Path.join(config.fs, path), '/', { name: filename });
 			} else {
-				const Drive = api.drives.get(dkey);
-				if (Drive) {
-					const files = await Drive.listAllFiles(path);
-					for (const file of files) {
-						zip.addFile(file, await Drive.read(file));
+				const drive = api.drives.get(dkey);
+				if (drive) {
+					const files = await drive.$listAllFiles(path);
+					for (const name of files) {
+						zip.append(await drive.$read(name), { name });
 					}
 				}
 			}
-			res.send(zip.toBuffer());
+			zip.pipe(res);
+			zip.finalize();
 		}
 	});
 	app.get('/image', async function (req, res) {
@@ -115,11 +123,11 @@ async function serveRoutes(app, api = makeApi()) {
 		res.setHeader('Content-Type', ctype);
 
 		if (storage === 'fs') {
-			fs.createReadStream(imgPath).pipe(res);
+			fs.createReadStream(Path.join(config.fs, imgPath)).pipe(res);
 		} else {
-			const Drive = api.drives.get(dkey);
-			if (Drive) {
-				const imgStream = Drive.drive.createReadStream(imgPath);
+			const drive = api.drives.get(dkey);
+			if (drive) {
+				const imgStream = drive.createReadStream(imgPath);
 				imgStream.pipe(res);
 			}
 		}
@@ -136,13 +144,13 @@ async function serveRoutes(app, api = makeApi()) {
 		res.setHeader('Content-Type', ctype);
 
 		if (storage === 'fs') {
-			const text = fs.readFileSync(filePath);
+			const text = fs.readFileSync(Path.join(config.fs, filePath));
 			console.log('text', text);
 			res.send(text);
 		} else {
-			const Drive = api.drives.get(dkey);
-			if (Drive) {
-				const text = await Drive.read(filePath);
+			const drive = api.drives.get(dkey);
+			if (drive) {
+				const text = await drive.$read(filePath);
 				res.send(text);
 			}
 		}
@@ -160,19 +168,18 @@ async function serveRoutes(app, api = makeApi()) {
 		res.setHeader('Content-Type', ctype);
 		// res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
 		if (storage === 'fs') {
-			const pdf = fs.readFileSync(pdfPath);
+			const pdf = fs.readFileSync(Path.join(config.fs, pdfPath));
 			res.send(pdf);
 		} else {
-			const Drive = api.drives.get(dkey);
-			if (Drive) {
-				const pdf = await Drive.read(pdfPath);
+			const drive = api.drives.get(dkey);
+			if (drive) {
+				const pdf = await drive.$read(pdfPath);
 				res.send(pdf);
 			}
 		}
 	});
 
 	app.get('/media', function (req, res) {
-		console.log('/media');
 		// Ensure there is a range given for the media
 		const range = req.headers.range;
 		if (!range) {
@@ -190,6 +197,8 @@ async function serveRoutes(app, api = makeApi()) {
 		const start = Number(range.replace(/\D/g, ''));
 		const end = Math.min(start + CHUNK_SIZE, mediaSize - 1);
 
+		console.log(`media chunks => ${start}::${end}`);
+
 		const contentLength = end - start + 1;
 		const headers = {
 			'Content-Range': `bytes ${start}-${end}/${mediaSize}`,
@@ -202,18 +211,50 @@ async function serveRoutes(app, api = makeApi()) {
 		res.writeHead(206, headers);
 
 		if (storage === 'fs') {
-			const mediaStream = fs.createReadStream(mediaPath, { start, end });
+			const mediaStream = fs.createReadStream(Path.join(config.fs, mediaPath), { start, end });
 			mediaStream.pipe(res);
 		} else {
-			const Drive = api.drives.get(dkey);
-			if (Drive) {
-				const mediaStream = Drive.drive.createReadStream(mediaPath, { start, end });
+			const drive = api.drives.get(dkey);
+			if (drive) {
+				const mediaStream = drive.createReadStream(mediaPath, { start, end });
 				mediaStream.pipe(res);
 			}
 		}
 	});
 }
 
+const enhanceChannel = (channel) => {
+	return {
+		emit: (...args) => {
+			// console.log('in emit', args[0]);
+			try {
+				channel.emit(...args);
+			} catch (error) {
+				if (emitter) emitter.broadcast('notify-danger', error.message);
+				console.log(chalk.red('error: ' + error.message));
+			}
+		},
+		on: (...args) => {
+			// console.log('in on', args[0]);
+			const listener = handleError(args[1], emitter);
+			try {
+				channel.on(args[0], listener);
+			} catch (error) {
+				if (emitter) emitter.broadcast('notify-danger', error.message);
+				console.log(chalk.red('error: ' + error.message));
+			}
+		},
+		signal: (...args) => {
+			// console.log('in signal', args[0]);
+			try {
+				channel.signal(...args);
+			} catch (error) {
+				if (emitter) emitter.broadcast('notify-danger', error.message);
+				console.log(chalk.red('error: ' + error.message));
+			}
+		}
+	};
+};
 async function start() {
 	const port = process.env.PORT || 3788;
 	const app = express();
@@ -235,7 +276,7 @@ async function start() {
 	const channelList = acceptor.registerProtocol({
 		protocol: 'dmtapp',
 		lane: 'hyp',
-		onConnect: async ({ channel }) => onConnect({ channel, api })
+		onConnect: async ({ channel }) => onConnect({ channel: enhanceChannel(channel), api })
 	});
 	mirroringStore.mirror(channelList);
 
