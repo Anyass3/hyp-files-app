@@ -6,3 +6,4 @@ package-lock.json
 storage
 .storage
 keys
+backend/settings.json

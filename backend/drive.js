@@ -319,8 +319,8 @@ export default class extends hyperdrive {
 				await destDrive[writeDir](items, dest.path, src);
 			}
 			if (!dest.isdrive) this.emitter.broadcast('storage-updated', 'fs');
-			console.log(chalk.green('\t✓ exported drive:' + src.path + ' to fs:' + dest.path));
-			return '✓ exported drive:' + src.path + ' to fs:' + path.join('', dest.path);
+			// console.log(chalk.green('\t✓ exported drive:' + src.path + ' to fs:' + dest.path));
+			// return '✓ exported drive:' + src.path + ' to fs:' + path.join('', dest.path);
 		});
 	}
 }

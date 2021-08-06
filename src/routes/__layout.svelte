@@ -10,34 +10,51 @@
 	}
 </script>
 
-<script>
+<script lang="ts">
+	import { NotificationDisplay } from '@beyonk/svelte-notifications';
+	import ContextMenu from '$components/context-menu.svelte';
 	import 'tailwindcss/tailwind.css';
 	import '$lib/app.css';
 	import Header from '$components/nav.svelte';
 	import store from '$store';
 	import Prompt from '$components/prompt.svelte';
 	import { dev, browser } from '$app/env';
+	import { page } from '$app/stores';
 	const colorScheme = store.g('colorScheme');
-	import { NavInterObserver } from '$lib/utils';
+	const hideFilemenu = store.g('hideFilemenu');
+	import { InterObserver, NavInterObserver } from '$lib/utils';
 
 	$: ((theme) => {
 		if (browser) {
+			// window['ntfy'] = notifier;
+			// notifier.danger('hello', 4000);
 			if (theme === 'dark') {
-				document.querySelector('html').classList.add('dark');
+				document.body.classList.add('dark');
 			} else {
-				document.querySelector('html').classList.remove('dark');
+				document.body.classList.remove('dark');
 			}
 		}
 	})($colorScheme);
+	// $: console.log('page', $page);
 </script>
 
 <Prompt />
 <div
-	class="w-full min-h-screen mx-auto flex flex-col justify-between bg-gray-100 dark:bg-gray-800 shadow-md"
+	id="main"
+	class="w-full min-h-screen mx-auto flex flex-col justify-between bg-white dark:bg-gray-800 shadow-md select-none"
 >
 	<div class="h-full flex flex-col flex-grow">
 		<Header />
-		<span class="w-1 h-1" use:NavInterObserver />
+		<div class="w-screen h-1" use:NavInterObserver />
+
+		<div
+			class="w-screen h-1"
+			use:InterObserver={{
+				isIntersecting: () => {
+					$hideFilemenu = !$hideFilemenu;
+				}
+			}}
+		/>
 		<slot />
 	</div>
 </div>
@@ -48,11 +65,12 @@
 	<!-- hmm -->
 </footer>
 
-<style>
-	footer a {
-		font-weight: bold;
-	}
+<NotificationDisplay />
+{#if $page.path === '/file-manager'}
+	<ContextMenu />
+{/if}
 
+<style>
 	@media (min-width: 480px) {
 		footer {
 			padding: 40px 0;
