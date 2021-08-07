@@ -58,15 +58,18 @@ export default {
 					console.log('resp', resp); // @ts-ignore
 					const ctype = resp.body.ctype || '';
 					console.log({ storage, path, dkey, ctype, size });
+					const view_args = `${storage}?dkey=${dkey}&ctype=${ctype}&size=${size}&path=${path}`;
 					if (ctype.includes('video') || ctype.includes('audio') || ctype.includes('image')) {
-						const url = `/view/media-${storage}?dkey=${dkey}&ctype=${ctype}&size=${size}&path=${path}`;
+						const url = `/view/media-${view_args}`;
 						goto(url);
 					} else if (ctype.includes('text') || ctype.includes('json')) {
-						const url = `/view/text-${storage}?dkey=${dkey}&ctype=${ctype}&size=${size}&path=${path}`;
+						const url = `/view/text-${view_args}`;
 						goto(url);
 					} else if (ctype.includes('pdf')) {
-						const url = `/_api/pdf?storage=${storage}&dkey=${dkey}&ctype=${ctype}&size=${size}&path=${path}`;
-						window.open(url, '_blank').focus();
+						// const url = `/_api/pdf?storage=${storage}&dkey=${dkey}&ctype=${ctype}&size=${size}&path=${path}`;
+						// window.open(url, '_blank').focus();
+						const url = `/view/embed-${view_args}`;
+						goto(url);
 					}
 				}
 			} else {

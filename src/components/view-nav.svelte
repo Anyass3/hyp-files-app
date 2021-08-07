@@ -20,14 +20,14 @@
 	<div class="nav-link ">
 		{#if $colorScheme === 'light'}
 			<button
-				class="p-1 border rounded-full bg-gray-200 dark:bg-gray-800 border-gray-300 hover:bg-gray-400"
+				class="p-1 border rounded-full bg-gray-200 border-gray-300 hover:bg-gray-400"
 				on:click={() => store.commit('setColorScheme', 'dark')}
 			>
 				<img src={dark_mode} alt="dark" />
 			</button>
 		{:else}
 			<button
-				class="p-1 border rounded-full bg-gray-200 dark:bg-gray-500 border-gray-400 hover:bg-gray-300 dark:hover:bg-gray-300"
+				class="p-1 border rounded-full dark:bg-gray-800 border-gray-400 dark:hover:bg-gray-600"
 				on:click={() => store.commit('setColorScheme', 'light')}
 			>
 				<img src={light_mode} alt="light" />

@@ -23,8 +23,8 @@
 
 <script>
 	export let url, ctype, filename;
-	import { scale, fade, slide, crossfade } from 'svelte/transition';
-	import { backOut, quadIn, quintOut } from 'svelte/easing';
+	import { scale } from 'svelte/transition';
+	import { backOut, quintOut } from 'svelte/easing';
 	// {path,size,ctype,storage,dkey}
 </script>
 

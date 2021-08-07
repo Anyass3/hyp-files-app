@@ -4,6 +4,9 @@
 	import Drives from '$components/drives.svelte';
 </script>
 
+<svelte:head>
+	<title>Hyp</title>
+</svelte:head>
 <div
 	class="flex justify-between h-full mx-2 gap-2 flex-grow flex-wrap bg-gray-50 dark:bg-gray-800 rounded-sm dark:text-blue-100 select-none"
 >

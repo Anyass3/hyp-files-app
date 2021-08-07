@@ -76,6 +76,9 @@
 	}, 10000)}
 />
 
+<svelte:head>
+	<title>File Manager</title>
+</svelte:head>
 <div class="px-2 flex-grow md:px-10 relative" id="file-manager" on:contextmenu={setMainContextMenu}>
 	<div
 		class:hidden={scrollY > lastScroll}

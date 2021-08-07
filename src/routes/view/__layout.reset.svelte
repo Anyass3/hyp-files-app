@@ -25,9 +25,9 @@
 	$: ((theme) => {
 		if (browser) {
 			if (theme === 'dark') {
-				document.querySelector('html').classList.add('dark');
+				document.body.classList.add('dark');
 			} else {
-				document.querySelector('html').classList.remove('dark');
+				document.body.classList.remove('dark');
 			}
 		}
 	})($colorScheme);
@@ -36,7 +36,10 @@
 <div
 	class="w-full min-h-screen mx-auto flex flex-col justify-between bg-gray-200 dark:bg-gray-800 shadow-md"
 >
-	<div class="{$page.path.includes('media') ? 'max-h-screen' : 'h-full'} flex flex-col flex-grow">
+	<div
+		class:min-h-screen={$page.path.includes('embed')}
+		class="{$page.path.includes('media') ? 'max-h-screen' : 'h-full'} flex flex-col flex-grow"
+	>
 		<Header />
 		<slot />
 	</div>

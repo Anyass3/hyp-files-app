@@ -30,15 +30,15 @@
 				on:click={() => store.commit('setColorScheme', 'dark')}
 			>
 				<img src={dark_mode} alt="dark" />
-				<span class="inline-block">dark mode</span>
+				<span class="inline-block ml-1">dark mode</span>
 			</button>
 		{:else}
 			<button
-				class="p-2 text-blue-50 border rounded-full dark:bg-gray-500 border-gray-400 hover:bg-gray-300 flex justify-between ml-6 md:ml-0"
+				class="p-2 text-blue-50 border rounded-full dark:bg-gray-800 border-gray-400 dark:hover:bg-gray-600 flex justify-between ml-6 md:ml-0"
 				on:click={() => store.commit('setColorScheme', 'light')}
 			>
 				<img src={light_mode} alt="light" />
-				<span class="inline-block">light mode</span>
+				<span class="inline-block ml-1">light mode</span>
 			</button>
 		{/if}
 	</div>

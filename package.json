@@ -2,7 +2,7 @@
 	"name": "hyp-app",
 	"version": "0.0.1",
 	"scripts": {
-		"dev": "svelte-kit dev",
+		"dev": "svelte-kit dev --port 4000",
 		"build": "svelte-kit build",
 		"server": "node backend/server.js",
 		"preview": "svelte-kit preview",
