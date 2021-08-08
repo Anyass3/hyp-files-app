@@ -2,28 +2,42 @@ import { Client as HyperspaceClient, Server as HyperspaceServer } from 'hyperspa
 import chalk from 'chalk';
 import { Settings, setSettings } from './settings.js';
 import Hyperbee from 'hyperbee';
-import { getRandomStr } from './utils.js';
+import { v4 as uuidV4 } from 'uuid';
+import path from 'path';
+import fs from 'fs';
 
-export const setupHyperspace = async ({
-	host = undefined,
-	storage = './storage/hyp-storage-1'
-} = {}) => {
+// #TODO create a change host name to avoid storage misplacement
+
+export const setupHyperspace = async ({ host = Settings().host, oldhost } = {}) => {
+	if (!host) {
+		host = 'AwesomeSocket';
+		setSettings('host', host);
+	}
 	let client;
 	let server;
 
+	let storage = path.resolve(path.join('./storage', host));
+	if (oldhost) {
+		const oldstorage = path.resolve(path.join('./storage', oldhost));
+		if (fs.existsSync(oldstorage)) {
+			fs.renameSync(oldstorage, storage);
+		}
+	}
 	try {
 		client = new HyperspaceClient({
 			host
 		});
-		console.log('daemon already running...');
 		await client.ready();
+		console.log('daemon already running');
 	} catch (e) {
+		console.log(e.message);
 		// no daemon, start it in-process
 		server = new HyperspaceServer({
 			storage,
 			host
 		});
 		await server.ready();
+		console.log('server is ready');
 
 		server.on('client-open', () => {
 			console.log(chalk.blue('A HyperspaceClient has connected'));
@@ -51,28 +65,33 @@ export const setupHyperspace = async ({
 	};
 };
 
-export async function setupBee({ _public = false, newbee = false } = {}) {
-	let pHost;
+export async function setupBee({ replicate = false, newbee = false } = {}) {
+	let host;
 	let beekey;
-	if (!_public) {
-		pHost = Settings().privateHost;
-		if (pHost) {
-			pHost = getRandomStr();
-			setSettings('privateHost', pHost);
-		}
+	let oldhost;
+	if (!replicate) {
+		oldhost = Settings().privateHost;
+		host = uuidV4().replace(/-/g, '');
+		console.log('host', host);
+		// at every startup it creates a new unique private host
+		// for security even our pc cannot access our drive without knowing the host
+		// because we are not going to advertise it.
+		setSettings('privateHost', host);
 	}
 	// Setup the Hyperspace Daemon connection
-	const { client, cleanup } = await setupHyperspace({ host: pHost });
+	const { client, cleanup } = await setupHyperspace({ host, oldhost });
 	console.log('Hyperspace daemon connected, status:');
 	console.log(await client.status());
 
 	if (!newbee) beekey = Settings().beekey || undefined;
 
 	// Create a Hyperbee
+	console.log('Create a Hyperbee');
 	let bee = new Hyperbee(client.corestore().get({ key: beekey, name: 'awesome-bee-db' }), {
 		keyEncoding: 'utf8',
 		valueEncoding: 'json'
 	});
+
 	await bee.ready();
 	if (!bee.feed.writable) {
 		bee.feed.close();
@@ -92,9 +111,10 @@ export async function setupBee({ _public = false, newbee = false } = {}) {
 
 	console.log('bee initiated, key:');
 	console.log('\t', beekey);
-	client.network.configure(bee.feed.discoveryKey, { announce: _public, lookup: _public });
+	client.network.configure(bee.feed, { announce: replicate, lookup: replicate });
 	// await client.replicate(bee.feed); // i don't wanna advertice my bee
 	const cores = bee.sub('cores');
 	const drives = bee.sub('drives');
+	console.log('bee no probs');
 	return { bee, client, cores, drives, cleanup };
 }

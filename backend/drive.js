@@ -19,15 +19,17 @@ export default class extends hyperdrive {
 	async check(fn) {
 		return await handleError(fn, this.emitter)();
 	}
-	async $ready() {
+	async $ready(name) {
 		await this.check(async () => {
 			await this.promises.ready();
 
 			this.emitter.emit('drive key', this.$key);
 
-			console.log(chalk.gray('drive key ' + this.$key)); // the drive's public key, used to identify it
-			console.log(chalk.gray('Discovery Key:' + this.discoveryKey.toString('hex'))); // the drive's discovery key for the DHT
-			console.log(chalk.gray('Drive Writable: ' + this.writable)); // do we possess the private key of this drive?
+			// console.log(chalk.gray('drive key ' + this.$key)); // the drive's public key, used to identify it
+			// console.log(chalk.gray('Discovery Key:' + this.discoveryKey.toString('hex'))); // the drive's discovery key for the DHT
+			// console.log(chalk.gray('Drive Writable: ' + this.writable)); // do we possess the private key of this drive?
+
+			console.log(chalk.gray(`${name || ''} drive metadata: `), this.metadata); // do we possess the private key of this drive?
 
 			// this.emitter.broadcast('notify-info', 'drive is ready');
 		});
@@ -90,6 +92,7 @@ export default class extends hyperdrive {
 			}
 		});
 	}
+
 	async $fsWriteDir(dirList, fs_dest, { drive }) {
 		await this.check(async () => {
 			for (let item of dirList) {
@@ -98,10 +101,15 @@ export default class extends hyperdrive {
 					: fs.statSync(path.join(config.fs, item.path)).isDirectory();
 				if (isdir) {
 					await this.$fsMakeDir(item.new_path);
-					const items = await this.$readDir(item.path, { dest: item.new_path, drive });
-					if (items.length) await this.$fsWriteDir(items, fs_dest);
+					const items = await this.$readDir(item.path, {
+						dest: item.new_path,
+						drive,
+						isdrive: !!drive
+					});
+					console.log(items);
+					if (items.length) await this.$fsWriteDir(items, fs_dest, { drive });
 				} else {
-					await this.$fsMakeDir(path.join(fs_dest, item.new_path.split('/')[0]));
+					await this.$fsMakeDir(item.new_path.split('/')[0]);
 					const destFile = fs.createWriteStream(path.join(config.fs, item.new_path));
 					if (drive) drive.createReadStream(item.path).pipe(destFile);
 					else fs.createReadStream(path.join(config.fs, item.path)).pipe(destFile);
@@ -121,7 +129,7 @@ export default class extends hyperdrive {
 					const items = await this.$readDir(item.path, {
 						drive,
 						dest: item.new_path,
-						isdrive: drive
+						isdrive: !!drive
 					});
 					// console.log('items in drivewritedir', items, dest);
 					if (items?.length) await this.$driveWriteDir(items, dest, { drive, isdrive });

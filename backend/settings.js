@@ -4,6 +4,7 @@ const settingsJsonPath = path.resolve('./backend/settings.json');
 const Settings = (_settings) => {
 	if (!fs.existsSync(settingsJsonPath)) {
 		_settings = {
+			host: 'AwesomeSocket',
 			fs: '/',
 			beekey: '',
 			username: 'me'

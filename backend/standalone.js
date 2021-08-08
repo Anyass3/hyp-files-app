@@ -11,8 +11,8 @@ stdin.resume();
 stdin.setEncoding('utf8');
 let KEY, DKEY;
 process.argv.forEach((arg) => {
-	const k = /^key=([\w\-]+)$/.exec(arg)?.[1];
-	const dk = /^dkey=([\w\-]+)$/.exec(arg)?.[1];
+	const k = /^key=([\w-]+)$/.exec(arg)?.[1];
+	const dk = /^dkey=([\w-]+)$/.exec(arg)?.[1];
 	if (k) KEY = k;
 	else if (dk) DKEY = dk;
 });

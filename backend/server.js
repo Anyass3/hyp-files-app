@@ -8,7 +8,6 @@ import fs from 'fs';
 import mime from 'mime-types';
 import Path from 'path';
 import archiver from 'archiver';
-// import AdmZip from 'adm-zip';
 import bodyParser from 'body-parser';
 import express from 'express';
 import http from 'http';
@@ -252,6 +251,9 @@ const enhanceChannel = (channel) => {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
 				console.log(chalk.red('error: ' + error.message));
 			}
+		},
+		get key() {
+			return channel._remotePubkeyHex;
 		}
 	};
 };
@@ -261,6 +263,18 @@ async function start() {
 
 	const mirroringStore = new MirroringStore({ peers: [], drives: [] });
 	const api = makeApi(mirroringStore);
+
+	process.on('SIGINT', async () => {
+		console.log(chalk.cyan('cleaning up ...'));
+		for (let cleanup of api.cleanups) await cleanup();
+		process.exit();
+	});
+	process.on('uncaughtExceptionMonitor', async (err, origin) => {
+		console.log(chalk.red('uncaughtExceptionMonitor'), err, origin);
+		console.log(chalk.cyan('cleaning up ...'));
+		for (let cleanup of api.cleanups) await cleanup();
+		process.exit();
+	});
 
 	serveRoutes(app, api);
 
@@ -293,11 +307,6 @@ async function start() {
 	);
 
 	server.listen(port, HOST);
-	process.on('SIGINT', async () => {
-		console.log(chalk.cyan('cleaning up ...'));
-		for (let cleanup of api.cleanups) await cleanup();
-		process.exit();
-	});
 }
 
 start();

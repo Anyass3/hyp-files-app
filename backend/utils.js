@@ -107,10 +107,14 @@ export function makeApi(store = { state: {} }) {
 	const peerDrives = new Map();
 	const peersObj = new Map();
 	const bees = new Map();
+	const channels = new Map();
+	const clients = new Map();
 	const connectedDrives = [];
 	const cleanups = [];
 	return {
 		bees,
+		clients,
+		channels,
 		cleanups,
 		cores,
 		drives,
@@ -178,6 +182,9 @@ export function makeApi(store = { state: {} }) {
 			store.announceStateChange();
 			drives.delete(key);
 			connectedDrives.find((dk) => dk !== key);
+		},
+		async getDrives() {
+			return state.drives;
 		},
 		///to be removed
 		///peersObj
