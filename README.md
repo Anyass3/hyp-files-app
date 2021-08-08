@@ -37,6 +37,7 @@ npm run server -- -h 0.0.0.0
    
 
 ## todos
+- correct the tooltip
 - extract zip files
 - upload files
 - create new file or folder
