@@ -54,7 +54,7 @@
 		"prompt-sync": "^4.2.0",
 		"read-chunk": "^3.2.0",
 		"sidebar-swipe": "^0.8.81",
-		"stores-x": "^0.0.871",
+		"stores-x": "^0.0.872",
 		"svelte-feather-icons": "^3.5.0",
 		"uuid": "^8.3.2"
 	}
