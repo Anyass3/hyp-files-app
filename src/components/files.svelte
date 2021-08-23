@@ -19,6 +19,7 @@
 			_files = files.filter((file) => !/^\./.exec(file.name));
 		} else _files = files;
 	})(show_hidden);
+
 	const dispatch = createEventDispatcher();
 
 	function open(path, stat) {
@@ -92,7 +93,7 @@
 					</div>
 					<div class="tooltip">
 						<div class="flex flex-col">
-							<span class="text-semibold">name: {name}</span>
+							<span class="text-semibold whitespace-wrap">name: {name}</span>
 							<span>size: {stat.size}</span>
 							<span>type: {!stat.isFile ? 'folder' : 'file'}</span>
 						</div>

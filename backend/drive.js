@@ -177,11 +177,13 @@ export default class extends hyperdrive {
 		return await this.check(async () => {
 			let list = fs.readdirSync(dir);
 			list = list.map((item) => {
-				const _path = path.join(dir, item);
+				let _path = path.join(dir, item);
 				const stat = fs.statSync(_path);
+				_path = _path.replace(config.fs, '');
+				if (!_path.startsWith('/')) _path = '/' + _path;
 				return {
 					name: item,
-					path: _path.replace(config.fs, ''),
+					path: _path,
 					stat: { isFile: stat.isFile(), size: stat.size }
 				};
 			});
