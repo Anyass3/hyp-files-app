@@ -18,7 +18,7 @@ export async function setDriveEvents(_drive, driveName = '', { cleanup } = {}) {
 	);
 	_drive.on('metadata-download', (index, data, feed) => {
 		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'download' });
-		emitter.log('metadata-download', { index, data, feed });
+		// emitter.log('metadata-download', { index, data, feed });
 		//Emitted when data has been downloaded for the metadata feed.
 	});
 
@@ -46,7 +46,11 @@ export async function setDriveEvents(_drive, driveName = '', { cleanup } = {}) {
 	});
 	_drive.on('peer-open', (peer) => {
 		emitter.broadcast('notify-info', `${driveName} drive connection opened`);
-		emitter.log(chalk.cyan('peer-open: ' + driveName), peer);
+		emitter.log(chalk.cyan('peer-open: ' + driveName), {
+			connType: peer.type,
+			remotePublicKey: peer.remotePublicKey?.toString?.('hex'),
+			remoteAddress: peer.remoteAddress
+		});
 	});
 
 	_drive.on('close', () => {
@@ -205,6 +209,7 @@ export default class extends hyperdrive {
 		let total = 0;
 		return await this.check(async () => {
 			// emitter.log('in list', dir);
+			// console.log({ page, paginate, show_hidden, limit, offset });
 			let list = await this.promises.readdir(dir, { recursive, includeStats: true });
 			if (paginate) {
 				if (!show_hidden) list = list.filter((file) => !/^\./.exec(file));

@@ -14,15 +14,20 @@ const isMedia = (ctype, img = true) => {
 
 export default {
 	noStore: ['base_url', 'notify'],
-	storeType: { colorScheme: 'localPersistantStore', clipboard: 'sessionPersistantStore' },
+	storeType: {
+		colorScheme: 'localPersistantStore',
+		clipboard: 'sessionPersistantStore',
+		render: 'sessionPersistantStore'
+	},
 	state: {
 		// @ts-ignore
 		base_url: import.meta.env.BASE_URL.replace('_app/', ''),
 		context_menu: [],
 		pos: { x: 0, y: 0 },
-		clipboard: {},
+		clipboard: null,
 		notify: notifier,
 		hideFilemenu: true,
+		render: false,
 		colorScheme:
 			browser && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 	},
@@ -62,7 +67,7 @@ export default {
 			if (!ctype) ctype = '';
 			if (isFile) {
 				{
-					// console.log('open', { size, storage, dkey, isFile, path, ctype });
+					console.log('open', { size, storage, dkey, isFile, path, ctype });
 					const view_args = storage + toQueryString({ path: escape(path), dkey, ctype, size });
 					if (isMedia(ctype, true)) {
 						if (!ctype.includes('image') && !inBrowser && state.serverStore.get().isMpvInstalled) {
@@ -174,7 +179,8 @@ export default {
 						};
 
 						state.socket.on(event, onpaste);
-					}
+					},
+					disabled: !g('clipboard').get()
 				},
 				{
 					name: 'delete',
@@ -212,7 +218,8 @@ export default {
 						};
 
 						state.socket.on(event, onpaste);
-					}
+					},
+					disabled: !g('clipboard').get()
 				}
 			];
 			dispatch('context_menu', items);

@@ -39,13 +39,13 @@ export default {
 				state.notify.info('connections ready');
 				// socket.signal('get-drives');
 			});
-			socket.on('folder', ({ items = [], page = 1, total = 0 } = {}) => {
+			socket.on('folder', ({ items, page, total }) => {
 				// console.log('folder', { items, page, total });
 				dispatch('pagination', new Pagination({ total, page }));
 				if (page === 1) {
 					commit('folder', items || []);
 				} else {
-					state.folder.update((folder) => [...folder, ...items]);
+					state.folder.update((folder) => [...folder, ...(items || [])]);
 				}
 				commit('loading', false);
 			});

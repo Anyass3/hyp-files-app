@@ -156,7 +156,7 @@
 						page: pagination.page,
 						show_hidden: $show_hidden
 					};
-					if (storage === 'drive') opts['dkey'] = dkey;
+					if (storage === 'drive') opts['dkey'] = $dkey;
 					store.state.socket.signal(`${storage}-list`, opts);
 					$loading = 'load-next-page';
 				}

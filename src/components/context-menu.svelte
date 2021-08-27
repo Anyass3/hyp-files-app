@@ -123,7 +123,7 @@
 
 <style lang="postcss">
 	.disabled button {
-		@apply text-gray-300;
+		@apply text-gray-300 cursor-not-allowed;
 	}
 	:global(.dark) .disabled button {
 		/* color: rgb(156, 163, 175) !important; */

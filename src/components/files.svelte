@@ -48,7 +48,7 @@
 	// 	if (active === path) active = '';
 	// 	else active = path;
 	// }
-	// $: console.log('files', $files);
+	$: console.log('files', $files);
 </script>
 
 <div data-main-menu={true}>
