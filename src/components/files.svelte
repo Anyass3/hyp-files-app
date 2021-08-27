@@ -1,24 +1,17 @@
 <script lang="ts">
-	// import store from '$store';
+	import store from '$store';
 	import { createEventDispatcher } from 'svelte';
 	import { truncate, debounce, getPosition } from '$lib/utils';
 	import { scale, fade, slide, crossfade } from 'svelte/transition';
 	import { backOut, quadIn, quintOut } from 'svelte/easing';
 	import { flip } from 'svelte/animate';
-	// import contextMenu from '$lib/context-menu';
-	// import Options from '$components/options.svelte';
+	import Spinner from '$components/spinner.svelte';
 	import FolderIcon from 'icons/FolderIcon.svelte';
 	import FileIcon from 'icons/FileIcon.svelte';
-	export let files = [];
-	export let show_hidden = false;
-	$: _files = files || [];
+	import type { Writable } from 'svelte/store';
+	const files = store.g('folder');
 
-	$: (async (show_hidden) => {
-		console.log('show-hidden', show_hidden);
-		if (!show_hidden) {
-			_files = files.filter((file) => !/^\./.exec(file.name));
-		} else _files = files;
-	})(show_hidden);
+	const loading: Writable<loading> = store.g('loading');
 
 	const dispatch = createEventDispatcher();
 
@@ -37,7 +30,6 @@
 	}
 	const [send, receive] = crossfade({
 		duration: (d) => Math.sqrt(d * 200),
-
 		fallback(node, params) {
 			const style = getComputedStyle(node);
 			const transform = style.transform === 'none' ? '' : style.transform;
@@ -56,17 +48,26 @@
 	// 	if (active === path) active = '';
 	// 	else active = path;
 	// }
-	// $: console.log('active', active);
+	// $: console.log('files', $files);
 </script>
 
 <div data-main-menu={true}>
-	<div data-main-menu={true} class="flex justify-between gap-2 flex-wrap pt-1">
-		{#if files?.length > 0}
-			{#each _files as { name, path, stat } (path)}
+	{#if $loading === 'load-page'}
+		<div class="grid place-items-center w-full pt-10">
+			<Spinner />
+		</div>
+	{/if}
+	<div
+		data-main-menu={true}
+		class="flex justify-between gap-2 flex-wrap pt-1"
+		class:hidden={$loading === 'load-page'}
+	>
+		{#if $files?.length}
+			{#each $files as { name, path, stat } (path)}
 				<div
-					in:receive|local={{ key: path }}
-					out:send|local={{ key: path }}
-					animate:flip={{ duration: 200 }}
+					in:receive={{ key: path }}
+					out:send={{ key: path }}
+					animate:flip={{ duration: 50 }}
 					on:contextmenu|preventDefault={(ev) => contextMenu(ev, name, path, stat)}
 					class="group anchor-tooltip context-menu__item"
 					tabindex="-1"

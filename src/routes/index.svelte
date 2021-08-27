@@ -2,6 +2,7 @@
 	import StorageSelect from '$components/storage-select.svelte';
 	import ConnectDrive from '$components/connect-drive.svelte';
 	import Drives from '$components/drives.svelte';
+	import ChildProcess from '$components/child-process.svelte';
 </script>
 
 <svelte:head>
@@ -16,14 +17,17 @@
 			<StorageSelect />
 			<!-- <ConnectDrive /> -->
 		</div>
-		<Drives
-			class="mt-2 p-2 rounded-lg border-gray-500 shadow-sm border-[.3px] text-gray-800 text-xl  dark:text-blue-100"
-		/>
 		<div
 			class=" mt-2  p-2 rounded-lg border-gray-500 shadow-sm border-[.3px] text-gray-800 text-xl  dark:text-blue-100"
 		>
 			<ConnectDrive />
 		</div>
+		<Drives
+			class="mt-2 p-2 rounded-lg border-gray-500 shadow-sm border-[.3px] text-gray-800 text-xl  dark:text-blue-100"
+		/>
+		<ChildProcess
+			class=" mt-2  p-2 rounded-lg border-gray-500 shadow-sm border-[.3px] text-gray-800 text-xl  dark:text-blue-100"
+		/>
 	</div>
 	<div class="w-full h-full border border-gray-500">
 		<h3>chat Manager</h3>

@@ -47,14 +47,14 @@
 		<Header />
 		<div class="w-screen h-1" use:NavInterObserver />
 
-		<div
+		<!-- <div
 			class="w-screen h-1"
 			use:InterObserver={{
 				isIntersecting: () => {
 					$hideFilemenu = !$hideFilemenu;
 				}
 			}}
-		/>
+		/> -->
 		<slot />
 	</div>
 </div>

@@ -42,6 +42,7 @@
 		"chalk": "^4.1.0",
 		"compression": "^1.7.4",
 		"connectome": "^0.0.108",
+		"cors": "^2.8.5",
 		"crypto": "^1.0.1",
 		"express": "^4.17.1",
 		"file-type": "^16.5.3",

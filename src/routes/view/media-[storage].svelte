@@ -10,10 +10,7 @@
 			dkey: page.query.get('dkey'),
 			size: page.query.get('size')
 		};
-		let url = `/_api/${args.ctype.includes('image') ? 'image' : 'media'}?`;
-		for (let arg in args) {
-			if (args[arg]) url += `&${arg}=${args[arg]}`;
-		}
+		let url = API + `/${args.ctype.includes('image') ? 'image' : 'media'}` + toQueryString(args);
 		const filename = args.path.split('/').reverse()[0];
 		return {
 			props: { ctype: args.ctype, url, filename }
@@ -25,7 +22,10 @@
 	export let url, ctype, filename;
 	import { scale } from 'svelte/transition';
 	import { backOut, quintOut } from 'svelte/easing';
+	import { API } from '$lib/getAPi';
+	import { toQueryString } from '$lib/utils';
 	// {path,size,ctype,storage,dkey}
+	// console.log('url', url);
 </script>
 
 <svelte:head>

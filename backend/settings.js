@@ -7,7 +7,8 @@ const Settings = (_settings) => {
 			host: 'AwesomeSocket',
 			fs: '/',
 			beekey: '',
-			username: 'me'
+			username: 'me',
+			log: false
 		};
 		fs.writeFileSync(settingsJsonPath, JSON.stringify(_settings));
 		return _settings;

@@ -5,16 +5,17 @@
 	import { browser } from '$app/env';
 	import FolderIcon from 'icons/FolderIcon.svelte';
 	import { goto } from '$app/navigation';
-	import { throttle, debounce, getPosition, truncate } from '$lib/utils';
+	import { throttle, debounce, getPosition, truncate, InterObserver } from '$lib/utils';
 	import { api } from '$lib/getAPi';
 	import NavItems from '$components/navItems.svelte';
+	import Spinner from '$components/spinner.svelte';
+	import type { Writable } from 'svelte/store';
 	const dkey = store.g('dkey');
+	const loading: Writable<loading> = store.g('loading');
 	const show_hidden = store.g('show_hidden');
-	const hideFilemenu = store.g('hideFilemenu');
+	// const hideFilemenu = store.g('hideFilemenu');
 	$: dirs = store.g('dirs', $dkey);
-	$: console.log('dirs', $dirs);
-
-	// let show_hidden = true;
+	// $: console.log('dirs', $dirs);
 
 	$: dir = $dirs[$dkey];
 	$: storage = $dkey !== 'fs' ? 'drive' : 'fs';
@@ -22,10 +23,9 @@
 	$: options = { dkey: $dkey, dir, storage };
 
 	// const socket = store.g('socket');
-	const files = store.g('folder');
 
 	const pos = store.g('pos');
-	// console.log('store', store, socket, socket.signal);
+
 	const open = async (detail: any = {}) => {
 		// if (detail.path && !detail.isFile) $dir = detail.path;
 		store.dispatch('open', { ...detail, ...options });
@@ -49,7 +49,7 @@
 	let dirlist: Array<{ name; path }>;
 
 	$: dirlist = dir.split('/').reduce((arr, name) => {
-		console.log(arr, name);
+		// console.log(arr, name);
 		let path;
 		if (arr.length === 0) path = name || '';
 		else if (arr[arr.length - 1].path === '/') path = '/' + name;
@@ -57,21 +57,22 @@
 		return [...arr, { name: name || 'root', path: path || '/' }];
 	}, []);
 
-	$: console.log('dkey', $dkey);
-	$: console.log('dirlist', dirlist);
-	$: console.log('$dir', dir);
+	// $: console.log('dkey', $dkey);
+	// $: console.log('dirlist', dirlist);
+	// $: console.log('$loading', $loading);
 
-	$: if (browser || $dkey) {
+	$: if (browser || $dkey || $show_hidden) {
 		open();
 	}
 	let scrollY = 0;
 	let lastScroll = scrollY;
+	$: hideFilemenu = scrollY > lastScroll;
 </script>
 
 <svelte:window
 	bind:scrollY
 	on:scroll|passive={throttle(() => {
-		$hideFilemenu = scrollY > 0 && lastScroll <= scrollY;
+		// $hideFilemenu = scrollY > 0 && lastScroll <= scrollY;
 		lastScroll = scrollY;
 	}, 10000)}
 />
@@ -81,7 +82,7 @@
 </svelte:head>
 <div class="px-2 flex-grow md:px-10 relative" id="file-manager" on:contextmenu={setMainContextMenu}>
 	<div
-		class:hidden={scrollY > lastScroll}
+		class:hidden={hideFilemenu}
 		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-10 top-[7%] md:top-[13%] bg-white dark:bg-gray-800 shadow border-b-2 pb-1"
 	>
 		<div class="flex text-base md:text-2xl overflow-x-auto gap-1">
@@ -133,8 +134,34 @@
 	</div>
 	<Files
 		on:contextmenu={({ detail }) => setContextMenu(detail)}
-		files={$files}
 		on:open={(ev) => open(ev.detail)}
-		show_hidden={$show_hidden}
+	/>
+
+	{#if $loading === 'load-next-page'}
+		<div class="grid place-items-center">
+			<Spinner />
+		</div>
+	{/if}
+	<div
+		class="w-full h-1"
+		use:InterObserver={{
+			isIntersecting: () => {
+				const pagination = store.state.pagination;
+				if (pagination.has_next) {
+					// console.log('is intersecting', { ...pagination, offset: pagination.offset });
+					pagination.next();
+					const opts = {
+						dir,
+						offset: pagination.offset,
+						page: pagination.page,
+						show_hidden: $show_hidden
+					};
+					if (storage === 'drive') opts['dkey'] = dkey;
+					store.state.socket.signal(`${storage}-list`, opts);
+					$loading = 'load-next-page';
+				}
+			},
+			unobserve: true
+		}}
 	/>
 </div>

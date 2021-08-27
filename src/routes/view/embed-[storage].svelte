@@ -10,8 +10,9 @@
 			dkey: page.query.get('dkey'),
 			size: page.query.get('size')
 		};
-		// let url = `/_api/`;
-		const url = `/_api/pdf?storage=${args.storage}&dkey=${args.dkey}&ctype=${args.ctype}&size=${args.size}&path=${args.path}`;
+		const url =
+			API +
+			`/pdf?storage=${args.storage}&dkey=${args.dkey}&ctype=${args.ctype}&size=${args.size}&path=${args.path}`;
 		// for (let arg in args) {
 		// 	if (args[arg]) url += `&${arg}=${args[arg]}`;
 		// }
@@ -26,6 +27,8 @@
 	export let url, ctype, filename;
 	import { scale } from 'svelte/transition';
 	import { backOut, quintOut } from 'svelte/easing';
+	import { API } from '$lib/getAPi';
+
 	// {path,size,ctype,storage,dkey}
 </script>
 

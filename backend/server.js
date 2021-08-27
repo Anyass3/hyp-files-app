@@ -2,8 +2,8 @@ import { ConnectionsAcceptor, newServerKeypair as newKeypair } from 'connectome/
 import chalk from 'chalk';
 import { MirroringStore } from 'connectome/stores';
 import hyperspace from './hyperspace.js';
-import { handleError, makeApi } from './utils.js';
-import { getEmitter } from './state.js';
+import { execChildProcess, handleError, spawnChildProcess } from './utils.js';
+import { getEmitter, makeApi } from './state.js';
 import express from 'express';
 import http from 'http';
 import endpoints from './endpoints.js';
@@ -17,38 +17,37 @@ stdin.setEncoding('utf8');
 let HOST = 'localhost';
 const _h = process.argv.indexOf('-h');
 if (process.argv[_h] === '-h') HOST = process.argv[_h + 1];
-console.log('process.argv', process.argv, 'host=' + HOST);
-
 const emitter = getEmitter();
+// console.log('process.argv', process.argv, 'host=' + HOST);
 
 const enhanceChannel = (channel) => {
 	return {
 		emit: (...args) => {
-			// console.log('in emit', args[0]);
+			// emitter.log('in emit', args[0]);
 			try {
 				channel.emit(...args);
 			} catch (error) {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
-				console.log(chalk.red('error: ' + error.message));
+				emitter.log(chalk.red('error: ' + error.message));
 			}
 		},
 		on: (...args) => {
-			// console.log('in on', args[0]);
+			// emitter.log('in on', args[0]);
 			const listener = handleError(args[1], emitter);
 			try {
 				channel.on(args[0], listener);
 			} catch (error) {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
-				console.log(chalk.red('error: ' + error.message));
+				emitter.log(chalk.red('error: ' + error.message));
 			}
 		},
 		signal: (...args) => {
-			// console.log('in signal', args[0]);
+			// emitter.log('in signal', args[0]);
 			try {
 				channel.signal(...args);
 			} catch (error) {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
-				console.log(chalk.red('error: ' + error.message));
+				emitter.log(chalk.red('error: ' + error.message));
 			}
 		},
 		get key() {
@@ -56,22 +55,51 @@ const enhanceChannel = (channel) => {
 		}
 	};
 };
+const manageChildProcess = (api = makeApi()) => {
+	emitter.on('child-process:spawn', async (cm, pid) => {
+		emitter.log('spawn', { cm, pid });
+		emitter.broadcast('child-process:spawn', { cm, pid });
+		api.addChildProcess({ pid, cm });
+	});
+	emitter.on('child-process:data', async (cm, pid, data) => {
+		// emitter.log('data', { cm, pid, data });
+		emitter.broadcast('child-process:data', { cm, pid, data });
+	});
+	emitter.on('child-process:error', async (cm, pid, error) => {
+		// emitter.log('error', { cm, pid, error });
+		emitter.broadcast('child-process:error', { cm, pid, error });
+	});
+	emitter.on('child-process:exit', async (pid, msg) => {
+		emitter.log('exit', { pid, msg });
+		api.removeChildProcess(pid);
+		emitter.broadcast('child-process:exit', msg);
+	});
+	emitter.on('child-process:kill', async (pid) => {
+		// emitter.log('child-process:kill -9', pid);
+		spawnChildProcess('kill -9 ' + pid)
+			.then((_) => {})
+			.catch((_) => {});
+		// emitter.broadcast('child-process:killed', 'killed process ' + pid);
+	});
+};
 async function start() {
 	const mirroringStore = new MirroringStore({ peers: [], drives: [] });
 	const api = makeApi(mirroringStore);
 
 	process.on('SIGINT', async () => {
-		console.log(chalk.cyan('cleaning up ...'));
+		emitter.broadcast('notify-warn', 'closing server ...');
+		emitter.log(chalk.cyan('cleaning up ...'));
 		for (let cleanup of api.cleanups) await cleanup();
 		process.exit();
 	});
 	process.on('uncaughtExceptionMonitor', async (err, origin) => {
-		console.log(chalk.red('uncaughtExceptionMonitor'), err, origin);
-		console.log(chalk.cyan('cleaning up ...'));
+		emitter.broadcast('notify-danger', 'uncaughtException::closing server ...');
+		emitter.log(chalk.red('uncaughtExceptionMonitor'), err, origin);
+		emitter.log(chalk.cyan('cleaning up ...'));
 		for (let cleanup of api.cleanups) await cleanup();
 		process.exit();
 	});
-
+	manageChildProcess(api);
 	const port = process.env.PORT || 3788;
 	const app = express();
 
@@ -82,8 +110,8 @@ async function start() {
 	const acceptor = new ConnectionsAcceptor({ port, server, keypair });
 
 	acceptor.on('protocol_added', ({ protocol, lane }) => {
-		console.log(`💡 Connectome protocol ${chalk.cyan(protocol)}/${chalk.cyan(lane)} ready.`);
-		// console.log('acceptor', acceptor);
+		emitter.log(`💡 Connectome protocol ${chalk.cyan(protocol)}/${chalk.cyan(lane)} ready.`);
+		// emitter.log('acceptor', acceptor);
 	});
 	const onConnect = await hyperspace();
 	const channelList = acceptor.registerProtocol({
@@ -93,15 +121,22 @@ async function start() {
 	});
 	mirroringStore.mirror(channelList);
 
-	channelList.on('new_channel', (channel) => {
+	channelList.on('new_channel', async (channel) => {
 		channel.attachObject('dmtapp:hyp', api);
-		console.log(chalk.cyan(`channel.attachObject => dmtapp:hyp`));
+		emitter.log(chalk.cyan(`channel.attachObject => dmtapp:hyp`));
+		// make sure mpv is installed after every new connectome connection
+		// it might be uninstalled anytime
+		const isMpvInstalled = (await execChildProcess('apt list --installed mpv')).includes(
+			'installed'
+		);
+		emitter.log('isMpvInstalled', isMpvInstalled);
+		api.setIsMpvInstalled(isMpvInstalled);
 	});
 
 	// start websocket server
 	acceptor.start();
 
-	console.log(
+	emitter.log(
 		chalk.green(`Connectome → Running websocket connections acceptor on port ${port} ...`)
 	);
 

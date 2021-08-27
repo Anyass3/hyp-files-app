@@ -10,7 +10,7 @@
 	$: drives = $serverStore?.drives || [];
 	$: savedDrives = $serverStore?.savedDrives || [];
 	// $: connectedDrives = drives.reduce((arr, drive) => [...arr, drive?.key], []);
-	console.log('serverStore', $serverStore);
+	// console.log('serverStore', $serverStore);
 </script>
 
 <div class={cls}>

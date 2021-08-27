@@ -257,3 +257,6 @@ button:focus:not(:focus-visible) {
 body {
 	@apply transition-colors overflow-x-hidden;
 }
+.btn {
+	@apply p-1 px-3 rounded active:opacity-95 transform active:scale-95;
+}

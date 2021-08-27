@@ -3,8 +3,8 @@
 	import SideBarSwipe, { opened, applied, toggle } from 'sidebar-swipe';
 	import MenuIcon from 'icons/MenuIcon.svelte';
 	import NavItems from '$components/navItems.svelte';
-	$: console.log('applied', $applied);
-	$: console.log('opened', $opened);
+	// $: console.log('applied', $applied);
+	// $: console.log('opened', $opened);
 </script>
 
 <div id="nav-sm" class="mobile mb-1 p-2 sticky-top">

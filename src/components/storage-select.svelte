@@ -5,7 +5,7 @@
 	const serverStore = store.g('serverStore');
 	const dkey = store.g('dkey');
 	$: drives = [...($serverStore?.drives || []), { name: 'file system', key: 'fs' }];
-	$: if (browser && drives?.length) {
+	$: if (browser && ($serverStore?.drives || [])?.length) {
 		if (!drives.some((drive) => drive.key === $dkey)) {
 			$dkey = 'fs';
 		}

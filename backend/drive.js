@@ -1,20 +1,68 @@
 import chalk from 'chalk';
-import lodash from 'lodash';
+import _ from 'lodash';
 import hyperdrive from 'hyperdrive';
 import fs from 'fs';
 import { getEmitter } from './state.js';
-import path from 'path';
-import { handleError } from './utils.js';
+import mime from 'mime-types';
+import { extname, resolve, join } from 'path';
+import { handleError, getFileType } from './utils.js';
 import { Settings } from './settings.js';
 
 const config = Settings();
+const emitter = getEmitter();
+
+export async function setDriveEvents(_drive, driveName = '', { cleanup } = {}) {
+	const debouncedUpdateNotify = _.debounce(
+		() => emitter.broadcast('notify-info', `${driveName} drive updated`),
+		1000
+	);
+	_drive.on('metadata-download', (index, data, feed) => {
+		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'download' });
+		emitter.log('metadata-download', { index, data, feed });
+		//Emitted when data has been downloaded for the metadata feed.
+	});
+
+	_drive.on('metadata-upload', (index, data, feed) => {
+		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'upload' });
+		// emitter.log('metadata-upload', { index, data, feed });
+		//Emitted when data has been uploaded for the metadata feed.
+	});
+
+	_drive.on('content-download', (index, data, feed) => {
+		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'download' });
+		// console.log('content-download', { index, data, feed });
+		//Emitted when data has been downloaded for the content feed.
+	});
+
+	_drive.on('content-upload', (index, data, feed) => {
+		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'upload' });
+		// emitter.log('content-upload', { index, data, feed });
+	});
+
+	_drive.on('update', () => {
+		debouncedUpdateNotify();
+		emitter.broadcast('storage-updated', _drive.$key);
+		emitter.log(chalk.cyan('updated: ' + driveName));
+	});
+	_drive.on('peer-open', (peer) => {
+		emitter.broadcast('notify-info', `${driveName} drive connection opened`);
+		emitter.log(chalk.cyan('peer-open: ' + driveName), peer);
+	});
+
+	_drive.on('close', () => {
+		//TODO: work on cleanup issue
+		if (cleanup) cleanup(false);
+		emitter.broadcast('notify-info', `${driveName} drive connection closed`);
+		emitter.log(chalk.cyan('closed ' + driveName));
+	});
+	_drive.watch('/');
+}
 
 export default class extends hyperdrive {
 	constructor(store, dkey = null) {
 		super(store, dkey);
-		console.log(chalk.cyan('setting up drive'));
-		this.emitter = getEmitter();
-		// this.emitter.broadcast('notify-info', 'greeting from drive');
+		emitter.log(chalk.cyan('setting up drive'));
+		this.emitter = emitter;
 	}
 	async check(fn) {
 		return await handleError(fn, this.emitter)();
@@ -25,11 +73,14 @@ export default class extends hyperdrive {
 
 			this.emitter.emit('drive key', this.$key);
 
-			// console.log(chalk.gray('drive key ' + this.$key)); // the drive's public key, used to identify it
-			// console.log(chalk.gray('Discovery Key:' + this.discoveryKey.toString('hex'))); // the drive's discovery key for the DHT
-			// console.log(chalk.gray('Drive Writable: ' + this.writable)); // do we possess the private key of this drive?
-
-			console.log(chalk.gray(`${name || ''} drive metadata: `), this.metadata); // do we possess the private key of this drive?
+			emitter.log(chalk.gray(`${name || ''} drive metadata: `), {
+				key: this.$key,
+				discoveryKey: this.discoveryKey.toString('hex'),
+				writable: this.writable,
+				opened: this.opened,
+				byteLength: this.metadata.byteLength,
+				peers: this.peers.length
+			});
 
 			// this.emitter.broadcast('notify-info', 'drive is ready');
 		});
@@ -42,19 +93,19 @@ export default class extends hyperdrive {
 		return await this.check(async () => {
 			let items;
 			if (drive || isdrive) {
-				// console.log('readdir is drive');
+				// emitter.log('readdir is drive');
 				items = await (drive || this).promises.readdir(dir);
 
-				// console.log('readdir is drive and items', items);
+				// emitter.log('readdir is drive and items', items);
 			} else {
-				// console.log('readdir is fs');
-				items = fs.readdirSync(path.join(config.fs, dir));
+				// emitter.log('readdir is fs');
+				items = fs.readdirSync(join(config.fs, dir));
 			}
-			console.log('readdir-dest', dest);
+			emitter.log('readdir-dest', dest);
 			return items.map((item) => ({
 				name: item,
-				path: path.join(dir, item),
-				new_path: path.join(dest, item)
+				path: join(dir, item),
+				new_path: join(dest, item)
 			}));
 		});
 	}
@@ -66,7 +117,7 @@ export default class extends hyperdrive {
 			else dirList = drive_src;
 			for (let item of dirList) {
 				const isdir = (await this.promises.stat(item.path)).isDirectory();
-				const _dest = path.join(dest, item.new_path);
+				const _dest = join(dest, item.new_path);
 				if (isdir) {
 					const items = await this.$readDir(item.path);
 					if (items.length) files = [...files, ...(await this.$readAllDirFiles(item.path, dest))];
@@ -79,8 +130,8 @@ export default class extends hyperdrive {
 	}
 	async $fsMakeDir(dest) {
 		return await this.check(async () => {
-			if (!fs.existsSync(path.resolve(path.join(config.fs, dest))))
-				fs.mkdirSync(path.resolve(path.join(config.fs, dest)));
+			if (!fs.existsSync(resolve(join(config.fs, dest))))
+				fs.mkdirSync(resolve(join(config.fs, dest)));
 		});
 	}
 	async $driveMakeDir(dir) {
@@ -88,7 +139,7 @@ export default class extends hyperdrive {
 			const exists = await this.promises.exists(dir);
 			if (!exists) {
 				await this.promises.mkdir(dir);
-				console.log('in drivemakedir', dir);
+				// emitter.log('in drivemakedir', dir);
 			}
 		});
 	}
@@ -98,7 +149,7 @@ export default class extends hyperdrive {
 			for (let item of dirList) {
 				const isdir = drive
 					? (await drive.promises.stat(item.path)).isDirectory()
-					: fs.statSync(path.join(config.fs, item.path)).isDirectory();
+					: fs.statSync(join(config.fs, item.path)).isDirectory();
 				if (isdir) {
 					await this.$fsMakeDir(item.new_path);
 					const items = await this.$readDir(item.path, {
@@ -106,13 +157,13 @@ export default class extends hyperdrive {
 						drive,
 						isdrive: !!drive
 					});
-					console.log(items);
+					emitter.log(items);
 					if (items.length) await this.$fsWriteDir(items, fs_dest, { drive });
 				} else {
 					await this.$fsMakeDir(item.new_path.split('/')[0]);
-					const destFile = fs.createWriteStream(path.join(config.fs, item.new_path));
+					const destFile = fs.createWriteStream(join(config.fs, item.new_path));
 					if (drive) drive.createReadStream(item.path).pipe(destFile);
-					else fs.createReadStream(path.join(config.fs, item.path)).pipe(destFile);
+					else fs.createReadStream(join(config.fs, item.path)).pipe(destFile);
 				}
 			}
 		});
@@ -122,43 +173,59 @@ export default class extends hyperdrive {
 			for (let item of dirList) {
 				const isdir = isdrive
 					? (await drive.promises.stat(item.path)).isDirectory()
-					: fs.statSync(path.join(config.fs, item.path)).isDirectory();
+					: fs.statSync(join(config.fs, item.path)).isDirectory();
 				if (isdir) {
 					await this.$driveMakeDir(item.new_path);
-					console.log('drive=>', !!drive);
+					emitter.log('drive=>', !!drive);
 					const items = await this.$readDir(item.path, {
 						drive,
 						dest: item.new_path,
 						isdrive: !!drive
 					});
-					// console.log('items in drivewritedir', items, dest);
+					// emitter.log('items in drivewritedir', items, dest);
 					if (items?.length) await this.$driveWriteDir(items, dest, { drive, isdrive });
 				} else {
 					await this.$driveMakeDir(item.new_path.split('/')[0]);
 					const destFile = this.createWriteStream(item.new_path);
-					// console.log('b4 read stream');
+					// emitter.log('b4 read stream');
 					if (drive) drive.createReadStream(item.path).pipe(destFile);
-					else fs.createReadStream(path.join(config.fs, item.path)).pipe(destFile);
+					else fs.createReadStream(join(config.fs, item.path)).pipe(destFile);
 				}
 			}
 		});
 	}
 
 	// GRUD
-	async $list(dir = '/', recursive = false) {
+	async $list(
+		dir = '/',
+		recursive = false,
+		{ offset = 0, limit = 50, page = 1, paginate = false, show_hidden = true } = {}
+	) {
+		// returns both files and dirs
+		let total = 0;
 		return await this.check(async () => {
-			// console.log('in list', dir);
+			// emitter.log('in list', dir);
 			let list = await this.promises.readdir(dir, { recursive, includeStats: true });
+			if (paginate) {
+				if (!show_hidden) list = list.filter((file) => !/^\./.exec(file));
+				total = list.length;
+				list = list.slice(offset, offset + limit);
+			}
 			list = list.map((item) => ({
 				name: item.name,
-				path: path.join(dir, item.name),
-				stat: { isFile: item.stat.isFile(), size: item.stat.size }
+				path: join(dir, item.name),
+				stat: {
+					isFile: item.stat.isFile(),
+					size: item.stat.size,
+					ctype: mime.lookup(extname(item.name))
+				}
 			}));
-			// console.log('\tListing:', list);
-			return list;
+			// emitter.log('\tListing:', list);
+			return paginate ? { items: list, total, page } : list;
 		});
 	}
 	async $listAllFiles(dir = '/') {
+		// returns only files
 		return await this.check(async () => {
 			let list = await this.$list(dir, true);
 			list = list.filter((item) => item.stat.isFile);
@@ -166,36 +233,46 @@ export default class extends hyperdrive {
 		});
 	}
 	async $listAllDirs(dir = '/') {
+		// returns only dirs
 		return await this.check(async () => {
 			let list = await this.$list(dir, true);
 			list = list.filter((item) => !item.stat.isFile);
 			return list.map((item) => item.path);
 		});
 	}
-	async $listfs(dir = '/') {
-		dir = path.join(config.fs, dir);
+	async $listfs(
+		dir = '/',
+		{ offset = 0, limit = 50, page = 1, paginate = false, show_hidden = true } = {}
+	) {
+		dir = join(config.fs, dir);
+		let total = 0;
 		return await this.check(async () => {
 			let list = fs.readdirSync(dir);
+			if (paginate) {
+				if (!show_hidden) list = list.filter((file) => !/^\./.exec(file));
+				total = list.length;
+				list = list.slice(offset, offset + limit);
+			}
 			list = list.map((item) => {
-				let _path = path.join(dir, item);
+				let _path = join(dir, item);
 				const stat = fs.statSync(_path);
 				_path = _path.replace(config.fs, '');
 				if (!_path.startsWith('/')) _path = '/' + _path;
 				return {
 					name: item,
 					path: _path,
-					stat: { isFile: stat.isFile(), size: stat.size }
+					stat: { isFile: stat.isFile(), size: stat.size, ctype: mime.lookup(extname(item)) }
 				};
 			});
-			console.log('\tListing:', list);
-			return list;
+			emitter.log('\tListing:', list);
+			return paginate ? { items: list, total, page } : list;
 		});
 	}
 	async $write(file, ...content) {
 		return await this.check(async () => {
 			await this.promises.writeFile(file, content.join(' '));
 			const message = '✓ written ' + file;
-			console.log(chalk.green('\t' + message));
+			emitter.log(chalk.green('\t' + message));
 		});
 	}
 	async $put(...args) {
@@ -213,12 +290,12 @@ export default class extends hyperdrive {
 		return await this.check(async () => {
 			if (dirs.length === 0) {
 				await this.promises.download('/');
-				console.log(chalk.green('\t downloaded all '));
+				emitter.log(chalk.green('\t downloaded all '));
 				return 'downloaded all';
 			} else
 				for (let dir of dirs) {
 					await this.promises.download(dir);
-					console.log(chalk.green('\t downloaded: ' + dir));
+					emitter.log(chalk.green('\t downloaded: ' + dir));
 				}
 			return 'downloaded' + dirs.join(', ');
 		});
@@ -227,14 +304,14 @@ export default class extends hyperdrive {
 		return await this.check(async () => {
 			for (let dir of dirs) {
 				await this.promises.mkdir(dir);
-				console.log(chalk.green('\t✓ makedir ' + dir));
+				emitter.log(chalk.green('\t✓ makedir ' + dir));
 			}
 		});
 	}
 	async $copy(source, dest) {
 		return await this.check(async () => {
 			this.createReadStream(source).pipe(this.createWriteStream(dest));
-			console.log(chalk.green('\t copied: ' + source + ' ' + dest));
+			emitter.log(chalk.green('\t copied: ' + source + ' ' + dest));
 			return 'copied: ' + source + ' ' + dest;
 		});
 	}
@@ -243,16 +320,16 @@ export default class extends hyperdrive {
 			//neeeds_work
 			for (let dir of dirs) {
 				const files = await this.$listAllFiles(dir);
-				console.log('files', files);
+				emitter.log('files', files);
 				await this.$remove(...files);
 				const dirs = await this.$listAllDirs(dir);
-				console.log('dirs', dirs);
+				emitter.log('dirs', dirs);
 				for (let dir of dirs.reverse()) {
 					//deleting the now empty directories
 					await this.promises.rmdir(dir);
 				}
 				if (await this.promises.exists(dir)) await this.promises.rmdir(dir);
-				console.log(chalk.green('\t✓ removed dir ' + dir));
+				emitter.log(chalk.green('\t✓ removed dir ' + dir));
 			}
 			return '✓ removed dir ' + dirs.join(', ');
 		});
@@ -261,7 +338,7 @@ export default class extends hyperdrive {
 		return await this.check(async () => {
 			for (let file of files) {
 				await this.promises.unlink(file); // delete the copy
-				console.log(chalk.green('\t✓ rm ' + file));
+				emitter.log(chalk.green('\t✓ rm ' + file));
 			}
 			return '✓ removed ' + files.join(', ');
 		});
@@ -289,48 +366,48 @@ export default class extends hyperdrive {
 			if (!destDrive.writable) {
 				throw new Error('sorry this drive is not writable');
 			}
-			console.log('dest.isdrive', dest.isdrive);
-			console.log('src.isdrive', src.isdrive, !!src.drive);
+			// emitter.log('dest.isdrive', dest.isdrive);
+			// emitter.log('src.isdrive', src.isdrive, !!src.drive);
 			const isFile = (src.isdrive
 				? await srcDrive.promises.stat(src.path)
-				: fs.statSync(path.join(config.fs, src.path))
+				: fs.statSync(join(config.fs, src.path))
 			).isFile();
-			console.log('isFile', isFile);
+			// emitter.log('isFile', isFile);
 			const destStorage = dest.isdrive ? destDrive : fs;
 			const srcStorage = src.isdrive ? srcDrive : fs;
 			const makeDir = dest.isdrive ? '$driveMakeDir' : '$fsMakeDir';
 			const writeDir = dest.isdrive ? '$driveWriteDir' : '$fsWriteDir';
 			if (isFile) {
 				if (dest.path.endsWith('/') || dest.path === '.') {
-					const filename = lodash.last(src.path.split('/'));
-					dest.path = path.join(dest.path, filename);
+					const filename = _.last(src.path.split('/'));
+					dest.path = join(dest.path, filename);
 				}
-				if (!dest.isdrive) dest.path = path.join(config.fs, dest.path);
-				if (!src.isdrive) src.path = path.join(config.fs, src.path);
+				if (!dest.isdrive) dest.path = join(config.fs, dest.path);
+				if (!src.isdrive) src.path = join(config.fs, src.path);
 				const destFile = destStorage.createWriteStream(dest.path);
 				srcStorage.createReadStream(src.path).pipe(destFile);
 			} else {
 				if (dest.path.endsWith('/')) {
 					const dirname = src.path.split('/').reverse()[src.path.endsWith('/') ? 1 : 0];
-					dest.path = path.join(dest.path, dirname);
+					dest.path = join(dest.path, dirname);
 				} else {
 					let dirname = '';
 					if (!src.path.endsWith('/')) dirname = src.path.split('/').reverse()[0];
-					dest.path = path.join(dest.path, dirname);
+					dest.path = join(dest.path, dirname);
 				}
-				console.log('dest.path new', dest.path);
+				// emitter.log('dest.path new', dest.path);
 				const items = await srcDrive.$readDir(src.path, {
 					dest: dest.path,
 					drive: src.drive,
 					isdrive: src.isdrive
 				});
-				console.log('ITEMS', items);
+				// emitter.log('ITEMS', items);
 				await destDrive[makeDir](dest.path);
 				await destDrive[writeDir](items, dest.path, src);
 			}
 			if (!dest.isdrive) this.emitter.broadcast('storage-updated', 'fs');
-			// console.log(chalk.green('\t✓ exported drive:' + src.path + ' to fs:' + dest.path));
-			// return '✓ exported drive:' + src.path + ' to fs:' + path.join('', dest.path);
+			// emitter.log(chalk.green('\t✓ exported drive:' + src.path + ' to fs:' + dest.path));
+			// return '✓ exported drive:' + src.path + ' to fs:' + join('', dest.path);
 		});
 	}
 }

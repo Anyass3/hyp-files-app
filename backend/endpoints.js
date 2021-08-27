@@ -2,9 +2,17 @@ import mime from 'mime-types';
 import Path from 'path';
 import archiver from 'archiver';
 import bodyParser from 'body-parser';
-import { getDriveFileType, getFileType, handleError, makeApi } from './utils.js';
-import { getEmitter } from './state.js';
+import {
+	execChildProcess,
+	getDriveFileType,
+	getFileType,
+	handleError,
+	spawnChildProcess
+} from './utils.js';
+import { getEmitter, makeApi } from './state.js';
 import fs from 'fs';
+import cors from 'cors';
+import chalk from 'chalk';
 import compression from 'compression';
 import { Settings } from './settings.js';
 
@@ -16,9 +24,10 @@ export default async function (app, api = makeApi()) {
 
 	app.use(bodyParser.json());
 	app.use(compression());
+	app.use(cors());
 
 	app.post('/get-file-type', async function (req, res) {
-		console.log('/get-file-type', req?.body);
+		// console.log('/get-file-type', req?.body);
 		let storage = req?.body?.storage; //drive || fs
 		const filePath = unescape(req.body.path);
 		const fsFilePath = Path.join(config.fs, filePath);
@@ -32,13 +41,13 @@ export default async function (app, api = makeApi()) {
 			console.log('/get-file-type', drive.$key);
 			if (drive) {
 				ctype = mime.lookup(Path.extname(filePath));
-				if (!ctype) {
-					const stream = await drive.createReadStream(filePath);
-					ctype = await getDriveFileType(stream);
-				}
+				// // it's not working
+				// if (!ctype) {
+				// 	const stream = await drive.createReadStream(filePath, { start: 0, end: 5 });
+				// 	ctype = await getDriveFileType(stream);
+				// }
 			}
 		}
-		console.log({ storage, filePath, dkey, ctype });
 		res.send({ ctype });
 	});
 	app.get('/download', async (req, res) => {
@@ -163,25 +172,63 @@ export default async function (app, api = makeApi()) {
 		}
 	});
 
-	app.get('/media', function (req, res) {
+	app.post('/mpv_stream', async (req, res) => {
+		const command = 'mpv ' + req.body.url;
+		// console.log('commard', command);
+		spawnChildProcess(command, { emitter });
+		emitter.on('child-process:spawn', () => {
+			res.status(200).end();
+		});
+	});
+	app.get('/media', async (req, res) => {
 		// Ensure there is a range given for the media
-		const range = req.headers.range;
-		if (!range) {
-			res.status(400).send('Requires Range header');
-		}
-
 		const mediaSize = req.query.size;
 		const ctype = req.query.ctype;
 		const storage = req.query.storage || 'fs'; //drive || fs
-		const mediaPath = unescape(req.query.path);
+		const mediaPath = Path.join(storage === 'fs' ? config.fs : '', unescape(req.query.path));
 		const dkey = req.query.dkey;
+		const range = req.headers.range;
+		emitter.log('/media', { mediaSize, ctype, range, storage });
+		if (!range) {
+			//in case there's no range header
+			emitter.log('NO Range Header');
+			const headers = {
+				'Content-Length': mediaSize,
+				'Content-Type': ctype
+			};
+			res.writeHead(200, headers);
+			if (storage === 'fs') {
+				if (!fs.existsSync(mediaPath)) {
+					emitter.log(chalk.red(storage + '::' + mediaPath + '::media-path do not exist'));
+					emitter.broadcast(
+						'notify-danger',
+						storage + '::' + mediaPath + '::media-path do not exist'
+					);
+					return;
+				}
+				fs.createReadStream(mediaPath).pipe(res);
+			} else {
+				const drive = api.drives.get(dkey);
+				if (drive) {
+					if (!(await drive.promises.exists(mediaPath))) {
+						emitter.log(chalk.red(storage + '::' + mediaPath + '::media-path do not exist'));
+						emitter.broadcast(
+							'notify-danger',
+							storage + '::' + mediaPath + '::media-path do not exist'
+						);
+						return;
+					}
+					drive.createReadStream(mediaPath).pipe(res);
+				}
+			}
+		}
 
 		// range: "bytes=32324-"
 		const CHUNK_SIZE = 1 * 1e6;
 		const start = Number(range.replace(/\D/g, ''));
 		const end = Math.min(start + CHUNK_SIZE, mediaSize - 1);
 
-		console.log(`media chunks => ${start}::${end}`);
+		emitter.log(`media chunks => ${start}::${end}`);
 
 		const contentLength = end - start + 1;
 		const headers = {
@@ -195,13 +242,27 @@ export default async function (app, api = makeApi()) {
 		res.writeHead(206, headers);
 
 		if (storage === 'fs') {
-			const mediaStream = fs.createReadStream(Path.join(config.fs, mediaPath), { start, end });
-			mediaStream.pipe(res);
+			if (!fs.existsSync(mediaPath)) {
+				emitter.log(chalk.red(storage + '::' + mediaPath + '::media-path do not exist'));
+				emitter.broadcast(
+					'notify-danger',
+					storage + '::' + mediaPath + '::media-path do not exist'
+				);
+				return;
+			}
+			fs.createReadStream(mediaPath, { start, end }).pipe(res);
 		} else {
 			const drive = api.drives.get(dkey);
 			if (drive) {
-				const mediaStream = drive.createReadStream(mediaPath, { start, end });
-				mediaStream.pipe(res);
+				if (!(await drive.promises.exists(mediaPath))) {
+					emitter.log(chalk.red(storage + '::' + mediaPath + '::media-path do not exist'));
+					emitter.broadcast(
+						'notify-danger',
+						storage + '::' + mediaPath + '::media-path do not exist'
+					);
+					return;
+				}
+				drive.createReadStream(mediaPath, { start, end }).pipe(res);
 			}
 		}
 	});

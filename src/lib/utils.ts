@@ -63,11 +63,13 @@ export const InterObserver = (
 		options = {},
 		isIntersecting = intersectingFunc,
 		notIntersecting = intersectingFunc,
-		cls = ''
+		cls = '',
+		unobserve = true
 	} = {}
 ) => {
 	const observer = new IntersectionObserver((entries, myObserver) => {
 		entries.forEach((entry) => {
+			// console.log('entry.intersectionRatio', entry.intersectionRatio);
 			if (entry.isIntersecting) {
 				isIntersecting(node, entry, myObserver);
 				if (cls) {
@@ -81,7 +83,7 @@ export const InterObserver = (
 			}
 		});
 	}, options);
-	observer.observe(node);
+	if (unobserve) observer.observe(node);
 	return {
 		destroy() {
 			observer.unobserve(node);
@@ -132,7 +134,7 @@ export const accordion = (node) => {
 };
 
 export const axiosFetch = async (instance, path: string, ...args) => {
-	console.log('axiosFetch', instance, path);
+	console.log('axiosFetch', path);
 	try {
 		const res = await instance(path, ...args);
 		return { status: res.status, ok: true, headers: res.headers, body: res.data };
@@ -143,6 +145,17 @@ export const axiosFetch = async (instance, path: string, ...args) => {
 			headers: error.response.headers,
 			body: error.response.data
 		};
+	}
+};
+
+export const toQueryString = (obj = {}) => {
+	let queryString = '';
+	try {
+		return Object.entries(obj)
+			.reduce((q, arr) => `${q}&${arr.join('=')}`, queryString)
+			.replace(/^&/, '?');
+	} catch (_) {
+		return queryString;
 	}
 };
 
@@ -169,6 +182,54 @@ export const getPosition = (e) => {
 
 	return pos;
 };
+
+type PaganationFetcher = (opts: { limit: number; offset: number }, ...args) => void;
+export class Pagination {
+	limit: number;
+	page: number;
+	total: number;
+
+	constructor({
+		total = 0,
+		limit = 50,
+		page = 0
+	}: {
+		total: number;
+		limit?: number;
+		page?: number;
+	}) {
+		this.limit = limit;
+		this.page = page;
+		this.total = total;
+	}
+	get pages(): number {
+		return Math.ceil(this.total / this.limit);
+	}
+	get offset(): number {
+		return ((this.page || 1) - 1) * this.limit;
+	}
+	get has_next(): boolean {
+		return this.page < this.pages;
+	}
+	get has_prev(): boolean {
+		return this.page > 1;
+	}
+	get page_count(): number {
+		return this.page < this.pages ? this.limit : this.total - this.limit * ((this.page || 1) - 1);
+	}
+	next(): void {
+		if (this.has_next) {
+			this.page++;
+			console.log('page_count', this.page_count);
+		}
+	}
+	prev(): void {
+		if (this.has_prev) {
+			this.page--;
+		}
+	}
+}
+
 export const gotoExtenal = (href) => {};
 
 export const Q = ($q: string | Node, __query__: HTMLBaseElement | Document = document) => {

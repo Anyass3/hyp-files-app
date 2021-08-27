@@ -12,7 +12,7 @@ export default () => {
 	const lane = 'hyp';
 
 	const store = new ConnectedStore({ address, protocol, port, lane });
-	console.log('store', store);
+	// console.log('store', store);
 	return {
 		socket: store.connector,
 		api: store.remoteObject?.bind?.(store)?.('dmtapp:hyp'),
