@@ -1,11 +1,10 @@
 import { browser } from '$app/env'; // @ts-ignore
 import { ConnectedStore } from 'connectome/stores';
+import { port } from './getAPi';
 
 export default () => {
 	if (!browser) return;
 	const address = window.location.hostname;
-
-	const port = '3788';
 
 	const protocol = 'dmtapp';
 

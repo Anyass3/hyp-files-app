@@ -30,6 +30,9 @@ const config = {
 						rewrite: (path) => path.replace(/^\/_api/, '')
 					}
 				}
+			},
+			build: {
+				outDir: resolve('build')
 			}
 		}
 	}

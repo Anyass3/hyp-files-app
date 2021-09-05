@@ -1,4 +1,4 @@
-import chalk from 'chalk';
+import colors from 'colors';
 import readChunk from 'read-chunk';
 import fileType from 'file-type';
 import child_process from 'child_process';
@@ -23,7 +23,7 @@ export const handleError = (fn, emitter) => {
 			return await fn(...args);
 		} catch (error) {
 			emitter.broadcast('notify-danger', error.message);
-			console.log(chalk.red('error: handle'), error.stack);
+			console.log(colors.red('error: handle'), error.stack);
 		}
 	};
 };

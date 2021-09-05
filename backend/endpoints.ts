@@ -12,7 +12,7 @@ import {
 import { getEmitter, makeApi } from './state.js';
 import fs from 'fs';
 import cors from 'cors';
-import chalk from 'chalk';
+import colors from 'colors';
 import compression from 'compression';
 import { Settings } from './settings.js';
 
@@ -199,7 +199,7 @@ export default async function (app, api = makeApi()) {
 			res.writeHead(200, headers);
 			if (storage === 'fs') {
 				if (!fs.existsSync(mediaPath)) {
-					emitter.log(chalk.red(storage + '::' + mediaPath + '::media-path do not exist'));
+					emitter.log(colors.red(storage + '::' + mediaPath + '::media-path do not exist'));
 					emitter.broadcast(
 						'notify-danger',
 						storage + '::' + mediaPath + '::media-path do not exist'
@@ -211,7 +211,7 @@ export default async function (app, api = makeApi()) {
 				const drive = api.drives.get(dkey);
 				if (drive) {
 					if (!(await drive.promises.exists(mediaPath))) {
-						emitter.log(chalk.red(storage + '::' + mediaPath + '::media-path do not exist'));
+						emitter.log(colors.red(storage + '::' + mediaPath + '::media-path do not exist'));
 						emitter.broadcast(
 							'notify-danger',
 							storage + '::' + mediaPath + '::media-path do not exist'
@@ -243,7 +243,7 @@ export default async function (app, api = makeApi()) {
 
 		if (storage === 'fs') {
 			if (!fs.existsSync(mediaPath)) {
-				emitter.log(chalk.red(storage + '::' + mediaPath + '::media-path do not exist'));
+				emitter.log(colors.red(storage + '::' + mediaPath + '::media-path do not exist'));
 				emitter.broadcast(
 					'notify-danger',
 					storage + '::' + mediaPath + '::media-path do not exist'
@@ -255,7 +255,7 @@ export default async function (app, api = makeApi()) {
 			const drive = api.drives.get(dkey);
 			if (drive) {
 				if (!(await drive.promises.exists(mediaPath))) {
-					emitter.log(chalk.red(storage + '::' + mediaPath + '::media-path do not exist'));
+					emitter.log(colors.red(storage + '::' + mediaPath + '::media-path do not exist'));
 					emitter.broadcast(
 						'notify-danger',
 						storage + '::' + mediaPath + '::media-path do not exist'

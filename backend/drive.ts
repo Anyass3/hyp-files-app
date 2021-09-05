@@ -1,6 +1,9 @@
-import chalk from 'chalk';
-import _ from 'lodash';
+import colors from 'colors';
+import last from 'lodash/last.js';
+import debounce from 'lodash/debounce.js';
 import hyperdrive from 'hyperdrive';
+import { EventEmitter } from 'events';
+
 import fs from 'fs';
 import { getEmitter } from './state.js';
 import mime from 'mime-types';
@@ -11,73 +14,79 @@ import { Settings } from './settings.js';
 const config = Settings();
 const emitter = getEmitter();
 
-export async function setDriveEvents(_drive, driveName = '', { cleanup } = {}) {
-	const debouncedUpdateNotify = _.debounce(
+export async function setDriveEvents(drive, driveName = '') {
+	const debouncedUpdateNotify = debounce(
 		() => emitter.broadcast('notify-info', `${driveName} drive updated`),
 		1000
 	);
-	_drive.on('metadata-download', (index, data, feed) => {
+	drive.on('metadata-download', (index, data, feed) => {
 		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'download' });
 		// emitter.log('metadata-download', { index, data, feed });
 		//Emitted when data has been downloaded for the metadata feed.
 	});
 
-	_drive.on('metadata-upload', (index, data, feed) => {
+	drive.on('metadata-upload', (index, data, feed) => {
 		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'upload' });
 		// emitter.log('metadata-upload', { index, data, feed });
 		//Emitted when data has been uploaded for the metadata feed.
 	});
 
-	_drive.on('content-download', (index, data, feed) => {
+	drive.on('content-download', (index, data, feed) => {
 		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'download' });
 		// console.log('content-download', { index, data, feed });
 		//Emitted when data has been downloaded for the content feed.
 	});
 
-	_drive.on('content-upload', (index, data, feed) => {
+	drive.on('content-upload', (index, data, feed) => {
 		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'upload' });
 		// emitter.log('content-upload', { index, data, feed });
 	});
 
-	_drive.on('update', () => {
+	drive.on('update', () => {
 		debouncedUpdateNotify();
-		emitter.broadcast('storage-updated', _drive.$key);
-		emitter.log(chalk.cyan('updated: ' + driveName));
+		emitter.broadcast('storage-updated', drive.$key);
+		emitter.log(colors.cyan('updated: ' + driveName));
 	});
-	_drive.on('peer-open', (peer) => {
+	drive.on('peer-open', (peer) => {
 		emitter.broadcast('notify-info', `${driveName} drive connection opened`);
-		emitter.log(chalk.cyan('peer-open: ' + driveName), {
+		emitter.log(colors.cyan('peer-open: ' + driveName), {
 			connType: peer.type,
 			remotePublicKey: peer.remotePublicKey?.toString?.('hex'),
 			remoteAddress: peer.remoteAddress
 		});
 	});
 
-	_drive.on('close', () => {
-		//TODO: work on cleanup issue
-		if (cleanup) cleanup(false);
-		emitter.broadcast('notify-info', `${driveName} drive connection closed`);
-		emitter.log(chalk.cyan('closed ' + driveName));
-	});
-	_drive.watch('/');
+	drive.watch('/');
 }
-
+//@ts-ignore
 export default class extends hyperdrive {
+	promises: HyperdrivePromises;
+	key: Buffer;
+	discoveryKey: Buffer;
+	writable: boolean;
+	opened: boolean;
+	closed: boolean;
+	closing: boolean;
+	metadata: any;
+	peers: Array<any>;
+	createWriteStream: typeof fs.createWriteStream;
+	createReadStream: typeof fs.createReadStream;
+	on: (event: string, fn: () => void) => void;
+	close?: () => Promise<any>;
 	constructor(store, dkey = null) {
 		super(store, dkey);
-		emitter.log(chalk.cyan('setting up drive'));
-		this.emitter = emitter;
+		emitter.log(colors.cyan('setting up drive'));
 	}
 	async check(fn) {
-		return await handleError(fn, this.emitter)();
+		return await handleError(fn, emitter)();
 	}
 	async $ready(name) {
 		await this.check(async () => {
 			await this.promises.ready();
 
-			this.emitter.emit('drive key', this.$key);
+			emitter.emit('drive key', this.$key);
 
-			emitter.log(chalk.gray(`${name || ''} drive metadata: `), {
+			emitter.log(colors.gray(`${name || ''} drive metadata: `), {
 				key: this.$key,
 				discoveryKey: this.discoveryKey.toString('hex'),
 				writable: this.writable,
@@ -86,14 +95,14 @@ export default class extends hyperdrive {
 				peers: this.peers.length
 			});
 
-			// this.emitter.broadcast('notify-info', 'drive is ready');
+			// emitter.broadcast('notify-info', 'drive is ready');
 		});
 		return this;
 	}
 	get $key() {
 		return this?.key?.toString?.('hex');
 	}
-	async $readDir(dir, { dest = '/', isdrive = true, drive } = {}) {
+	async $readDir(dir, { dest = '/', isdrive = true, drive = undefined } = {}) {
 		return await this.check(async () => {
 			let items;
 			if (drive || isdrive) {
@@ -258,6 +267,7 @@ export default class extends hyperdrive {
 				total = list.length;
 				list = list.slice(offset, offset + limit);
 			}
+			//@ts-ignore
 			list = list.map((item) => {
 				let _path = join(dir, item);
 				const stat = fs.statSync(_path);
@@ -277,11 +287,12 @@ export default class extends hyperdrive {
 		return await this.check(async () => {
 			await this.promises.writeFile(file, content.join(' '));
 			const message = '✓ written ' + file;
-			emitter.log(chalk.green('\t' + message));
+			emitter.log(colors.green('\t' + message));
 		});
 	}
 	async $put(...args) {
 		return await this.check(async () => {
+			//@ts-ignore
 			await this.$write(...args);
 		});
 	}
@@ -295,12 +306,12 @@ export default class extends hyperdrive {
 		return await this.check(async () => {
 			if (dirs.length === 0) {
 				await this.promises.download('/');
-				emitter.log(chalk.green('\t downloaded all '));
+				emitter.log(colors.green('\t downloaded all '));
 				return 'downloaded all';
 			} else
 				for (let dir of dirs) {
 					await this.promises.download(dir);
-					emitter.log(chalk.green('\t downloaded: ' + dir));
+					emitter.log(colors.green('\t downloaded: ' + dir));
 				}
 			return 'downloaded' + dirs.join(', ');
 		});
@@ -309,14 +320,14 @@ export default class extends hyperdrive {
 		return await this.check(async () => {
 			for (let dir of dirs) {
 				await this.promises.mkdir(dir);
-				emitter.log(chalk.green('\t✓ makedir ' + dir));
+				emitter.log(colors.green('\t✓ makedir ' + dir));
 			}
 		});
 	}
 	async $copy(source, dest) {
 		return await this.check(async () => {
 			this.createReadStream(source).pipe(this.createWriteStream(dest));
-			emitter.log(chalk.green('\t copied: ' + source + ' ' + dest));
+			emitter.log(colors.green('\t copied: ' + source + ' ' + dest));
 			return 'copied: ' + source + ' ' + dest;
 		});
 	}
@@ -334,7 +345,7 @@ export default class extends hyperdrive {
 					await this.promises.rmdir(dir);
 				}
 				if (await this.promises.exists(dir)) await this.promises.rmdir(dir);
-				emitter.log(chalk.green('\t✓ removed dir ' + dir));
+				emitter.log(colors.green('\t✓ removed dir ' + dir));
 			}
 			return '✓ removed dir ' + dirs.join(', ');
 		});
@@ -343,7 +354,7 @@ export default class extends hyperdrive {
 		return await this.check(async () => {
 			for (let file of files) {
 				await this.promises.unlink(file); // delete the copy
-				emitter.log(chalk.green('\t✓ rm ' + file));
+				emitter.log(colors.green('\t✓ rm ' + file));
 			}
 			return '✓ removed ' + files.join(', ');
 		});
@@ -384,7 +395,7 @@ export default class extends hyperdrive {
 			const writeDir = dest.isdrive ? '$driveWriteDir' : '$fsWriteDir';
 			if (isFile) {
 				if (dest.path.endsWith('/') || dest.path === '.') {
-					const filename = _.last(src.path.split('/'));
+					const filename = last(src.path.split('/'));
 					dest.path = join(dest.path, filename);
 				}
 				if (!dest.isdrive) dest.path = join(config.fs, dest.path);
@@ -410,8 +421,8 @@ export default class extends hyperdrive {
 				await destDrive[makeDir](dest.path);
 				await destDrive[writeDir](items, dest.path, src);
 			}
-			if (!dest.isdrive) this.emitter.broadcast('storage-updated', 'fs');
-			// emitter.log(chalk.green('\t✓ exported drive:' + src.path + ' to fs:' + dest.path));
+			if (!dest.isdrive) emitter.broadcast('storage-updated', 'fs');
+			// emitter.log(colors.green('\t✓ exported drive:' + src.path + ' to fs:' + dest.path));
 			// return '✓ exported drive:' + src.path + ' to fs:' + join('', dest.path);
 		});
 	}

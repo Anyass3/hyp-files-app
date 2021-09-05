@@ -6,8 +6,6 @@
 	import FolderIcon from 'icons/FolderIcon.svelte';
 	import { goto } from '$app/navigation';
 	import { throttle, debounce, getPosition, truncate, InterObserver } from '$lib/utils';
-	import { api } from '$lib/getAPi';
-	import NavItems from '$components/navItems.svelte';
 	import Spinner from '$components/spinner.svelte';
 	import type { Writable } from 'svelte/store';
 	const dkey = store.g('dkey');

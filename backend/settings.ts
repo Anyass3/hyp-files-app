@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-const settingsJsonPath = path.resolve('./backend/settings.json');
-const Settings = (_settings) => {
+const settingsJsonPath = path.resolve('./settings.json');
+const Settings = (_settings = null) => {
 	if (!fs.existsSync(settingsJsonPath)) {
 		_settings = {
 			host: 'AwesomeSocket',

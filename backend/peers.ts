@@ -1,5 +1,5 @@
 // import lodash from 'lodash';
-import chalk from 'chalk';
+import colors from 'colors';
 import Drive from './drive.js';
 import { Settings } from './settings.js';
 import { getEmitter } from './state.js';
@@ -8,10 +8,14 @@ import startCore from './core.js';
 const config = Settings();
 const emitter = getEmitter();
 
-export async function Extention(core, peer = '') {
+export async function Extention(core: Feed, peer = '') {
 	// create a messenger ext. any peer can send and recieve messages when connected
 	const events = {};
 	const ext = {
+		send: (message, peer) => {},
+		broadcast: (event, message?) => {},
+		emit: (event, message, peer) => {},
+		info: ({ corekey, drivekey, username }, peer) => {},
 		on: async (event, fn) => {
 			const fns = events[event] || [];
 			events[event] = fns.concat(fn);
@@ -20,12 +24,12 @@ export async function Extention(core, peer = '') {
 	const _ext = core.registerExtension(peer + 'extention', {
 		encoding: 'json',
 		onmessage: ({ event, data }, peer) => {
-			console.log(chalk.blue(`ext ${peer.remoteAddress}:`), event, chalk.green(data));
+			console.log(colors.blue(`ext ${peer.remoteAddress}:`), event, colors.green(data));
 			events[event]?.forEach?.(async (fn) => {
 				try {
 					return await fn(data);
 				} catch (error) {
-					console.log(chalk.red('error: ' + error.message));
+					console.log(colors.red('error: ' + error.message));
 				}
 			});
 			// if (event === 'info') oninfo(data, peer);
@@ -61,7 +65,7 @@ export async function Extention(core, peer = '') {
 		core.on('append', async () => {
 			ext.broadcast('update-core');
 			const idx = core.length - 1;
-			console.log(chalk.blue('log: ' + idx), await core.get(idx));
+			console.log(colors.blue('log: ' + idx), await core.get(idx));
 		});
 	}
 	return ext;
@@ -69,18 +73,18 @@ export async function Extention(core, peer = '') {
 
 export async function Connect(client, corekey, api) {
 	// if I joined with another peer's public key
-	const core = await startCore(client, corekey);
-	const drive = await Drive(client.corestore(), await core.get(0));
-	corekey = core.key.toString('hex');
-	api.addPeer({
-		corekey,
-		drivekey: drive.$key
-	});
-	api.peerCores.set(corekey, core);
-	api.peerDrives.set(drive.$key, drive);
-	core.on('close', async () => {
-		api.removePeer(corekey);
-	});
-	const { ext } = Extention(core);
-	return { core, drive, ext };
+	// const core = await startCore({ ...client, key:corekey });
+	// const drive = await Drive(client.corestore(), await core.get(0));
+	// corekey = core.key.toString('hex');
+	// api.addPeer({
+	// 	corekey,
+	// 	drivekey: drive.$key
+	// });
+	// api.peerCores.set(corekey, core);
+	// api.peerDrives.set(drive.$key, drive);
+	// core.on('close', async () => {
+	// 	api.removePeer(corekey);
+	// });
+	// const { ext } = Extention(core);
+	// return { core, drive, ext };
 }

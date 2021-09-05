@@ -20,6 +20,7 @@ interface ContextMenuEventDetail {
 interface ImportMetaEnv {
 	VITE_API_URL: string;
 	VITE_API_PORT: number;
+	API_URL: number;
 }
 
 declare type loading = 'load-next-page' | 'load-page';
