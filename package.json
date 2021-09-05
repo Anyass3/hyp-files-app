@@ -43,7 +43,7 @@
 	"type": "module",
 	"dependencies": {
 		"@beyonk/svelte-notifications": "^3.1.0",
-		"@corestore/networker": "file:///home/abdoulie/projects/forks/corestore-networker",
+		"@corestore/networker": "github:Anyass3/corestore-networker",
 		"@fontsource/fira-mono": "^4.4.2",
 		"archiver": "^5.3.0",
 		"axios": "^0.21.1",
