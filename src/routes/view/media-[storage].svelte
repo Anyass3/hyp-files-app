@@ -24,8 +24,13 @@
 	import { backOut, quintOut } from 'svelte/easing';
 	import { API } from '$lib/getAPi';
 	import { toQueryString } from '$lib/utils';
+	import { onDestroy } from 'svelte';
 	// {path,size,ctype,storage,dkey}
 	// console.log('url', url);
+
+	onDestroy(() => {
+		url = null;
+	});
 </script>
 
 <svelte:head>

@@ -37,9 +37,14 @@
 	import Render from '$components/render.svelte';
 	// Import markdown-hljs library;
 	import { highlightCode, marked } from 'markdown-hljs';
+	import { onDestroy } from 'svelte';
 	const canRender =
 		filename.includes('html') || filename.includes('xml') || ctype.includes('markdown');
 	let highlightedCode;
+
+	onDestroy(() => {
+		url = null;
+	});
 
 	$: {
 		try {

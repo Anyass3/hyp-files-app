@@ -28,6 +28,10 @@
 	import { scale } from 'svelte/transition';
 	import { backOut, quintOut } from 'svelte/easing';
 	import { API } from '$lib/getAPi';
+	import { onDestroy } from 'svelte';
+	onDestroy(() => {
+		url = null;
+	});
 
 	// {path,size,ctype,storage,dkey}
 </script>
