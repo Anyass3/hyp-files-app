@@ -28,7 +28,7 @@ export const handleError = (fn, emitter) => {
 	};
 };
 
-export const execChildProcess = async (command) => {
+export const execChildProcess: (command: string) => Promise<string> = async (command) => {
 	return new Promise((resolve, reject) => {
 		child_process.exec(command, (err, res) => {
 			if (err) return reject(err);
@@ -38,7 +38,7 @@ export const execChildProcess = async (command) => {
 };
 export const spawnChildProcess = async (
 	command,
-	{ shell = false, log = false, emitter, ...kwargs } = {}
+	{ shell = false, log = false, emitter = null, ...kwargs } = {}
 ) => {
 	return new Promise((resolve, reject) => {
 		const [cm, ...cms] = command
@@ -49,14 +49,15 @@ export const spawnChildProcess = async (
 		else {
 			command = [cm, cms];
 		}
+		//@ts-ignore
 		const child = child_process.spawn(...command, { ...kwargs, shell });
 		if (log) console.log(child.pid);
 		if (emitter) emitter.emit('child-process:spawn', cm, child.pid);
-		child.stdout.on('data', (data) => {
+		(child.stdout as { on }).on('data', (data) => {
 			if (log) console.log(`data:${cm}\n${data}`);
 			if (emitter) emitter.emit(`child-process:data`, cm, child.pid, data);
 		});
-		child.stderr.on('data', (data) => {
+		(child.stderr as { on }).on('data', (data) => {
 			if (log) console.error(`error:${cm}\n${data}`);
 			if (emitter) emitter.emit('child-process:error', cm, child.pid, data);
 		});
@@ -80,6 +81,7 @@ export const getFileType = async (path) => {
 	if (!_type) {
 		const res = await execChildProcess(`"file" "${path}"`);
 		const typeOfFile = res?.replace('\n', '')?.split?.(':')?.[1] || '';
+		//@ts-ignore
 		if (typeOfFile.includes('text')) _type = 'plain/text';
 	}
 	if (!_type) _type = mime.lookup(extname(path));

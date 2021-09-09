@@ -1,10 +1,12 @@
 .DS_Store
 node_modules
-/.svelte-kit/dev
-/.svelte-kit/build
+/.svelte-kit
 /package
 package-lock.json
 storage
 .storage
 keys
 backend/settings.json
+build
+rollup.config.js
+settings.json

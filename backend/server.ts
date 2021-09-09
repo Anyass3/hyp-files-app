@@ -77,11 +77,12 @@ const manageChildProcess = (api = makeApi()) => {
 		emitter.broadcast('child-process:exit', msg);
 	});
 	emitter.on('child-process:kill', async (pid) => {
-		// emitter.log('child-process:kill -9', pid);
 		spawnChildProcess('kill -9 ' + pid)
 			.then((_) => {})
-			.catch((_) => {});
-		// emitter.broadcast('child-process:killed', 'killed process ' + pid);
+			.catch((err) => {
+				emitter.log(err);
+				emitter.broadcast(err);
+			});
 	});
 };
 async function start() {

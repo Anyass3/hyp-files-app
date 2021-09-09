@@ -81,7 +81,7 @@
 <div class="px-2 flex-grow md:px-10 relative" id="file-manager" on:contextmenu={setMainContextMenu}>
 	<div
 		class:hidden={hideFilemenu}
-		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-10 top-[7%] md:top-[13%] bg-white dark:bg-gray-800 shadow border-b-2 pb-1"
+		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-10 top-[7%] bg-white dark:bg-gray-800 shadow border-b-2 pb-1"
 	>
 		<div class="flex text-base md:text-2xl overflow-x-auto gap-1">
 			{#if dir === '/'}

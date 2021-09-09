@@ -74,7 +74,7 @@
 				>
 					<div class="relative">
 						<button
-							class="bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white group-hover:bg-gray-300 rounded-[3px]  dark:group-hover:bg-gray-500 active:ring cursor-pointer w-36 h-24 overflow-hidden"
+							class="bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white group-hover:bg-gray-300 rounded-[3px]  dark:group-hover:bg-gray-500 active:ring cursor-pointer w-36 h-32 overflow-hidden"
 							on:dblclick={() => open(path, stat)}
 						>
 							<div class="flex justify-center">

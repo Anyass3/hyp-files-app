@@ -39,7 +39,7 @@ export default {
 				state.notify.info('connections ready');
 				// socket.signal('get-drives');
 			});
-			socket.on('folder', ({ items, page, total }) => {
+			socket.on('folder', ({ items = [], page = 0, total = 0 } = {}) => {
 				// console.log('folder', { items, page, total });
 				dispatch('pagination', new Pagination({ total, page }));
 				if (page === 1) {

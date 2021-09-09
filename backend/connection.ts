@@ -131,10 +131,10 @@ export default async function () {
 		emitter.log('channel::connect', channel.key);
 		api.channels.set(channel.key, channel);
 
-		const refreshSavedDrives = async ({ key, name }) => {
+		const refreshSavedDrives = async ({ key, name }, connected = false) => {
 			if (await drivesBee.get(name)) {
 				const drives = api.getSavedDrives().map((drive) => {
-					if (drive.key === key) drive.connected = false;
+					if (drive.key === key) drive.connected = connected;
 					return drive;
 				});
 				api.setSavedDrive(drives);
@@ -234,7 +234,7 @@ export default async function () {
 			} else if (privateDrivekey === key) {
 				privateDrive = drive;
 			}
-			refreshSavedDrives({ key, name });
+			refreshSavedDrives({ key, name }, true);
 		});
 
 		channel.on('save-drive', async ({ key, name, network = false, replicate = true }) => {

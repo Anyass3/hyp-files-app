@@ -59,24 +59,27 @@ export const getBeeState = async (bee) => {
 	return state || [];
 };
 
+interface Store {
+	state: {
+		isMpvInstalled?: boolean;
+		savedDrives?: Array<{ key: string; name: string; connected: boolean }>;
+		drives?: Array<{ key: string; name: string }>;
+		peers?: Array<{ corekey: string; drivekey: string; username: string }>;
+		child_processes?: Array<{ pid: number; cm: string }>;
+		dataUsage?: {};
+	};
+}
 export function makeApi(
-	store = {
-		state: {
-			isMpvInstalled: false,
-			savedDrives: [],
-			drives: [],
-			peers: [],
-			child_processes: [],
-			dataUsage: {}
-		}
+	store: Store = {
+		state: {}
 	}
 ) {
 	const { state } = store;
-	//@ts-ignore
-	// state.savedDrives = []; // [{key,name}]
-	// state.drives = []; // [{key,name}]
-	// state.peers = []; // [{corekey,drivekey,username}]
-	// state.child_processes = []; // [{pid,cm}]
+
+	state.savedDrives = [];
+	state.drives = [];
+	state.peers = [];
+	state.child_processes = [];
 	state.dataUsage = {
 		total: 0,
 		today: 0,
