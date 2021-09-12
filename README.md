@@ -14,26 +14,27 @@ npm run server -- -h 0.0.0.0
 
 # some notes
 
-- after running the app for the first time
+### after running the app for the first time
   -it will create a hyperbee which will be your database
-  - then a hypercore which just logs your public drives key for now
+  - then a hypercore logger which keeps your logs
   - then a public drive and private drive
   - also it will generate a settings.json file
-     - for you should just edit the file system mount point
-     - by default it's set to root `/`
- 
-- you can connect to remote hyperdrives
+     - you can edit the file system mount point, it's set to root `/`
+     - set `log` to `true` if you want to see logs from logger in console
+### features
+you can:
+
+- connect to remote hyperdrives
 - see and preview the files in your drives, file system and also remote drives
 - copy and paste files or folders between your file system or drives
-  - but you cannot paste in remote drives because they are not writable
-- or download a file or folder
-- or if it's media you can watch or listen by streaming
-- you can also view:
+  - > but you cannot paste in remote drives because they are not writable
+- download a file or folder
+- stream media files from file system or drives
+- view:
    - photos
    - pdfs are embed
    - text files
-   - codes for various languages are syntax highlighted
-   - 
+   - codes for various languages(syntax highlighted)
    
 
 ## todos
