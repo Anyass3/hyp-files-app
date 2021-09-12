@@ -69,10 +69,10 @@
 			: 'https://unpkg.com/@highlightjs/cdn-assets@10.6.0/styles/night-owl.min.css';
 </script>
 
-<div class="flex justify-center flex-grow h-full">
+<div class="flex justify-center flex-grow h-full w-full">
 	<div
 		class="flex flex-col flex-grow h-full px-2 {$render && filename.endsWith('.md')
-			? 'max-w-[min(70rem,100%)]'
+			? 'max-w-[min(64rem,100%)]'
 			: 'max-w-full'}"
 	>
 		<div class="mt-1 dark:text-blue-200 flex-grow flex flex-col">

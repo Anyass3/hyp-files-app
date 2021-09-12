@@ -54,6 +54,8 @@ body::before {
 	min-height: 100vh;
 	display: flex;
 	flex-direction: column;
+	max-width: 200rem;
+	width: 100%;
 }
 
 h1,
@@ -255,7 +257,7 @@ button:focus:not(:focus-visible) {
 }
 
 body {
-	@apply transition-colors overflow-x-hidden;
+	@apply transition-colors overflow-x-hidden flex justify-center;
 }
 .btn {
 	@apply p-1 px-3 rounded active:opacity-95 transform active:scale-95;
