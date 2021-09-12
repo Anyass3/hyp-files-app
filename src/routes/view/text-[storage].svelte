@@ -56,11 +56,12 @@
 	});
 
 	$: {
-		if (!ctype.includes('plain'))
-			highlightedCode = highlightCode(
-				ctype.replace(/[a-z]+\//, '') || _.last(filename.split('.')),
-				body
-			);
+		highlightedCode = highlightCode(
+			ctype.includes('plain')
+				? 'plaintext'
+				: ctype.replace(/[a-z]+\//, '') || _.last(filename.split('.')),
+			body
+		);
 	}
 	$: codeStyle =
 		$colorScheme === 'light'
