@@ -43,7 +43,7 @@
 		 */
 		if (!main) main = document.querySelector('div#main');
 
-		const parent = document.getElementById('file-manager');
+		const parent = document.getElementById('files');
 		let dimention = { x: 0, y: 0 };
 		let menuPos = { x: 0, y: 0 };
 		dimention.x = menu.offsetWidth;

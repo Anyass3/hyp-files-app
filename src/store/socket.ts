@@ -114,7 +114,7 @@ export default {
 				if (dkey === dkey) {
 					const dir = g('dirs', dkey, true);
 					const storage = dkey !== 'fs' ? 'drive' : 'fs';
-					dispatch('open', { dir, dkey, storage });
+					dispatch('open', { dir, dkey, storage, silent: true });
 				}
 			});
 

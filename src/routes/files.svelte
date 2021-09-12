@@ -12,6 +12,23 @@
 	const loading: Writable<loading> = store.g('loading');
 	const show_hidden = store.g('show_hidden');
 	// const hideFilemenu = store.g('hideFilemenu');
+	let pagination = {} as any;
+	const isIntersecting = () => {
+		pagination = store.state.pagination;
+		if (pagination.has_next) {
+			// console.log('is intersecting', { ...pagination, offset: pagination.offset });
+			pagination.next();
+			const opts = {
+				dir,
+				offset: pagination.offset,
+				page: pagination.page,
+				show_hidden: $show_hidden
+			};
+			if (storage === 'drive') opts['dkey'] = $dkey;
+			store.state.socket.signal(`${storage}-list`, opts);
+			$loading = 'load-next-page';
+		}
+	};
 	$: dirs = store.g('dirs', $dkey);
 	// $: console.log('dirs', $dirs);
 
@@ -34,7 +51,7 @@
 		store.dispatch('setupMenuItems', { ...data, ...options });
 	};
 	const setMainContextMenu = async (ev) => {
-		if (ev.target.id === 'file-manager') {
+		if (ev.target.id === 'files') {
 			ev.preventDefault();
 			$pos = getPosition(ev);
 			const name = options.dir.endsWith('/')
@@ -76,9 +93,10 @@
 />
 
 <svelte:head>
-	<title>File Manager</title>
+	<title>Files</title>
 </svelte:head>
-<div class="px-2 flex-grow md:px-10 relative" id="file-manager" on:contextmenu={setMainContextMenu}>
+
+<div class="px-2 flex-grow md:px-10 relative" id="files" on:contextmenu={setMainContextMenu}>
 	<div
 		class:hidden={hideFilemenu}
 		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-10 top-[7%] bg-white dark:bg-gray-800 shadow border-b-2 pb-1"
@@ -99,9 +117,6 @@
 				{#each dirlist as item}
 					<button class="anchor-tooltip">
 						<div class="flex">
-							<!-- {#if item.name !== '/'}
-								<span class="text-gray-900 dark:text-gray-200 text-3xl">/</span>
-							{/if} -->
 							<span
 								class="text-blue-600 dark:text-blue-100 dark:active:text-blue-300 active:text-blue-400 cursor-pointer border-2 border-gray-400 dark:border-gray-200 rounded"
 								on:click={() => open({ path: item.path })}
@@ -134,31 +149,24 @@
 		on:contextmenu={({ detail }) => setContextMenu(detail)}
 		on:open={(ev) => open(ev.detail)}
 	/>
-
-	{#if $loading === 'load-next-page'}
+	{#if pagination.has_next}
 		<div class="grid place-items-center">
-			<Spinner />
+			{#if $loading === 'load-next-page'}
+				<Spinner />
+			{:else if !$loading}
+				<button
+					on:click={isIntersecting}
+					class="btn bg-blue-500 text-white p-2 m-2 dark:bg-blue-200 dark:text-gray-500"
+					>more</button
+				>
+			{/if}
 		</div>
 	{/if}
+
 	<div
 		class="w-full h-1"
 		use:InterObserver={{
-			isIntersecting: () => {
-				const pagination = store.state.pagination;
-				if (pagination.has_next) {
-					// console.log('is intersecting', { ...pagination, offset: pagination.offset });
-					pagination.next();
-					const opts = {
-						dir,
-						offset: pagination.offset,
-						page: pagination.page,
-						show_hidden: $show_hidden
-					};
-					if (storage === 'drive') opts['dkey'] = $dkey;
-					store.state.socket.signal(`${storage}-list`, opts);
-					$loading = 'load-next-page';
-				}
-			},
+			isIntersecting,
 			unobserve: true
 		}}
 	/>

@@ -25,9 +25,11 @@ export default {
 		context_menu: [],
 		pos: { x: 0, y: 0 },
 		clipboard: null,
+		tooltip: false,
 		notify: notifier,
 		hideFilemenu: true,
 		render: false,
+		canRender: false,
 		colorScheme:
 			browser && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
 	},
@@ -62,17 +64,20 @@ export default {
 	actions: {
 		open: async (
 			{ state, commit, dispatch, g },
-			{ path, isFile, size, storage, dkey, dir, ctype, inBrowser = false }: any = {}
+			{ path, isFile, size, storage, dkey, dir, ctype, inBrowser = false, silent = false }: any = {}
 		) => {
 			if (!ctype) ctype = '';
 			if (isFile) {
 				{
-					console.log('open', { size, storage, dkey, isFile, path, ctype });
-					const view_args = storage + toQueryString({ path: escape(path), dkey, ctype, size });
+					// console.log('open', { size, storage, dkey, isFile, path, ctype });
+					const view_args =
+						storage + toQueryString({ path: encodeURIComponent(path), dkey, ctype, size });
 					if (isMedia(ctype, true)) {
 						if (!ctype.includes('image') && !inBrowser && state.serverStore.get().isMpvInstalled) {
 							const url =
-								API + '/media' + toQueryString({ storage, path: escape(path), dkey, ctype, size });
+								API +
+								'/media' +
+								toQueryString({ storage, path: encodeURIComponent(path), dkey, ctype, size });
 							api.post('/mpv_stream', {
 								url
 							});
@@ -95,7 +100,7 @@ export default {
 					commit('updateDirs', dkey, path);
 				}
 				if (!state.socket) return;
-				dispatch('loading', 'load-page');
+				if (!silent) dispatch('loading', 'load-page');
 				const opts = { dir, show_hidden: state.show_hidden.get() };
 				if (storage === 'fs') {
 					state.socket.on('ready', () => {

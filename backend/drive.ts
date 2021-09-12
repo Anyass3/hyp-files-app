@@ -6,9 +6,8 @@ import { EventEmitter } from 'events';
 
 import fs from 'fs';
 import { getEmitter } from './state.js';
-import mime from 'mime-types';
 import { extname, resolve, join } from 'path';
-import { handleError, getFileType } from './utils.js';
+import { handleError, getFileType, mime } from './utils.js';
 import { Settings } from './settings.js';
 
 const config = Settings();
@@ -103,7 +102,8 @@ export default class extends hyperdrive {
 		return this?.key?.toString?.('hex');
 	}
 	async $readDir(dir, { dest = '/', isdrive = true, drive = undefined } = {}) {
-		return await this.check(async () => {
+		//@ts-ignore
+		const result: Promise<Array<any>> = this.check(async () => {
 			let items;
 			if (drive || isdrive) {
 				// emitter.log('readdir is drive');
@@ -121,9 +121,12 @@ export default class extends hyperdrive {
 				new_path: join(dest, item)
 			}));
 		});
+
+		return result;
 	}
 	async $readAllDirFiles(drive_src, dest = '/') {
-		return await this.check(async () => {
+		//@ts-ignore
+		const result: Promise<Array<any>> = this.check(async () => {
 			let files = [];
 			let dirList;
 			if (typeof drive_src === 'string') dirList = await this.$readDir(drive_src, { dest });
@@ -140,6 +143,8 @@ export default class extends hyperdrive {
 			}
 			return files;
 		});
+
+		return result;
 	}
 	async $fsMakeDir(dest) {
 		return await this.check(async () => {
@@ -216,14 +221,16 @@ export default class extends hyperdrive {
 	) {
 		// returns both files and dirs
 		let total = 0;
-		return await this.check(async () => {
+		//@ts-ignore
+		const result: Promise<Array<any>> = await this.check(async () => {
 			// emitter.log('in list', dir);
 			// console.log({ page, paginate, show_hidden, limit, offset });
 			let list = await this.promises.readdir(dir, { recursive, includeStats: true });
 			if (paginate) {
-				if (!show_hidden) list = list.filter((file) => !/^\./.exec(file));
+				if (!show_hidden) list = list.filter((item) => !/^\./.exec(item.name));
 				total = list.length;
 				list = list.slice(offset, offset + limit);
+				console.log({ list, show_hidden, paginate });
 			}
 			list = list.map((item) => ({
 				name: item.name,
@@ -237,22 +244,28 @@ export default class extends hyperdrive {
 			// emitter.log('\tListing:', list);
 			return paginate ? { items: list, total, page } : list;
 		});
+		return result;
 	}
 	async $listAllFiles(dir = '/') {
 		// returns only files
-		return await this.check(async () => {
+		//@ts-ignore
+		const result: Promise<Array<any>> = await this.check(async () => {
 			let list = await this.$list(dir, true);
 			list = list.filter((item) => item.stat.isFile);
 			return list.map((item) => item.path);
 		});
+		return result;
 	}
 	async $listAllDirs(dir = '/') {
-		// returns only dirs
-		return await this.check(async () => {
+		// returns only dir
+		//@ts-ignore
+		const result: Promise<Array<any>> = this.check(async () => {
 			let list = await this.$list(dir, true);
 			list = list.filter((item) => !item.stat.isFile);
 			return list.map((item) => item.path);
 		});
+
+		return result;
 	}
 	async $listfs(
 		dir = '/',

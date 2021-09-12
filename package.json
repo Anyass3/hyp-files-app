@@ -67,7 +67,7 @@
 		"hyperswarm": "^3.0.0-beta3",
 		"lodash": "^4.17.21",
 		"markdown-hljs": "^0.0.23",
-		"mime-types": "^2.1.32",
+		"mime": "^1.6.0",
 		"prompt-sync": "^4.2.0",
 		"pump": "^3.0.0",
 		"read-chunk": "^3.2.0",

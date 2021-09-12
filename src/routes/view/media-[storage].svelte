@@ -5,13 +5,13 @@
 	export async function load({ page, fetch, session, context }) {
 		const args = {
 			storage: page.params.storage,
-			path: escape(page.query.get('path')),
+			path: encodeURIComponent(decodeURIComponent(page.query.get('path'))),
 			ctype: page.query.get('ctype') || 'video',
 			dkey: page.query.get('dkey'),
 			size: page.query.get('size')
 		};
-		let url = API + `/${args.ctype.includes('image') ? 'image' : 'media'}` + toQueryString(args);
-		const filename = args.path.split('/').reverse()[0];
+		let url = API + `/${args.ctype.includes('image') ? 'file' : 'media'}` + toQueryString(args);
+		const filename = decodeURIComponent(args.path).split('/').reverse()[0];
 		return {
 			props: { ctype: args.ctype, url, filename }
 		};
@@ -38,7 +38,7 @@
 </svelte:head>
 <div
 	in:scale={{ delay: 100, start: 0.8, easing: backOut, duration: 200 }}
-	out:scale={{ start: 0.9, easing: quintOut, duration: 200 }}
+	out:scale={{ start: 0.9, easing: quintOut, duration: 100 }}
 	class="flex-grow flex justify-center items-center"
 >
 	{#if ctype?.includes('audio')}

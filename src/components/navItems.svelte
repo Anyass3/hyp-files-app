@@ -12,7 +12,7 @@
 		<a href="/" sveltekit:prefetch class:active={$page.path === '/'} class="anchor text-3xl">Hyp</a>
 	</div>
 	<div class="flex justify-between flex-md-row flex-col">
-		{#each ['file-manager', 'chat'] as navLink}
+		{#each ['files', 'chat'] as navLink}
 			<div class="nav-link lead3">
 				<a
 					sveltekit:prefetch

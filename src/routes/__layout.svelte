@@ -66,7 +66,7 @@
 </footer>
 
 <NotificationDisplay />
-{#if $page.path === '/file-manager'}
+{#if $page.path === '/files'}
 	<ContextMenu />
 {/if}
 

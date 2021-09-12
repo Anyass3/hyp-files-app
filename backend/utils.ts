@@ -2,9 +2,11 @@ import colors from 'colors';
 import readChunk from 'read-chunk';
 import fileType from 'file-type';
 import child_process from 'child_process';
-import mime from 'mime-types';
+import mime from 'mime';
 import { extname } from 'path';
 
+mime.define({ 'text/python': ['py'] });
+export { mime };
 export const debounce = (fn, delay = 500) => {
 	let timeout;
 	return (...args) => {
@@ -15,7 +17,7 @@ export const debounce = (fn, delay = 500) => {
 	};
 };
 
-export const handleError = (fn, emitter) => {
+export const handleError = (fn: (...args) => void, emitter) => {
 	return async (...args) => {
 		// console.log('handling');
 		try {
