@@ -1,9 +1,9 @@
-// import { api, serverEndpoint } from '$lib/connectionBuilder';
-import { dev, browser } from '$app/env';
+import { browser } from '$app/env';
 import { goto } from '$app/navigation';
 import { notifier } from '@beyonk/svelte-notifications';
 import { API, api } from '$lib/getAPi';
 import { toQueryString } from '$lib/utils';
+import { extractLang } from '$lib/md-hljs';
 
 const isMedia = (ctype, img = true) => {
 	if (!ctype) ctype = '';
@@ -70,6 +70,8 @@ export default {
 			if (isFile) {
 				{
 					// console.log('open', { size, storage, dkey, isFile, path, ctype });
+					const language = extractLang(ctype, path);
+					console.log({ ctype, path, language });
 					const view_args =
 						storage + toQueryString({ path: encodeURIComponent(path), dkey, ctype, size });
 					if (isMedia(ctype, true)) {
@@ -85,12 +87,14 @@ export default {
 							const url = `/view/media-${view_args}`;
 							goto(url);
 						}
-					} else if (ctype.includes('text') || ctype.includes('json')) {
-						const url = `/view/text-${view_args}`;
-						goto(url);
 					} else if (ctype.includes('pdf')) {
 						const url = `/view/embed-${view_args}`;
 						goto(url);
+					} else if (ctype.includes('text') || language) {
+						const url = `/view/text-${view_args}&language=${language}`;
+						goto(url);
+					} else {
+						//
 					}
 				}
 			} else {

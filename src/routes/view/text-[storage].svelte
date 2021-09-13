@@ -19,7 +19,7 @@
 		const filename = _.last(decodeURIComponent(args.path).split('/'));
 		const dir = decodeURIComponent(args.path).replace(filename, '');
 		return {
-			props: { ...args, body, filename, url, dir }
+			props: { ...args, body, filename, url, dir, language: page.query.get('language') }
 		};
 	}
 </script>
@@ -31,6 +31,7 @@
 		filename = '',
 		dir = '',
 		storage = 'fs',
+		language: string,
 		dkey = '';
 	import _ from 'lodash';
 	// {path,size,ctype,storage,dkey}
@@ -40,7 +41,7 @@
 	const canRender = store.g('canRender');
 	import Render from '$components/render.svelte';
 	// Import markdown-hljs library;
-	import Markdown, { highlightCode } from 'markdown-hljs';
+	import { highlightCode, Markdown } from '$lib/md-hljs';
 	import { onDestroy } from 'svelte';
 	import { browser } from '$app/env';
 	if (browser) {
@@ -54,14 +55,11 @@
 	onDestroy(() => {
 		url = null;
 	});
-
+	console.log(language);
+	language = language || (ctype.includes('plain') ? 'plaintext' : '');
+	console.log(language);
 	$: {
-		highlightedCode = highlightCode(
-			ctype.includes('plain')
-				? 'plaintext'
-				: ctype.replace(/[a-z]+\//, '') || _.last(filename.split('.')),
-			body
-		);
+		highlightedCode = highlightCode(body, language);
 	}
 	$: codeStyle =
 		$colorScheme === 'light'
