@@ -71,7 +71,7 @@ export default {
 				{
 					// console.log('open', { size, storage, dkey, isFile, path, ctype });
 					const language = extractLang(ctype, path);
-					console.log({ ctype, path, language });
+					// console.log({ ctype, path, language });
 					const view_args =
 						storage + toQueryString({ path: encodeURIComponent(path), dkey, ctype, size });
 					if (isMedia(ctype, true)) {
@@ -104,7 +104,9 @@ export default {
 					commit('updateDirs', dkey, path);
 				}
 				if (!state.socket) return;
-				if (!silent) dispatch('loading', 'load-page');
+				if (!silent) {
+					dispatch('loading', 'load-page').then(() => commit('folder', []));
+				}
 				const opts = { dir, show_hidden: state.show_hidden.get() };
 				if (storage === 'fs') {
 					state.socket.on('ready', () => {

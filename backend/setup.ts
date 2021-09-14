@@ -146,7 +146,7 @@ export async function setupBee(newbee = false) {
 
 	const getNamespace = async (key) => {
 		const namespace = key ? (await corestoresBee.get(key))?.value : null;
-		emitter.log('getNamespace', key, namespace);
+		emitter.log('getNamespace', { key, namespace });
 		return namespace;
 	};
 	const setNamespace = async (key, namespace) => {

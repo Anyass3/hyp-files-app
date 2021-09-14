@@ -35,7 +35,7 @@ export default async function () {
 		// console.log('networker', !!networker, announce, lookup, replicate);
 		let newNamespace = false;
 		let namespace = getNamespace(dkey);
-		if (namespace) {
+		if (!namespace) {
 			newNamespace = true;
 			namespace = uuidV4().replace(/-/g, '');
 		}
@@ -45,23 +45,23 @@ export default async function () {
 		if (newNamespace) setNamespace(drive.$key, namespace);
 
 		if (networker) {
-			if (replicate)
-				networker.configure(drive.discoveryKey, {
-					server: drive.writable,
-					client: !drive.writable
-				});
-			else
-				networker.configure(drive.discoveryKey, {
-					server: drive.writable,
-					client: !drive.writable
-				});
+			// if (replicate)
+			// 	networker.configure(drive.discoveryKey, {
+			// 		server: true,
+			// 		client: !drive.writable
+			// 	});
+			// else
+			networker.configure(drive.discoveryKey, {
+				server: drive.writable,
+				client: !drive.writable
+			});
 		}
 
 		drive.on('close', () => {
 			if (networker)
 				networker.configure(drive.discoveryKey, {
-					server: drive.writable,
-					client: !drive.writable
+					server: false,
+					client: false
 				});
 			driveStore.close();
 			emitter.broadcast('notify-info', `${name} drive connection closed`);
@@ -281,6 +281,7 @@ export default async function () {
 			api.removeDrive(key);
 			refreshSavedDrives({ key, name });
 		});
+
 		channel.on('delete-drive', async ({ key, name }) => {
 			const drive = drivesBee.del(name) || { name };
 			api.removeSavedDrive(key);
@@ -298,6 +299,7 @@ export default async function () {
 			// emitter.log('drive-listitems', items);
 			channel.signal('folder', items);
 		});
+
 		channel.on('drive-download', async ({ dkey, dir }) => {
 			const drive = await api.drives.get(dkey);
 			await drive?.$download?.(dir);
