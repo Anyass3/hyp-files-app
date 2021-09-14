@@ -25,12 +25,15 @@
 	import { API } from '$lib/getAPi';
 	import { toQueryString } from '$lib/utils';
 	import { onDestroy } from 'svelte';
+	import { navigating } from '$app/stores';
 	// {path,size,ctype,storage,dkey}
 	// console.log('url', url);
 
 	onDestroy(() => {
 		url = null;
+		if (node) node.src = null;
 	});
+	let node;
 </script>
 
 <svelte:head>
@@ -43,13 +46,13 @@
 >
 	{#if ctype?.includes('audio')}
 		<!-- svelte-ignore a11y-media-has-caption -->
-		<audio id="media" controls autoplay alt={filename}>
+		<audio bind:this={node} id="media" controls autoplay alt={filename}>
 			<source src={url} type={ctype} />
 			This media file is supported by this browser
 		</audio>
 	{:else if ctype?.includes('video')}
 		<!-- svelte-ignore a11y-media-has-caption -->
-		<video id="media" controls autoplay alt={filename}>
+		<video bind:this={node} id="media" controls autoplay alt={filename}>
 			<source src={url} type={ctype.includes('x-matroska') ? 'video/webm' : ctype} />
 			This media file is supported by this browser
 		</video>

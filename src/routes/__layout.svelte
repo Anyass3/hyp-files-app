@@ -26,8 +26,6 @@
 
 	$: ((theme) => {
 		if (browser) {
-			// window['ntfy'] = notifier;
-			// notifier.danger('hello', 4000);
 			if (theme === 'dark') {
 				document.body.classList.add('dark');
 			} else {

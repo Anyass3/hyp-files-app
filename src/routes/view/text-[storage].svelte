@@ -43,28 +43,25 @@
 	// Import markdown-hljs library;
 	import { highlightCode, Markdown } from '$lib/md-hljs';
 	import { onDestroy } from 'svelte';
-	import { browser } from '$app/env';
-	if (browser) {
-		window['_'] = _;
-	}
+	// import { browser } from '$app/env';
+	// if (browser) {
+	// 	window['_'] = _;
+	// }
 	$: $canRender =
 		filename.endsWith('.html') || filename.endsWith('.xml') || filename.endsWith('.md');
-	$: console.log('filename', filename);
+	// $: console.log('filename', filename);
 	let highlightedCode;
 
 	onDestroy(() => {
 		url = null;
 	});
-	console.log(language);
+	// console.log(language);
 	language = language || (ctype.includes('plain') ? 'plaintext' : '');
-	console.log(language);
+	// console.log(language);
 	$: {
-		highlightedCode = highlightCode(body, language);
+		highlightedCode = highlightCode(body, language, false);
 	}
-	$: codeStyle =
-		$colorScheme === 'light'
-			? 'https://unpkg.com/@highlightjs/cdn-assets@10.6.0/styles/foundation.min.css'
-			: 'https://unpkg.com/@highlightjs/cdn-assets@10.6.0/styles/night-owl.min.css';
+	$: codeStyle = $colorScheme === 'light' ? '/hljs/foundation.css' : '/hljs/nord.css';
 </script>
 
 <div class="flex justify-center flex-grow h-full w-full">

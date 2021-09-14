@@ -25,10 +25,12 @@
 	import { toQueryString } from '$lib/utils';
 	onDestroy(() => {
 		url = null;
+		if (node) node.src = null;
 	});
+	let node;
 </script>
 
 <svelte:head>
 	<title>{filename}</title>
 </svelte:head>
-<embed src={url} type={ctype} class="flex-grow" />
+<embed bind:this={node} src={url} type={ctype} class="flex-grow" />

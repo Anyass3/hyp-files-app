@@ -34,7 +34,8 @@ const extractLang = (ctype: string, path: string) => {
 				: ext.replace('_history', '').replace('_', '-')
 		],
 		{
-			getMatch: true
+			getMatch: true,
+			error: false
 		}
 	);
 };
