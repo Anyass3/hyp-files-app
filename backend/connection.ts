@@ -342,7 +342,7 @@ export default async function () {
 		channel.on('privateDrive:list', privateDrive.$list);
 		emitter.on('broadcast', broadcast);
 		channel.on('child-process:kill', (pid) => {
-			// emitter.log('child-process:kill', pid);
+			emitter.log('child-process:kill', pid);
 			emitter.emit('child-process:kill', pid);
 		});
 		channel.on('disconnect', async () => {

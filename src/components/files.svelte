@@ -2,9 +2,8 @@
 	import store from '$store';
 	import { createEventDispatcher } from 'svelte';
 	import { truncate, debounce, getPosition } from '$lib/utils';
-	import { scale, fade, slide, crossfade } from 'svelte/transition';
-	import { backOut, quadIn, quintOut } from 'svelte/easing';
-	import { flip } from 'svelte/animate';
+	import { crossfade } from 'svelte/transition';
+	import { quintOut } from 'svelte/easing';
 	import Spinner from '$components/spinner.svelte';
 	import FolderIcon from 'icons/FolderIcon.svelte';
 	import FileIcon from 'icons/FileIcon.svelte';
@@ -53,9 +52,7 @@
 
 <div data-main-menu={true}>
 	{#if $loading === 'load-page'}
-		<div class="grid place-items-center w-full pt-10">
-			<Spinner />
-		</div>
+		<Spinner />
 	{/if}
 	<div
 		data-main-menu={true}

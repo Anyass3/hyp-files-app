@@ -1,12 +1,10 @@
 import Markdown, { highlightCode, setHljs, getLang, setLang } from 'markdown-hljs';
 import hljs from 'highlight.js';
-import { browser } from '$app/env';
 import _ from 'lodash';
 
 setHljs(hljs);
 
 const langs = [
-	{ language: 'plaintext', aliases: ['gitignore', 'README'] },
 	{ language: 'ini', aliases: ['Pipfile', 'flake8'] },
 	{ language: 'python', aliases: ['mako'] },
 	{ language: 'yaml', aliases: ['Procfile', 'def'] }
@@ -14,12 +12,8 @@ const langs = [
 for (let lang of langs) {
 	setLang(lang);
 }
-if (browser) {
-	window['lang'] = getLang;
-	window['hljs'] = highlightCode;
-}
-
-const extractLang = (ctype: string, path: string) => {
+//@ts-ignore
+const extractLang: (ctype: string, path: string) => string = (ctype, path) => {
 	const ext = _.last(_.last(path.split('/')).split('.'));
 	return getLang(
 		[

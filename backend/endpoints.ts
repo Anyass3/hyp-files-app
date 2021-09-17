@@ -31,6 +31,11 @@ export default async function (app, api = makeApi()) {
 	app.use(bodyParser.json());
 	app.use(compression());
 	app.use(cors());
+	app.get('/test', (reg, res) => {
+		const query = reg.query;
+		console.log(query, query.val);
+		res.send(query.val);
+	});
 
 	app.post('/get-file-type', async function (req, res) {
 		let storage = req?.body?.storage; //drive || fs
@@ -114,13 +119,21 @@ export default async function (app, api = makeApi()) {
 	});
 	app.get('/file', async function (req, res) {
 		let fileSize: string | number = req.query.size;
-		const filePath = Path.join(...decodeURIComponent(req.query.path).split(','));
+		const _path = req.query.path;
+		let filePath;
+		if (_.isArray(_path)) filePath = Path.join(..._path.map((pth) => decodeURIComponent(pth)));
+		else filePath = decodeURIComponent(_path);
 		const ctype: string = req.query.ctype || mime.lookup(filePath);
 		const storage: string = req.query.storage || 'fs'; //drive || fs
 		const dkey: string = req.query.dkey;
-		emitter.log('/file', { path: filePath, filePath, fileSize, ctype });
-		res.setHeader('Content-Type', ctype);
 
+		emitter.log('/file', {
+			path: filePath,
+			fileSize,
+			ctype
+		});
+
+		res.setHeader('Content-Type', ctype);
 		if (storage === 'fs') {
 			if (!fs.existsSync(Path.join(config.fs, filePath))) {
 				showError(storage, filePath);
@@ -131,7 +144,7 @@ export default async function (app, api = makeApi()) {
 				fileSize = fs.statSync(Path.join(config.fs, filePath)).size;
 			}
 			res.setHeader('Content-Length', fileSize);
-			fs.createReadStream(Path.join(config.fs, filePath)).pipe(res);
+			fs.createReadStream(Path.join(config.fs, filePath));
 		} else {
 			const drive = api.drives.get(dkey);
 
@@ -145,6 +158,7 @@ export default async function (app, api = makeApi()) {
 				const stats = await drive.promises.stat(filePath);
 				fileSize = stats.size;
 			}
+
 			res.setHeader('Content-Length', fileSize);
 			drive.createReadStream(filePath).pipe(res);
 		}
@@ -172,35 +186,18 @@ export default async function (app, api = makeApi()) {
 
 		emitter.log('/media', { mediaSize, ctype, range, storage });
 
-		if (storage === 'fs') {
-			if (!fs.existsSync(Path.join(config.fs, mediaPath))) {
-				showError(storage, mediaPath);
-				res.status(404).end();
-				return;
-			}
-		} else {
-			if (!drive || !(drive && (await drive.promises.exists(mediaPath)))) {
-				showError(storage, mediaPath);
-				res.status(404).end();
-				return;
-			}
-		}
 		if (!range) {
 			//in case there's no range header
 			emitter.log('NO Range Header');
-			const headers = {
-				'Content-Length': mediaSize,
-				'Content-Type': ctype
-			};
-			res.writeHead(200, headers);
-			(storage === 'fs' ? fs : drive).createReadStream(mediaPath).pipe(res);
+			res.status(416).end('Wrong range');
 			return;
 		}
 
+		let ranges = range.replace(/bytes=/, '').split('-');
 		// range: "bytes=32324-"
-		const CHUNK_SIZE = 1 * 1e6;
-		const start = Number(range.replace(/\D/g, ''));
-		const end = Math.min(start + CHUNK_SIZE, mediaSize - 1);
+		const CHUNK_SIZE = 5024;
+		const start = Number(ranges[0]);
+		const end = Math.min(Number(ranges[1]) || start + CHUNK_SIZE, mediaSize - 1);
 
 		emitter.log(`media chunks => ${start}::${end}`);
 
@@ -217,6 +214,13 @@ export default async function (app, api = makeApi()) {
 
 		const stream = (storage === 'fs' ? fs : drive).createReadStream(mediaPath, { start, end });
 
-		stream.pipe(res);
+		stream.on('open', () => {
+			stream.pipe(res);
+		});
+
+		stream.on('error', (err) => {
+			showError(storage, mediaPath);
+			return res.end(err);
+		});
 	});
 }

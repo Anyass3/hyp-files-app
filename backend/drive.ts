@@ -275,6 +275,8 @@ export default class extends hyperdrive {
 		let total = 0;
 		return await this.check(async () => {
 			let list = fs.readdirSync(dir);
+			console.log({ page, paginate, show_hidden, limit, offset });
+			console.log('list', list);
 			if (paginate) {
 				if (!show_hidden) list = list.filter((file) => !/^\./.exec(file));
 				total = list.length;

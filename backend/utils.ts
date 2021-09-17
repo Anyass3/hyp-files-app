@@ -69,6 +69,7 @@ export const spawnChildProcess: SpawnChildProcess = async (
 		}
 		//@ts-ignore
 		const child = child_process.spawn(...command, { ...kwargs, shell });
+		console.log(...command);
 		if (log) console.log(child.pid);
 		if (emitter) emitter.emit('child-process:spawn', { cm, pid: child.pid, broadcast });
 
@@ -87,7 +88,6 @@ export const spawnChildProcess: SpawnChildProcess = async (
 			if (log) console.error(`error:${cm}\n${error}`);
 			if (emitter) emitter.emit('child-process:error', { cm, pid: child.pid, error, broadcast });
 		});
-
 		if (stdin) {
 			stdin.on('error', (err) => {
 				console.error(err);

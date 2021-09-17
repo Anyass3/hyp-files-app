@@ -63,6 +63,7 @@ export default {
 	},
 	actions: {
 		open({ dispatch }, { path, isFile, size, storage, dkey, dir, ctype, inBrowser, silent }) {
+			console.log('openopenopen', isFile);
 			if (isFile) {
 				dispatch('openFile', { path, size, storage, dkey, ctype, inBrowser });
 			} else {
@@ -132,6 +133,7 @@ export default {
 				});
 				state.socket.signal('drive-list', { ...opts, dkey });
 			}
+			console.log('openFolderopenFolder');
 		},
 		setupMenuItems(
 			{ dispatch, g, state },

@@ -64,11 +64,11 @@ const manageChildProcess = (api = makeApi()) => {
 		api.addChildProcess({ pid, cm });
 	});
 	emitter.on('child-process:data', async ({ cm, pid, data, broadcast }) => {
-		// emitter.log('data', { cm, pid, data });
+		// emitter.log('data', { cm, pid, data: data.toString() });
 		// emitter.broadcast('child-process:data', { cm, pid, data });
 	});
 	emitter.on('child-process:error', async ({ cm, pid, error, broadcast }) => {
-		// emitter.log('error', { cm, pid, error });
+		// emitter.log('error', { cm, pid, error: error.toString() });
 		// emitter.broadcast('child-process:error', { cm, pid, error });
 	});
 	emitter.on('child-process:exit', async ({ pid, msg, broadcast }) => {
@@ -76,12 +76,12 @@ const manageChildProcess = (api = makeApi()) => {
 		api.removeChildProcess(pid);
 		if (broadcast) emitter.broadcast('child-process:exit', msg);
 	});
-	emitter.on('child-process:kill', async ({ pid, broadcast }) => {
-		spawnChildProcess('kill -9 ' + pid)
+	emitter.on('child-process:kill', async (pid) => {
+		spawnChildProcess('kill -9 ' + pid, { log: true })
 			.then((_) => {})
 			.catch((err) => {
 				emitter.log(err);
-				if (broadcast) emitter.broadcast(err);
+				//  emitter.broadcast(err);
 			});
 	});
 };

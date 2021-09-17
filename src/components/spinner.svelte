@@ -9,25 +9,27 @@
 	$: dash = (2 * Math.PI * radius * (100 - gap)) / 100;
 </script>
 
-<svg
-	height={size}
-	width={size}
-	style="animation-duration:{speed}ms;"
-	class="svelte-spinner"
-	viewBox="0 0 100 100"
->
-	<circle
-		role="presentation"
-		cx="50"
-		cy="50"
-		r={radius}
-		stroke={color}
-		fill="none"
-		stroke-width={thickness}
-		stroke-dasharray="{dash},100"
-		stroke-linecap="round"
-	/>
-</svg>
+<div class="grid place-items-center w-full pt-10">
+	<svg
+		height={size}
+		width={size}
+		style="animation-duration:{speed}ms;"
+		class="svelte-spinner"
+		viewBox="0 0 100 100"
+	>
+		<circle
+			role="presentation"
+			cx="50"
+			cy="50"
+			r={radius}
+			stroke={color}
+			fill="none"
+			stroke-width={thickness}
+			stroke-dasharray="{dash},100"
+			stroke-linecap="round"
+		/>
+	</svg>
+</div>
 
 <style>
 	.svelte-spinner {
