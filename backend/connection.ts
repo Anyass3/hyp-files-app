@@ -34,7 +34,7 @@ export default async function () {
 	) {
 		// console.log('networker', !!networker, announce, lookup, replicate);
 		let newNamespace = false;
-		let namespace = getNamespace(dkey);
+		let namespace = await getNamespace(dkey);
 		if (!namespace) {
 			newNamespace = true;
 			namespace = uuidV4().replace(/-/g, '');
@@ -222,7 +222,7 @@ export default async function () {
 			}
 			const network = privateDrivekey !== key;
 			const savedDrives = await getBeeState(drivesBee);
-			console.log('saved-drives', savedDrives);
+			emitter.log('saved-drives', savedDrives);
 
 			if (!name) name = getRandomStr();
 			const drive = await startDrive(network ? publicHyp : privateHyp, key, { replicate, name }); /// TODO: announce, lookup
