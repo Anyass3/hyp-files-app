@@ -34,10 +34,10 @@ export default {
 				// console.log('ready connection');
 				socket.signal('signal-connect');
 			});
+
 			socket.on('signal-connect', (settings) => {
 				console.log('settings', settings);
 				state.notify.info('connections ready');
-				// socket.signal('get-drives');
 			});
 			socket.on('folder', ({ items = [], page = 0, total = 0 } = {}) => {
 				// console.log('folder', { items, page, total });
@@ -47,7 +47,6 @@ export default {
 				} else {
 					state.folder.update((folder) => [...folder, ...(items || [])]);
 				}
-				commit('loading', false);
 			});
 			socket.on('notify-danger', async (msg) => {
 				// console.log(msg);
@@ -120,6 +119,10 @@ export default {
 
 			serverStore.subscribe((data) => {
 				console.log('server-store', data);
+			});
+
+			socket.on('disconnection', () => {
+				console.log('disconnected');
 			});
 		}
 	}

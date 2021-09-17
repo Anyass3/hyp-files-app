@@ -29,8 +29,6 @@ const extractLang = (ctype: string, path: string) => {
 				? 'plaintext'
 				: ext.includes('bash')
 				? 'bash'
-				: ext.includes('python')
-				? 'python'
 				: ext.replace('_history', '').replace('_', '-')
 		],
 		{

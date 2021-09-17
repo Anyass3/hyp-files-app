@@ -103,19 +103,21 @@ export async function setupBee(newbee = false) {
 	const logger = toPromises(mainStore.get({ name: 'logger', valueEncoding: 'json' }));
 	await logger.ready(); // wait for keys to be populated
 
-	logger.on('append', async () => {
-		if (Settings().log) {
-			try {
-				const log = await logger.get(logger.length - 1);
-				console.log(log.datetime, ...log.data);
-			} catch (error) {
-				console.log('logger:error', error);
-			}
-		}
-	});
+	// logger.on('append', async () => {
+	// 	if (Settings().debug) {
+	// 		try {
+	// 			const log = await logger.get(logger.length - 1);
+	// 			console.log(log.datetime, ...log.data);
+	// 		} catch (error) {
+	// 			console.log('logger:error', error);
+	// 		}
+	// 	}
+	// });
 
 	emitter.on('logger', async (...data) => {
 		const log = { datetime: colors.gray(new Date().toLocaleString()), data };
+		if (Settings().debug) console.log(log.datetime, ...log.data);
+		if (!Settings().log) return;
 		await logger.append(log);
 	});
 

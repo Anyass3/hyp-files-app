@@ -29,7 +29,7 @@
 			class=" mt-2  p-2 rounded-lg border-gray-500 shadow-sm border-[.3px] text-gray-800 text-xl  dark:text-blue-100"
 		/>
 	</div>
-	<div class="w-full h-full border border-gray-500">
+	<!-- <div class="w-full h-full border border-gray-500">
 		<h3>chat Manager</h3>
-	</div>
+	</div> -->
 </div>

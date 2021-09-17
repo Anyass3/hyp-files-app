@@ -58,30 +58,30 @@ const enhanceChannel = (channel) => {
 	};
 };
 const manageChildProcess = (api = makeApi()) => {
-	emitter.on('child-process:spawn', async (cm, pid) => {
+	emitter.on('child-process:spawn', async ({ cm, pid, broadcast }) => {
 		emitter.log('spawn', { cm, pid });
-		emitter.broadcast('child-process:spawn', { cm, pid });
+		if (broadcast) emitter.broadcast('child-process:spawn', { cm, pid });
 		api.addChildProcess({ pid, cm });
 	});
-	emitter.on('child-process:data', async (cm, pid, data) => {
+	emitter.on('child-process:data', async ({ cm, pid, data, broadcast }) => {
 		// emitter.log('data', { cm, pid, data });
-		emitter.broadcast('child-process:data', { cm, pid, data });
+		// emitter.broadcast('child-process:data', { cm, pid, data });
 	});
-	emitter.on('child-process:error', async (cm, pid, error) => {
+	emitter.on('child-process:error', async ({ cm, pid, error, broadcast }) => {
 		// emitter.log('error', { cm, pid, error });
-		emitter.broadcast('child-process:error', { cm, pid, error });
+		// emitter.broadcast('child-process:error', { cm, pid, error });
 	});
-	emitter.on('child-process:exit', async (pid, msg) => {
+	emitter.on('child-process:exit', async ({ pid, msg, broadcast }) => {
 		emitter.log('exit', { pid, msg });
 		api.removeChildProcess(pid);
-		emitter.broadcast('child-process:exit', msg);
+		if (broadcast) emitter.broadcast('child-process:exit', msg);
 	});
-	emitter.on('child-process:kill', async (pid) => {
+	emitter.on('child-process:kill', async ({ pid, broadcast }) => {
 		spawnChildProcess('kill -9 ' + pid)
 			.then((_) => {})
 			.catch((err) => {
 				emitter.log(err);
-				emitter.broadcast(err);
+				if (broadcast) emitter.broadcast(err);
 			});
 	});
 };

@@ -11,7 +11,7 @@
 	import type { Writable } from 'svelte/store';
 	const files = store.g('folder');
 
-	const loading: Writable<loading> = store.g('loading');
+	const loading: Writable<loading | false> = store.g('loading');
 
 	const dispatch = createEventDispatcher();
 
@@ -29,7 +29,7 @@
 		// debounce(() => (active = null), 500)();
 	}
 	const [send, receive] = crossfade({
-		duration: (d) => Math.sqrt(d * 50),
+		duration: (d) => Math.sqrt(d * 100),
 		fallback(node, params) {
 			const style = getComputedStyle(node);
 			const transform = style.transform === 'none' ? '' : style.transform;
@@ -48,7 +48,7 @@
 	// 	if (active === path) active = '';
 	// 	else active = path;
 	// }
-	$: console.log('files', $files);
+	$: if ($files) $loading = false;
 </script>
 
 <div data-main-menu={true}>
@@ -64,8 +64,7 @@
 	>
 		{#each $files || [] as { name, path, stat } (path)}
 			<div
-				in:scale={{ delay: 100, start: 0.8, easing: quintOut, duration: 600 }}
-				out:scale={{ delay: 0, start: 0.9, easing: quadIn, duration: 10 }}
+				in:receive={{ key: path }}
 				on:contextmenu|preventDefault={(ev) => contextMenu(ev, name, path, stat)}
 				class="group anchor-tooltip context-menu__item"
 				tabindex="-1"
@@ -89,10 +88,10 @@
 				</div>
 			</div>
 		{/each}
-		{#if !$files?.length}
+		<!-- {#if !$files?.length}
 			<div class="text-4xl md:text-7xl text-blue-400 dark:text-blue-300 p-3 md:p-4 lg:p-6">
 				this folder seems empty
 			</div>
-		{/if}
+		{/if} -->
 	</div>
 </div>

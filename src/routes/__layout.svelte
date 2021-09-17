@@ -21,7 +21,7 @@
 	import { dev, browser } from '$app/env';
 	import { page } from '$app/stores';
 	const colorScheme = store.g('colorScheme');
-	const hideFilemenu = store.g('hideFilemenu');
+	// const hideFilemenu = store.g('hideFilemenu');
 	import { InterObserver, NavInterObserver } from '$lib/utils';
 
 	$: ((theme) => {
@@ -43,7 +43,7 @@
 >
 	<div class="h-full flex flex-col flex-grow">
 		<Header />
-		<div class="w-screen h-1" use:NavInterObserver />
+		<div class="w-screen h-2" use:NavInterObserver />
 
 		<!-- <div
 			class="w-screen h-1"
@@ -56,12 +56,6 @@
 		<slot />
 	</div>
 </div>
-
-<footer
-	class="bg-gradient-to-r from-green-400 to-blue-500 flex flex-col justify-center items-center p-4 "
->
-	<!-- hmm -->
-</footer>
 
 <NotificationDisplay />
 {#if $page.path === '/files'}

@@ -4,11 +4,11 @@ const settingsJsonPath = path.resolve('./settings.json');
 const Settings = (_settings = null) => {
 	if (!fs.existsSync(settingsJsonPath)) {
 		_settings = {
-			host: 'AwesomeSocket',
 			fs: '/',
 			beekey: '',
 			username: 'me',
-			log: false
+			log: false,
+			debug: false
 		};
 		fs.writeFileSync(settingsJsonPath, JSON.stringify(_settings));
 		return _settings;

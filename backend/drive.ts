@@ -194,7 +194,7 @@ export default class extends hyperdrive {
 					: fs.statSync(join(config.fs, item.path)).isDirectory();
 				if (isdir) {
 					await this.$driveMakeDir(item.new_path);
-					emitter.log('drive=>', !!drive);
+					// emitter.log('drive=>', !!drive);
 					const items = await this.$readDir(item.path, {
 						drive,
 						dest: item.new_path,
@@ -230,7 +230,6 @@ export default class extends hyperdrive {
 				if (!show_hidden) list = list.filter((item) => !/^\./.exec(item.name));
 				total = list.length;
 				list = list.slice(offset, offset + limit);
-				console.log({ list, show_hidden, paginate });
 			}
 			list = list.map((item) => ({
 				name: item.name,
@@ -238,10 +237,11 @@ export default class extends hyperdrive {
 				stat: {
 					isFile: item.stat.isFile(),
 					size: item.stat.size,
-					ctype: mime.lookup(extname(item.name))
+					ctype: mime.lookup(extname(item.name)),
+					mtime: item.stat.mtime
 				}
 			}));
-			// emitter.log('\tListing:', list);
+			emitter.log('dir:', list);
 			return paginate ? { items: list, total, page } : list;
 		});
 		return result;
@@ -289,10 +289,15 @@ export default class extends hyperdrive {
 				return {
 					name: item,
 					path: _path,
-					stat: { isFile: stat.isFile(), size: stat.size, ctype: mime.lookup(extname(item)) }
+					stat: {
+						isFile: stat.isFile(),
+						size: stat.size,
+						ctype: mime.lookup(extname(item)),
+						mtime: stat.mtime
+					}
 				};
 			});
-			emitter.log('\tListing:', list);
+			emitter.log('dir:', list);
 			return paginate ? { items: list, total, page } : list;
 		});
 	}
@@ -401,7 +406,7 @@ export default class extends hyperdrive {
 				? await srcDrive.promises.stat(src.path)
 				: fs.statSync(join(config.fs, src.path))
 			).isFile();
-			// emitter.log('isFile', isFile);
+			emitter.log('isFile', isFile);
 			const destStorage = dest.isdrive ? destDrive : fs;
 			const srcStorage = src.isdrive ? srcDrive : fs;
 			const makeDir = dest.isdrive ? '$driveMakeDir' : '$fsMakeDir';
@@ -413,8 +418,17 @@ export default class extends hyperdrive {
 				}
 				if (!dest.isdrive) dest.path = join(config.fs, dest.path);
 				if (!src.isdrive) src.path = join(config.fs, src.path);
-				const destFile = destStorage.createWriteStream(dest.path);
-				srcStorage.createReadStream(src.path).pipe(destFile);
+				const destStream = destStorage.createWriteStream(dest.path);
+
+				const srcStream = srcStorage.createReadStream(src.path);
+
+				srcStream.on('error', (err) => {
+					emitter.broadcast('notify-danger', err.message);
+				});
+				destStream.on('error', (err) => {
+					emitter.broadcast('notify-danger', err.message);
+				});
+				srcStream.pipe(destStream);
 			} else {
 				if (dest.path.endsWith('/')) {
 					const dirname = src.path.split('/').reverse()[src.path.endsWith('/') ? 1 : 0];

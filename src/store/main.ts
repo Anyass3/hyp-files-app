@@ -62,67 +62,79 @@ export default {
 		}
 	},
 	actions: {
-		open: async (
-			{ state, commit, dispatch, g },
-			{ path, isFile, size, storage, dkey, dir, ctype, inBrowser = false, silent = false }: any = {}
-		) => {
-			if (!ctype) ctype = '';
+		open({ dispatch }, { path, isFile, size, storage, dkey, dir, ctype, inBrowser, silent }) {
 			if (isFile) {
-				{
-					// console.log('open', { size, storage, dkey, isFile, path, ctype });
-					const language = extractLang(ctype, path);
-					// console.log({ ctype, path, language });
-					const view_args =
-						storage + toQueryString({ path: encodeURIComponent(path), dkey, ctype, size });
-					if (isMedia(ctype, true)) {
-						if (!ctype.includes('image') && !inBrowser && state.serverStore.get().isMpvInstalled) {
-							const url =
-								API +
-								'/media' +
-								toQueryString({ storage, path: encodeURIComponent(path), dkey, ctype, size });
-							api.post('/mpv_stream', {
-								url
-							});
-						} else {
-							const url = `/view/media-${view_args}`;
-							goto(url);
-						}
-					} else if (ctype.includes('pdf')) {
-						const url = `/view/embed-${view_args}`;
-						goto(url);
-					} else if (ctype.includes('text') || language) {
-						const url = `/view/text-${view_args}&language=${language}`;
-						goto(url);
-					} else {
-						//
-					}
-				}
+				dispatch('openFile', { path, size, storage, dkey, ctype, inBrowser });
 			} else {
-				dir = dir || '/';
-				if (path) {
-					dir = path;
-					commit('updateDirs', dkey, path);
+				dispatch('openFolder', { dir, path, dkey, silent, storage });
+			}
+		},
+		async openFile({ state }, { path, size, storage, dkey, ctype, inBrowser = false }: any = {}) {
+			if (!ctype || ctype === 'application/octet-stream') {
+				const res = await api.post('/get-file-type', {
+					path: encodeURIComponent(path),
+					dkey,
+					storage
+				});
+				if (res.ok) {
+					ctype = res.body.ctype;
+					// console.log({ ctype });
 				}
-				if (!state.socket) return;
-				if (!silent) {
-					dispatch('loading', 'load-page').then(() => commit('folder', []));
-				}
-				const opts = { dir, show_hidden: state.show_hidden.get() };
-				if (storage === 'fs') {
-					state.socket.on('ready', () => {
-						state.socket.signal('fs-list', opts);
+			}
+			const view_args =
+				storage + toQueryString({ path: encodeURIComponent(path), dkey, ctype, size });
+			if (isMedia(ctype, true)) {
+				if (!ctype.includes('image') && !inBrowser && state.serverStore.get().isMpvInstalled) {
+					const url =
+						API +
+						'/media' +
+						toQueryString({ storage, path: encodeURIComponent(path), dkey, ctype, size });
+					api.post('/mpv_stream', {
+						url
 					});
-					state.socket.signal('fs-list', opts);
 				} else {
-					state.socket.on('ready', () => {
-						state.socket.signal('drive-list', { ...opts, dkey });
-					});
-					state.socket.signal('drive-list', { ...opts, dkey });
+					const url = `/view/media-${view_args}`;
+					goto(url);
 				}
+			} else if (ctype.includes('pdf')) {
+				const url = `/view/embed-${view_args}`;
+				goto(url);
+			} else {
+				const language = extractLang(ctype, path);
+				if (ctype.includes('text') || language) {
+					const url = `/view/text-${view_args}&language=${language}`;
+					goto(url);
+				} else if (ctype === 'application/x-empty')
+					state.notify.info('It seems this file is empty');
+				else if (ctype) state.notify.warning('sorry  cannot open file type: ' + ctype);
+			}
+		},
+		openFolder({ state, commit, dispatch }, { dir, path, dkey, silent, storage }) {
+			dir = dir || '/';
+			if (path) {
+				dir = path;
+				commit('updateDirs', dkey, path);
+			}
+			if (!state.socket) return;
+			if (!silent) {
+				// commit('folder', []);
+				dispatch('loading', 'load-page');
+			}
+			const opts = { dir, show_hidden: state.show_hidden.get() };
+			if (storage === 'fs') {
+				state.socket.on('ready', () => {
+					state.socket.signal('fs-list', opts);
+				});
+				state.socket.signal('fs-list', opts);
+			} else {
+				state.socket.on('ready', () => {
+					state.socket.signal('drive-list', { ...opts, dkey });
+				});
+				state.socket.signal('drive-list', { ...opts, dkey });
 			}
 		},
 		setupMenuItems(
-			{ dispatch, commit, g, state },
+			{ dispatch, g, state },
 			{ size, storage, dkey, isFile, path, dir, name, ctype }
 		) {
 			// console.log({ size, storage, dkey, isFile, path, ctype });
@@ -138,11 +150,11 @@ export default {
 				{
 					name: 'play in browser',
 					action: () => {
-						dispatch('open', { size, storage, dkey, isFile, dir, path, ctype, inBrowser: true });
+						dispatch('openFile', { size, storage, dkey, isFile, path, ctype, inBrowser: true });
 						dispatch('context_menu', []);
 					},
-					disabled: !isMedia(ctype, false)
-					// hidden: !isMedia(ctype, false)
+					disabled: !isMedia(ctype, false),
+					hidden: !isMedia(ctype, false) || !isFile
 				},
 				{
 					name: 'download',
@@ -199,6 +211,13 @@ export default {
 						state.socket.signal('delete-path-item', { path, dkey, name });
 						dispatch('context_menu', []);
 					}
+				},
+				{
+					name: 'make offline',
+					action() {},
+					options: {},
+					disabled: true,
+					hidden: true
 				}
 			];
 			dispatch('context_menu', items);
@@ -207,6 +226,19 @@ export default {
 			const items: ContextMenuItems = [
 				{
 					name: 'new',
+					action() {},
+					options: {},
+					disabled: true
+				},
+				{
+					name: 'make offline',
+					action() {},
+					options: {},
+					disabled: true,
+					hidden: storage === 'fs'
+				},
+				{
+					name: 'upload',
 					action() {},
 					options: {},
 					disabled: true

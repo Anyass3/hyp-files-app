@@ -15,6 +15,7 @@ import cors from 'cors';
 import colors from 'colors';
 import compression from 'compression';
 import { Settings } from './settings.js';
+import _ from 'lodash';
 
 const config = Settings();
 const emitter = getEmitter();
@@ -32,37 +33,38 @@ export default async function (app, api = makeApi()) {
 	app.use(cors());
 
 	app.post('/get-file-type', async function (req, res) {
-		// console.log('/get-file-type', req?.body);
 		let storage = req?.body?.storage; //drive || fs
-		const filePath = unescape(req.body.path);
-		const fsFilePath = Path.join(config.fs, filePath);
+		const filePath = decodeURIComponent(req.body.path);
 		const dkey = req?.body?.dkey;
 		if (!storage) storage = dkey?.match(/[a-z0-9]{64}/) ? 'drive' : 'fs';
-		let ctype;
-		if (storage === 'fs') ctype = await handleError(getFileType, emitter)(fsFilePath);
-		else {
-			const drive = api.drives.get(dkey);
-			console.log('/get-file-type', dkey, filePath, storage);
-			console.log('/get-file-type', drive.$key);
-			if (drive) {
-				ctype = mime.lookup(Path.extname(filePath));
-				// // it's not working
-				// if (!ctype) {
-				// 	const stream = await drive.createReadStream(filePath, { start: 0, end: 5 });
-				// 	ctype = await getDriveFileType(stream);
-				// }
-			}
+		let ctype = mime.lookup(Path.extname(filePath));
+		const drive = api.drives.get(dkey);
+		if (ctype === 'application/octet-stream' || !ctype) {
+			const stream = await (storage === 'fs' ? fs : drive).createReadStream(
+				Path.join(storage === 'fs' ? config.fs : '', filePath),
+				{
+					start: 0,
+					end: 100
+				}
+			);
+			const { data } = await spawnChildProcess('file --mime-type -', {
+				broadcast: false,
+				emitter,
+				stdin: stream
+			});
+			ctype = _.last(data.split(':')).trim();
 		}
 		res.send({ ctype });
+		console.log('/get-file-type', { ctype, storage, path: filePath, dkey });
 	});
+
 	app.get('/download', async (req, res) => {
-		console.log('/download');
 		const size = req.query.size;
 		const type = req.query.type;
 		const storage = req.query.storage || 'fs'; //drive || fs
 		const path = decodeURIComponent(req.query.path);
 		const dkey = req.query.dkey;
-		// console.log('download', { size, path, storage, type, dkey });
+		emitter.log('download', { size, path, storage, type, dkey });
 		const drive = api.drives.get(dkey);
 		const filename = path.split('/').reverse()[0];
 
@@ -79,6 +81,7 @@ export default async function (app, api = makeApi()) {
 				return;
 			}
 		}
+		res.setHeader('Content-Length', size);
 
 		if (type === 'file') {
 			try {
@@ -110,13 +113,12 @@ export default async function (app, api = makeApi()) {
 		}
 	});
 	app.get('/file', async function (req, res) {
-		console.log('/file');
 		let fileSize: string | number = req.query.size;
 		const filePath = Path.join(...decodeURIComponent(req.query.path).split(','));
 		const ctype: string = req.query.ctype || mime.lookup(filePath);
 		const storage: string = req.query.storage || 'fs'; //drive || fs
 		const dkey: string = req.query.dkey;
-		console.log({ path: req.query.path, filePath, fileSize, ctype });
+		emitter.log('/file', { path: filePath, filePath, fileSize, ctype });
 		res.setHeader('Content-Type', ctype);
 
 		if (storage === 'fs') {
@@ -141,27 +143,21 @@ export default async function (app, api = makeApi()) {
 
 			if (!fileSize) {
 				const stats = await drive.promises.stat(filePath);
-				// console.log('stats', stats);
 				fileSize = stats.size;
 			}
-			console.log({ fileSize, filePath });
 			res.setHeader('Content-Length', fileSize);
 			drive.createReadStream(filePath).pipe(res);
 		}
 	});
 	app.post('/mpv_stream', async (req, res) => {
 		const command = 'mpv ' + req.body.url;
-		// console.log('commard', command);
 		spawnChildProcess(command, { emitter }).catch((err) => {
 			emitter.log(err);
 			emitter.broadcast(err);
 		});
-		emitter.on('child-process:spawn', () => {
-			res.status(200).end();
-		});
+		res.status(200).end();
 	});
 	app.get('/media', async (req, res) => {
-		// Ensure there is a range given for the media
 		const mediaSize: number = req.query.size;
 		const ctype: string = req.query.ctype;
 		const storage: string = req.query.storage || 'fs'; //drive || fs
@@ -175,7 +171,6 @@ export default async function (app, api = makeApi()) {
 		const drive = api.drives.get(dkey);
 
 		emitter.log('/media', { mediaSize, ctype, range, storage });
-		let storageSys = storage === 'fs' ? fs : drive;
 
 		if (storage === 'fs') {
 			if (!fs.existsSync(Path.join(config.fs, mediaPath))) {
@@ -220,6 +215,8 @@ export default async function (app, api = makeApi()) {
 		// Partial Content
 		res.writeHead(206, headers);
 
-		(storage === 'fs' ? fs : drive).createReadStream(mediaPath, { start, end }).pipe(res);
+		const stream = (storage === 'fs' ? fs : drive).createReadStream(mediaPath, { start, end });
+
+		stream.pipe(res);
 	});
 }

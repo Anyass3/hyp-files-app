@@ -6,21 +6,18 @@
 	import dark_mode from '$lib/dark_mode.svg';
 	const colorScheme = store.state.colorScheme;
 	export let cls = '';
-
 	const path = decodeURIComponent($page.query.get('path'));
 	const canRender = path.endsWith('.html') || path.endsWith('.xml') || path.endsWith('.md');
 	const render = store.g('render');
 </script>
 
-<div
-	class="flex justify-between bg-transparent select-none {cls} border-b-2 border-gray-600 opacity-50 hover:opacity-100"
->
+<div class="flex justify-between bg-transparent select-none {cls} opacity-50 hover:opacity-100">
 	<div class="z-50">
 		<a
 			href="/files"
 			class:active={$page.path === '/files'}
-			class="p-2 nav-link font-bold bg-gray-200 dark:bg-gray-800 anchor rounded-md"
-			><div class="flex"><span><ArrowLeftIcon size="20" /></span></div></a
+			class="m-1 ml-[.5rem] nav-link font-bold bg-gray-200 dark:bg-gray-800 anchor rounded-md"
+			><div class="flex"><span class="pb-[.4rem]"><ArrowLeftIcon size="20" /></span></div></a
 		>
 	</div>
 	{#if canRender}
