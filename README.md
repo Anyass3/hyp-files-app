@@ -1,5 +1,5 @@
 # hyp-files-app
-[read about the in google Docs](https://docs.google.com/document/d/1fQzMs1ykgv3G-BIaiCB6dKrJvlZtI-ckZUtxjJ_YwjQ/edit?usp=sharing)
+[Read about it in google Docs](https://docs.google.com/document/d/1fQzMs1ykgv3G-BIaiCB6dKrJvlZtI-ckZUtxjJ_YwjQ/edit?usp=sharing)
 
 ## runing app
 
