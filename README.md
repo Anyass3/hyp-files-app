@@ -1,4 +1,5 @@
-# hyp-app
+# hyp-files-app
+[read about the in google Docs](https://docs.google.com/document/d/1fQzMs1ykgv3G-BIaiCB6dKrJvlZtI-ckZUtxjJ_YwjQ/edit?usp=sharing)
 
 ## runing app
 
@@ -11,7 +12,6 @@ npm run dev -- --host
 ```shell
 npm run server -- -h 0.0.0.0
 ```
-[read about the in google Docs](https://docs.google.com/document/d/1fQzMs1ykgv3G-BIaiCB6dKrJvlZtI-ckZUtxjJ_YwjQ/edit?usp=sharing)
 # some notes
 
 ### after running the app for the first time
