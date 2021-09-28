@@ -38,14 +38,10 @@ you can:
    
 
 ## todos
-- correct the tooltip
 - extract zip files
 - upload files
 - create new file or folder
 - create temporal or disposible drives useful for sharing files
-- sharing texts or files with hyperbeam or hyperswarm
-  - connecting to remote peers with just a phrase
-  - it's like it opens a temporal hole which closes as soon as file is received
 - sort files/folders based on:
   - type
   - 0>9>a>z
