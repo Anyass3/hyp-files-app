@@ -7,6 +7,7 @@ interface ContextMenuItem {
 	hidden?: bool;
 	options?: { emit?: Function };
 	items?: ContextMenuItems;
+	pending?: boolean;
 }
 
 declare type ContextMenuItems = Array<ContextMenuItem>;
@@ -17,6 +18,16 @@ interface ContextMenuEventDetail {
 	path?: string;
 	pos: { x: number; y: number };
 }
+interface ToolTip {
+	name: string;
+	path: string;
+	isFile: boolean;
+	size: number;
+	ctype: string;
+	mtime: string;
+	blocks: number;
+}
+
 interface ImportMetaEnv {
 	VITE_API_URL: string;
 	VITE_API_PORT: number;

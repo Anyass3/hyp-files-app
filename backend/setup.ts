@@ -16,20 +16,25 @@ import fs from 'fs';
 // #TODO create a change host name to avoid storage misplacement
 
 export const setupCorestore = async (
-	{ storage = Settings().storage, oldStorage = null, network = true } = {} as {
+	{ storage = Settings().publicStorage, oldStorage = null, network = true } = {} as {
 		storage?;
 		oldStorage?;
 		network?: boolean;
 	}
 ) => {
+	let parentStorage = Settings().storage;
+	if (parentStorage) {
+		parentStorage = './.storage';
+		setSettings('publicStorage', parentStorage);
+	}
 	if (!storage) {
 		storage = 'public';
-		setSettings('storage', storage);
+		setSettings('publicStorage', storage);
 	}
 	// let server;
-	storage = resolve(join('./.storage', storage));
+	storage = resolve(join(parentStorage, storage));
 	if (oldStorage) {
-		const oldstorage = resolve(join('./.storage', oldStorage));
+		const oldstorage = resolve(join(parentStorage, oldStorage));
 		if (fs.existsSync(oldstorage)) {
 			fs.renameSync(oldstorage, storage);
 		}

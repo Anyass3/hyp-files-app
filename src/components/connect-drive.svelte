@@ -1,13 +1,15 @@
 <script>
 	import store from '$store';
 	const socket = store.g('socket');
-	let key, name, anounce, lookup;
+	let key, name, _private;
 	const clear = () => {
 		name = '';
 		key = '';
+		_private = false;
 	};
 	clear();
-	let new_drive = true;
+	let new_drive = false;
+	$: console.log(key, name, _private);
 </script>
 
 <div>
@@ -22,28 +24,33 @@
 	<div class="flex gap-2 flex-wrap">
 		{#if new_drive}
 			<div class="">
-				<label class="  " for="input#name">Drive Name</label><br />
+				<label class="" for="input#name">Drive Name</label><br />
 				<input id="name" bind:value={name} class="dark:ring-gray-400" placeholder="awesome" />
 			</div>
 			<div class="">
-				<label class="  " for="input#key">never replicate</label><br />
+				<label class="" for="connect-drive-key">Private</label><br />
 				<input
-					id="key"
+					id="connect-drive-key"
 					type="checkbox"
-					bind:value={key}
-					class="dark:ring-gray-400"
+					bind:value={_private}
+					class="dark:ring-gray-400 w-8 h-8"
 					placeholder="[a-z0-9]{'{64}'}"
 				/>
 			</div>
 		{:else}
 			<div class="">
-				<label class="  " for="input#name">Drive Name</label><br />
-				<input id="name" bind:value={name} class="dark:ring-gray-400" placeholder="awesome" />
+				<label class="  " for="connect-drive-name">Drive Name</label><br />
+				<input
+					id="connect-drive-name"
+					bind:value={name}
+					class="dark:ring-gray-400"
+					placeholder="awesome"
+				/>
 			</div>
 			<div class="">
-				<label class="  " for="input#key">Drive Key</label><br />
+				<label class="  " for="connect-drive-key">Drive Key</label><br />
 				<input
-					id="key"
+					id="connect-drive-name"
 					bind:value={key}
 					class="dark:ring-gray-400"
 					placeholder="[a-z0-9]{'{64}'}"
@@ -52,22 +59,33 @@
 		{/if}
 	</div>
 	<div class="flex pt-1">
-		<button
-			on:click={() => {
-				socket.signal('add-drive', { name, key });
-				clear();
-			}}
-			class="text-white mr-1 p-2 rounded-md text-xl active:ring ring-blue-500 dark:ring-gray-500  bg-blue-600 dark:bg-gray-600"
-			>Add Drive</button
-		>
-		<button
-			on:click={() => {
-				socket.signal('connect-drive', { name, key });
-				clear();
-			}}
-			class="text-white mr-1 p-2  rounded-md text-xl active:ring ring-blue-500 dark:ring-gray-500  bg-blue-600 dark:bg-gray-600"
-			>Connect Drive</button
-		>
+		{#if new_drive}
+			<button
+				on:click={() => {
+					socket.signal('create-drive', { name, _private });
+					clear();
+				}}
+				class="text-white mr-1 p-2 rounded-md text-xl active:ring ring-blue-500 dark:ring-gray-500  bg-blue-600 dark:bg-gray-600"
+				>Create a New</button
+			>
+		{:else}
+			<button
+				on:click={() => {
+					socket.signal('add-drive', { name, key });
+					clear();
+				}}
+				class="text-white mr-1 p-2 rounded-md text-xl active:ring ring-blue-500 dark:ring-gray-500  bg-blue-600 dark:bg-gray-600"
+				>Connect and Save Drive</button
+			>
+			<button
+				on:click={() => {
+					socket.signal('connect-drive', { name, key });
+					clear();
+				}}
+				class="text-white mr-1 p-2  rounded-md text-xl active:ring ring-blue-500 dark:ring-gray-500  bg-blue-600 dark:bg-gray-600"
+				>Connect Drive</button
+			>
+		{/if}
 	</div>
 </div>
 

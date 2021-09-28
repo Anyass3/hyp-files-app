@@ -101,12 +101,24 @@ async function start() {
 		console.log('process exit');
 		process.exit();
 	});
-	process.on('uncaughtExceptionMonitor', async (err, origin) => {
-		emitter.broadcast('notify-danger', 'uncaughtException::closing server ...');
-		emitter.log(colors.red('uncaughtExceptionMonitor'), err, origin);
-		emitter.log(colors.cyan('cleaning up ...'));
-		for (let cleanup of api.cleanups) await cleanup();
-		process.exit();
+	let uncaughtExceptions = 0;
+	let uncaughtExceptionsTimeoutId;
+	process.on('uncaughtException', async (err, origin) => {
+		clearTimeout(uncaughtExceptionsTimeoutId);
+		emitter.log(colors.red('uncaughtException'), err, origin);
+		emitter.broadcast('notify-danger', err.message);
+		if (uncaughtExceptions > 5) {
+			emitter.broadcast(
+				'notify-danger',
+				uncaughtExceptions + ' uncaughtException in 30 secs. closing server ...'
+			);
+			emitter.log(colors.cyan('cleaning up ...'));
+			for (let cleanup of api.cleanups) await cleanup();
+			process.exit();
+		} else {
+			uncaughtExceptions += 1;
+			uncaughtExceptionsTimeoutId = setTimeout(() => (uncaughtExceptions = 0), 30000);
+		}
 	});
 	manageChildProcess(api);
 	const port = process.env.PORT || 3788;

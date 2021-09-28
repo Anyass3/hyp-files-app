@@ -99,7 +99,9 @@
 
 <div class="flex justify-center flex-grow h-full w-full">
 	{#if loading}
-		<Spinner size={200} thickness={2} />
+		<div class="grid place-items-center w-full pt-10">
+			<Spinner size={200} thickness={2} />
+		</div>
 	{:else}
 		<div
 			class="flex flex-col flex-grow h-full px-2 {$render && filename.endsWith('.md')

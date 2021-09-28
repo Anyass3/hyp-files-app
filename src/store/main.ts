@@ -4,6 +4,8 @@ import { notifier } from '@beyonk/svelte-notifications';
 import { API, api } from '$lib/getAPi';
 import { toQueryString } from '$lib/utils';
 import { extractLang } from '$lib/md-hljs';
+import _ from 'lodash';
+import randomWords from 'random-words';
 
 const isMedia = (ctype, img = true) => {
 	if (!ctype) ctype = '';
@@ -25,7 +27,7 @@ export default {
 		context_menu: [],
 		pos: { x: 0, y: 0 },
 		clipboard: null,
-		tooltip: false,
+		selected: null,
 		notify: notifier,
 		hideFilemenu: true,
 		render: false,
@@ -47,6 +49,13 @@ export default {
 				}
 			}
 			return state.dirs;
+		},
+		drives(state, dkey) {
+			const drives = [
+				...(state.serverStore.get().drives?.drives || []),
+				{ name: 'file system', key: 'fs' }
+			];
+			return dkey ? drives : drives.find((drive) => drive.dkey === dkey);
 		}
 	},
 	mutations: {
@@ -62,13 +71,16 @@ export default {
 		}
 	},
 	actions: {
-		open({ dispatch }, { path, isFile, size, storage, dkey, dir, ctype, inBrowser, silent }) {
-			console.log('openopenopen', isFile);
-			if (isFile) {
-				dispatch('openFile', { path, size, storage, dkey, ctype, inBrowser });
-			} else {
-				dispatch('openFolder', { dir, path, dkey, silent, storage });
-			}
+		open(
+			{ dispatch },
+			{ path, isFile, size, storage, dkey, dir, ctype, inBrowser, silent, offline }
+		) {
+			if (browser)
+				if (isFile) {
+					dispatch('openFile', { path, size, storage, dkey, ctype, inBrowser });
+				} else {
+					dispatch('openFolder', { dir, path, dkey, silent, storage, offline });
+				}
 		},
 		async openFile({ state }, { path, size, storage, dkey, ctype, inBrowser = false }: any = {}) {
 			if (!ctype || ctype === 'application/octet-stream') {
@@ -85,6 +97,12 @@ export default {
 			const view_args =
 				storage + toQueryString({ path: encodeURIComponent(path), dkey, ctype, size });
 			if (isMedia(ctype, true)) {
+				state.socket.signal('offline-access', {
+					path,
+					dkey,
+					start: 0,
+					end: Math.min(512000, size)
+				}); // intended to start streaming faster
 				if (!ctype.includes('image') && !inBrowser && state.serverStore.get().isMpvInstalled) {
 					const url =
 						API +
@@ -110,42 +128,75 @@ export default {
 				else if (ctype) state.notify.warning('sorry  cannot open file type: ' + ctype);
 			}
 		},
-		openFolder({ state, commit, dispatch }, { dir, path, dkey, silent, storage }) {
+		async openFolder({ state, commit, dispatch }, { dir, path, dkey, silent, storage, offline }) {
 			dir = dir || '/';
 			if (path) {
 				dir = path;
 				commit('updateDirs', dkey, path);
 			}
-			if (!state.socket) return;
+			if (!state.socket?.connected) await dispatch('startConnection');
 			if (!silent) {
-				// commit('folder', []);
+				// commit('folderItems', []);
 				dispatch('loading', 'load-page');
+				dispatch('selected', null);
+				dispatch('folder', { path, storage, dkey, offline });
 			}
 			const opts = { dir, show_hidden: state.show_hidden.get() };
-			if (storage === 'fs') {
-				state.socket.on('ready', () => {
+			const getFiles = () => {
+				if (storage === 'fs') {
 					state.socket.signal('fs-list', opts);
-				});
-				state.socket.signal('fs-list', opts);
-			} else {
-				state.socket.on('ready', () => {
+				} else {
 					state.socket.signal('drive-list', { ...opts, dkey });
-				});
-				state.socket.signal('drive-list', { ...opts, dkey });
-			}
-			console.log('openFolderopenFolder');
+				}
+			};
+			getFiles();
 		},
 		setupMenuItems(
 			{ dispatch, g, state },
-			{ size, storage, dkey, isFile, path, dir, name, ctype }
+			{ size, storage, dkey, isFile, path, dir, name, ctype, offline = true }
 		) {
-			// console.log({ size, storage, dkey, isFile, path, ctype });
+			const offlinePending = state.serverStore.get().offlinePending[dkey] || [];
+			const isWritable = g('drives', dkey)?.writable ?? true;
 			const items: ContextMenuItems = [
 				{
 					name: 'open',
 					action: () => {
 						// console.log('open', { size, storage, dkey, isFile, dir, path });
 						dispatch('open', { size, storage, dkey, isFile, dir, path, ctype });
+						dispatch('context_menu', []);
+					}
+				},
+				{
+					name: `send ${!isFile ? 'directory' : 'file'}`,
+					action() {
+						dispatch('showPrompt', {
+							onaccept: (phrase) =>
+								state.socket.signal('share send', { dkey, isFile, phrase, path }),
+							message: `Send ${_.last(path.split('/'))}${!isFile ? ' as zip' : ''}`,
+							input: {
+								value: randomWords({ exactly: 3, join: ' ' }),
+								label: 'You can replace phrase',
+								required: 'cannot send without a phrase'
+							},
+							acceptText: 'send file'
+						});
+						dispatch('context_menu', []);
+					}
+				},
+				{
+					name: `receive file`,
+					action() {
+						dispatch('showPrompt', {
+							onaccept: (phrase) =>
+								state.socket.signal('share receive', { dkey, isFile, phrase, path }),
+							message: `Receive file ${isFile ? 'and Replace' : 'in'} ${_.last(path.split('/'))}`,
+							input: {
+								value: '',
+								label: 'Enter phrase',
+								required: 'cannot receive a file without a phrase'
+							},
+							acceptText: 'receive file'
+						});
 						dispatch('context_menu', []);
 					}
 				},
@@ -205,45 +256,98 @@ export default {
 
 						state.socket.on(event, onpaste);
 					},
-					disabled: !g('clipboard').get()
+					disabled: !g('clipboard').get() || !isWritable
 				},
 				{
 					name: 'delete',
 					action: () => {
 						state.socket.signal('delete-path-item', { path, dkey, name });
 						dispatch('context_menu', []);
-					}
+					},
+					disabled: !isWritable
 				},
 				{
-					name: 'make offline',
-					action() {},
+					name: 'offline access',
+					action() {
+						state.socket.signal('offline-access', { path, dkey });
+						dispatch('context_menu', []);
+					},
 					options: {},
-					disabled: true,
-					hidden: true
+					disabled: offline,
+					pending: offlinePending.includes(path),
+					hidden: storage === 'fs'
 				}
 			];
 			dispatch('context_menu', items);
 		},
 		setupMainMenuItems({ dispatch, commit, g, state }, { storage, dkey, dir, name }) {
+			const offlinePending = state.serverStore.get()?.offlinePending[dkey] || [];
+			const isWritable = g('drives', dkey)?.writable ?? true;
+			const item = state.folder.get();
+			const offline = item?.offline ?? true;
 			const items: ContextMenuItems = [
 				{
-					name: 'new',
+					name: 'new file',
 					action() {},
 					options: {},
-					disabled: true
+					disabled: true || !isWritable
 				},
 				{
-					name: 'make offline',
+					name: 'new folder',
 					action() {},
 					options: {},
-					disabled: true,
+					disabled: true || !isWritable
+				},
+				{
+					name: 'send directory',
+					action() {
+						dispatch('showPrompt', {
+							onaccept: (phrase) =>
+								state.socket.signal('share send', { dkey, isFile: false, phrase, path: dir }),
+							message: `Send ${_.last(dir.split('/'))} as zip`,
+							input: {
+								value: randomWords({ exactly: 3, join: ' ' }),
+								label: 'You can replace phrase',
+								required: 'cannot send without a phrase'
+							},
+							acceptText: 'send file'
+						});
+						dispatch('context_menu', []);
+					}
+				},
+				{
+					name: 'receive file',
+					action() {
+						dispatch('showPrompt', {
+							onaccept: (phrase) =>
+								state.socket.signal('share receive', { dkey, isFile: false, phrase, path: dir }),
+							message: `Receive file in ${_.last(dir.split('/'))}`,
+							input: {
+								value: '',
+								label: 'Enter phrase',
+								required: 'cannot receive a file without a phrase'
+							},
+							acceptText: 'receive file'
+						});
+						dispatch('context_menu', []);
+					}
+				},
+				{
+					name: 'offline access',
+					action() {
+						state.socket.signal('offline-access', { path: dir, dkey });
+						dispatch('context_menu', []);
+					},
+					options: {},
+					disabled: offline,
+					pending: !offline && offlinePending?.includes(dir),
 					hidden: storage === 'fs'
 				},
 				{
 					name: 'upload',
 					action() {},
 					options: {},
-					disabled: true
+					disabled: true || !isWritable
 				},
 				{
 					name: 'paste',
@@ -264,7 +368,7 @@ export default {
 
 						state.socket.on(event, onpaste);
 					},
-					disabled: !g('clipboard').get()
+					disabled: !g('clipboard').get() || !isWritable
 				}
 			];
 			dispatch('context_menu', items);

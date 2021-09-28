@@ -44,7 +44,7 @@ export const debouncedStore = (initial_value, delay = 1000) => {
 
 export const hash = () => Math.floor(2147483648 * Math.random()).toString(36);
 
-export const func = () => null;
+export const func = (...args) => null;
 
 export const arrayRemove = (array: Array<any>, item) => {
 	let temp = new Set(array);

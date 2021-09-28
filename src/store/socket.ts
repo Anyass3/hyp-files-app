@@ -1,8 +1,16 @@
+import { browser } from '$app/env';
 import connection from '$lib/socket';
 import { Pagination } from '$lib/utils';
+import _ from 'lodash-es';
+let connectionMsg = 'connections ready';
+const notifyConnected = _.debounce((notify, settings) => {
+	console.log('settings', settings);
+	notify.info(connectionMsg);
+	connectionMsg = 'reconnected';
+});
 
 export default {
-	noStore: ['api', 'socket', 'serverStore', 'pagination'],
+	noStore: ['api', 'socket', 'serverStore'],
 	storeType: {
 		dkey: 'sessionPersistantStore',
 		show_hidden: 'sessionPersistantStore',
@@ -16,14 +24,24 @@ export default {
 		serverStore: null,
 		drives: [],
 		dkey: 'fs',
-		folder: [],
+		folder: {},
+		folderItems: [],
 		dirs: { fs: '/' },
 		show_hidden: true
 	},
 	actions: {
 		async startConnection({ state, commit, dispatch, g }) {
+			if (state.socket && state.api) {
+				if (!state.socket.connected)
+					return new Promise((resolve, reject) => {
+						state.socket.on('signal-connect', (settings) => {
+							notifyConnected(state.notify, settings);
+							resolve(settings);
+						});
+					});
+				else return;
+			}
 			console.log('starting connection');
-			if (state.socket && state.api) return;
 			const { socket, api, serverStore } = connection();
 			dispatch('socket', socket);
 			dispatch('api', api);
@@ -35,19 +53,39 @@ export default {
 				socket.signal('signal-connect');
 			});
 
-			socket.on('signal-connect', (settings) => {
-				console.log('settings', settings);
-				state.notify.info('connections ready');
-			});
-			socket.on('folder', ({ items = [], page = 0, total = 0 } = {}) => {
-				// console.log('folder', { items, page, total });
+			socket.on('folder-items', ({ items = [], page = 0, total = 0 } = {}) => {
+				// console.log('folderItems', { items, page, total });
 				dispatch('pagination', new Pagination({ total, page }));
 				if (page === 1) {
-					commit('folder', items || []);
+					commit('folderItems', items || []);
 				} else {
-					state.folder.update((folder) => [...folder, ...(items || [])]);
+					state.folderItems.update((folderItems) => [...folderItems, ...(items || [])]);
 				}
 			});
+			socket.on('offline-access', ({ dkey, path }) => {
+				if (state.dkey.get() === dkey)
+					state.folderItems.update((folderItems) =>
+						folderItems.map((item) => {
+							if (item.path === path) item.stat.offline = true;
+							return item;
+						})
+					);
+				else if (path === state.folder.get().path)
+					state.folder.update((folder) => {
+						folder.stat.offline = true;
+						return folder;
+					});
+			});
+			// socket.on('offline-access-in-progress', ({ dkey, path }) => {
+			// 	if (state.dkey.get() === dkey)
+			// 		state.folderItems.update((folderItems) =>
+			// 			folderItems.map((item) => {
+			// 				if (item.path === path) item.stat['offlinePending'] = true;
+			// 				return item;
+			// 			})
+			// 		);
+			// 	// console.log(state.folderItems.get(), { dkey, path });
+			// });
 			socket.on('notify-danger', async (msg) => {
 				// console.log(msg);
 				state.notify.danger(msg, 10000);
@@ -123,6 +161,12 @@ export default {
 
 			socket.on('disconnection', () => {
 				console.log('disconnected');
+			});
+			return new Promise((resolve, reject) => {
+				socket.on('signal-connect', (settings) => {
+					notifyConnected(state.notify, settings);
+					resolve(settings);
+				});
 			});
 		}
 	}

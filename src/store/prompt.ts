@@ -3,37 +3,47 @@ import { func } from './utils';
 export const initPrompt = ({
 	visible = false,
 	message = 'Here is a Prompt',
+	input = null,
 	acceptText = 'accept',
 	dismissText = 'dismiss',
 	onaccept = func,
 	ondismiss = func
 } = {}) => ({
+	input,
 	visible,
 	message,
-	onaccept: () =>
-		new Promise((resolve, reject) => {
+	onaccept() {
+		return new Promise((resolve, reject) => {
+			if (this.input) {
+				if (!this.input.value && this.input.required) {
+					reject(this.input.required);
+					return;
+				}
+			}
 			try {
-				resolve(onaccept());
+				resolve(onaccept(this.input?.value));
 			} catch (err) {
 				reject(err);
 			}
-		}),
+		});
+	},
 
-	ondismiss: () =>
-		new Promise((resolve, reject) => {
+	ondismiss() {
+		return new Promise((resolve, reject) => {
 			try {
 				resolve(ondismiss());
 			} catch (err) {
 				reject(err);
 			}
-		}),
+		});
+	},
 	acceptText,
 	dismissText
 });
 
 export default {
 	state: {
-		prompt: initPrompt() // prompt to used when new bundle of app is avialable (service workers)
+		prompt: initPrompt()
 	},
 
 	mutations: {

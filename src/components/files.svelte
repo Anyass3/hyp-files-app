@@ -5,28 +5,30 @@
 	import { crossfade } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import Spinner from '$components/spinner.svelte';
+	import BottomInfo from '$components/bottom-info.svelte';
 	import FolderIcon from 'icons/FolderIcon.svelte';
 	import FileIcon from 'icons/FileIcon.svelte';
 	import type { Writable } from 'svelte/store';
-	const files = store.g('folder');
+	const files = store.g('folderItems');
 
 	const loading: Writable<loading | false> = store.g('loading');
 
 	const dispatch = createEventDispatcher();
-
-	function open(path, stat) {
-		// if (path && !stat.isFile) $dir = path;
-		dispatch('open', {
-			...stat,
-			path
-		});
-		// debounce(() => (active = null), 500)();
-	}
-	function contextMenu(ev, name, path, stat) {
-		const pos = getPosition(ev);
-		dispatch('contextmenu', { ...stat, path, name, pos });
-		// debounce(() => (active = null), 500)();
-	}
+	const selected: Writable<ToolTip> = store.g('selected');
+	const mainEvent = (ev, open = true) => {
+		const element = ev.path.find((el) => el?.dataset?.data);
+		if (element) {
+			ev.preventDefault();
+			const data = JSON.parse(element.dataset.data);
+			if (open)
+				dispatch('open', {
+					...data
+				});
+			else $selected = data;
+		} else {
+			$selected = null;
+		}
+	};
 	const [send, receive] = crossfade({
 		duration: (d) => Math.sqrt(d * 100),
 		fallback(node, params) {
@@ -43,34 +45,35 @@
 			};
 		}
 	});
-	// function options(path) {
-	// 	if (active === path) active = '';
-	// 	else active = path;
-	// }
 	$: if ($files) $loading = false;
 </script>
 
-<div data-main-menu={true}>
+<div
+	data-files={true}
+	class="flex-grow"
+	on:dblclick={(ev) => mainEvent(ev)}
+	on:click={(ev) => mainEvent(ev, false)}
+>
 	{#if $loading === 'load-page'}
-		<Spinner />
+		<div class="grid place-items-center w-full pt-10">
+			<Spinner />
+		</div>
 	{/if}
 	<div
-		data-main-menu={true}
-		class="flex justify-between gap-2 flex-wrap pt-1"
+		class="flex justify-between gap-2 flex-wrap pt-1 pb-[8rem]"
 		class:hidden={$loading === 'load-page'}
+		data-files={true}
 	>
 		{#each $files || [] as { name, path, stat } (path)}
 			<div
+				class:selected={$selected?.path === path}
 				in:receive={{ key: path }}
-				on:contextmenu|preventDefault={(ev) => contextMenu(ev, name, path, stat)}
-				class="group anchor-tooltip context-menu__item"
+				class="group anchor-tooltip context-menu__item border border-no-color bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white group-hover:bg-gray-300 rounded-[3px]  dark:group-hover:bg-gray-500"
 				tabindex="-1"
+				data-data={JSON.stringify({ ...stat, path, name })}
 			>
 				<div class="relative">
-					<button
-						class="bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white group-hover:bg-gray-300 rounded-[3px]  dark:group-hover:bg-gray-500 active:ring cursor-pointer w-36 h-32 overflow-hidden"
-						on:dblclick={() => open(path, stat)}
-					>
+					<button class="cursor-pointer w-36 h-32 overflow-hidden">
 						<div class="flex justify-center">
 							{#if stat.isFile === true || (stat.isFile !== false && stat.isFile !== 'dir')}
 								<FileIcon size="4x" />
@@ -78,17 +81,26 @@
 								<FolderIcon size="4x" />
 							{/if}
 						</div>
-						<p class="text-semibold text-center select-none dark:text-white">
+						<p class="text-semibold text-center select-none dark:text-white break-words p-1">
 							{truncate(name)}
 						</p>
 					</button>
 				</div>
 			</div>
 		{/each}
-		<!-- {#if !$files?.length}
-			<div class="text-4xl md:text-7xl text-blue-400 dark:text-blue-300 p-3 md:p-4 lg:p-6">
-				this folder seems empty
-			</div>
-		{/if} -->
 	</div>
 </div>
+<BottomInfo />
+
+<style lang="postcss">
+	.selected {
+		@apply bg-gray-300 border-gray-400;
+		border-color: rgba(156, 163, 175, 1) !important;
+	}
+	:global(.dark) .selected {
+		@apply bg-gray-500;
+	}
+	.border-no-color {
+		border-color: transparent;
+	}
+</style>

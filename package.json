@@ -1,5 +1,5 @@
 {
-	"name": "hyp-app",
+	"name": "hyp-files-app",
 	"version": "0.0.1",
 	"scripts": {
 		"dev": "svelte-kit dev",
@@ -70,6 +70,7 @@
 		"mime": "^1.6.0",
 		"prompt-sync": "^4.2.0",
 		"pump": "^3.0.0",
+		"random-words": "^1.1.1",
 		"read-chunk": "^3.2.0",
 		"requirejs": "^2.3.6",
 		"sidebar-swipe": "^0.8.81",

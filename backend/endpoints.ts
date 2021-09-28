@@ -20,9 +20,12 @@ import _ from 'lodash';
 const config = Settings();
 const emitter = getEmitter();
 
-const showError = (storage: string, mediaPath: string) => {
-	emitter.broadcast('notify-danger', storage + '::' + mediaPath + '::media-path do not exist');
-	emitter.log(colors.red(storage + '::' + mediaPath + '::media-path do not exist'));
+const showError = (storage: string, mediaPath: string, message = 'media-path do not exist') => {
+	emitter.broadcast(
+		'notify-danger',
+		storage + '::' + _.last(mediaPath.split('/')) + '::' + message
+	);
+	emitter.log(colors.red(storage + '::' + mediaPath + '::' + message));
 };
 
 export default async function (app, api = makeApi()) {
@@ -60,7 +63,7 @@ export default async function (app, api = makeApi()) {
 			ctype = _.last(data.split(':')).trim();
 		}
 		res.send({ ctype });
-		console.log('/get-file-type', { ctype, storage, path: filePath, dkey });
+		emitter.log('/get-file-type', { ctype, storage, path: filePath, dkey });
 	});
 
 	app.get('/download', async (req, res) => {
@@ -144,7 +147,7 @@ export default async function (app, api = makeApi()) {
 				fileSize = fs.statSync(Path.join(config.fs, filePath)).size;
 			}
 			res.setHeader('Content-Length', fileSize);
-			fs.createReadStream(Path.join(config.fs, filePath));
+			fs.createReadStream(Path.join(config.fs, filePath)).pipe(res);
 		} else {
 			const drive = api.drives.get(dkey);
 
@@ -172,7 +175,7 @@ export default async function (app, api = makeApi()) {
 		res.status(200).end();
 	});
 	app.get('/media', async (req, res) => {
-		const mediaSize: number = req.query.size;
+		let mediaSize: number = req.query.size;
 		const ctype: string = req.query.ctype;
 		const storage: string = req.query.storage || 'fs'; //drive || fs
 		const mediaPath: string = Path.join(
@@ -184,18 +187,27 @@ export default async function (app, api = makeApi()) {
 
 		const drive = api.drives.get(dkey);
 
-		emitter.log('/media', { mediaSize, ctype, range, storage });
+		emitter.log('/media', { mediaSize, ctype, range, storage, mediaPath });
 
 		if (!range) {
 			//in case there's no range header
-			emitter.log('NO Range Header');
 			res.status(416).end('Wrong range');
+			emitter.log('NO Range Header');
 			return;
 		}
 
+		if (!mediaSize) {
+			try {
+				if (storage === 'fs') mediaSize = fs.statSync(Path.join(config.fs, mediaPath)).size;
+				else mediaSize = await drive.promises.stat(mediaPath).size;
+			} catch (err) {
+				showError(storage, mediaPath, err.message);
+				return res.end();
+			}
+		}
 		let ranges = range.replace(/bytes=/, '').split('-');
-		// range: "bytes=32324-"
-		const CHUNK_SIZE = 5024;
+
+		const CHUNK_SIZE = 512000; //500kb
 		const start = Number(ranges[0]);
 		const end = Math.min(Number(ranges[1]) || start + CHUNK_SIZE, mediaSize - 1);
 
@@ -211,16 +223,19 @@ export default async function (app, api = makeApi()) {
 
 		// Partial Content
 		res.writeHead(206, headers);
+		try {
+			const stream = (storage === 'fs' ? fs : drive).createReadStream(mediaPath, { start, end });
 
-		const stream = (storage === 'fs' ? fs : drive).createReadStream(mediaPath, { start, end });
-
-		stream.on('open', () => {
 			stream.pipe(res);
-		});
 
-		stream.on('error', (err) => {
-			showError(storage, mediaPath);
-			return res.end(err);
-		});
+			stream.on('error', (err) => {
+				showError(storage, mediaPath, err.message);
+				return res.end();
+			});
+			return;
+		} catch (err) {
+			showError(storage, mediaPath, err.message);
+			return res.end();
+		}
 	});
 }

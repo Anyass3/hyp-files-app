@@ -8,6 +8,7 @@ import startCore from './core.js';
 import { getEmitter, getBeeState, makeApi } from './state.js';
 import { Connect, Extention } from './peers.js';
 import Path from 'path';
+import { initiate, connect } from './share.js';
 import { v4 as uuidV4 } from 'uuid';
 
 const config = Settings();
@@ -30,9 +31,8 @@ export default async function () {
 	async function startDrive(
 		{ corestore, networker = undefined },
 		dkey,
-		{ replicate = false, name, announce = false, lookup = false }
+		{ _private = false, name }
 	) {
-		// console.log('networker', !!networker, announce, lookup, replicate);
 		let newNamespace = false;
 		let namespace = await getNamespace(dkey);
 		if (!namespace) {
@@ -45,16 +45,7 @@ export default async function () {
 		if (newNamespace) setNamespace(drive.$key, namespace);
 
 		if (networker) {
-			// if (replicate)
-			// 	networker.configure(drive.discoveryKey, {
-			// 		server: true,
-			// 		client: !drive.writable
-			// 	});
-			// else
-			networker.configure(drive.discoveryKey, {
-				server: drive.writable,
-				client: !drive.writable
-			});
+			networker.configure(drive.discoveryKey);
 		}
 
 		drive.on('close', () => {
@@ -74,11 +65,11 @@ export default async function () {
 
 	// let core = await startCore({...publicHyp, key: publicCoreKey});
 	let publicDrive = await startDrive(publicHyp, publicDriveKey, {
-		replicate: true,
+		_private: false,
 		name: 'public'
 	});
 	let privateDrive = await startDrive(privateHyp, privateDrivekey, {
-		replicate: false,
+		_private: true,
 		name: 'private'
 	});
 	// let ext = await Extention(core); // this will be used for chats
@@ -88,7 +79,7 @@ export default async function () {
 	if (!publicDrive.writable) {
 		// || !core.writable
 		const snapshot = bee.snapshot();
-		emitter.log(colors.red('snapshot: '), snapshot);
+		emitter.log(colors.red('snapshot: '), snapshot._checkouts);
 		// if (!core.writable) {
 		// 	core.close();
 		// 	core = await startCore({...publicHyp});
@@ -97,10 +88,11 @@ export default async function () {
 		if (!publicDrive.writable) {
 			publicDrive.close();
 			publicDrive = await startDrive(publicHyp, publicDriveKey, {
-				replicate: true,
+				_private: false,
 				name: 'public'
 			});
-			await drivesBee.put('public', { key: publicDrive?.$key, replicate: true });
+			publicDriveKey = publicDrive?.$key;
+			await drivesBee.put('public', { key: publicDrive?.$key, _private: false });
 		}
 	}
 	// if (!publicCoreKey && core.writable) {
@@ -145,10 +137,10 @@ export default async function () {
 		};
 
 		if (!api.getDrive(privateDrive.$key) && !(privateDrive.closed || privateDrive.closing)) {
-			api.addDrive({ key: privateDrive.$key, name: 'private' }, privateDrive);
+			api.addDrive({ key: privateDrive.$key, name: 'private', _private: true }, privateDrive);
 		}
 		if (!api.getDrive(publicDrive.$key) && !(publicDrive.closed || publicDrive.closing)) {
-			api.addDrive({ key: publicDrive.$key, name: 'public' }, publicDrive);
+			api.addDrive({ key: publicDrive.$key, name: 'public', _private: false }, publicDrive);
 		}
 		// if (!core?.opened) {
 		// 	emitter.log(colors.blue(`!core?.opened`), !core?.opened, core);
@@ -158,7 +150,7 @@ export default async function () {
 		if (!publicDrive?.opened) {
 			emitter.log(colors.blue(`!publicDrive??.opened`), !publicDrive?.opened);
 			publicDrive = await startDrive(publicHyp, publicDriveKey, {
-				replicate: false,
+				_private: false,
 				name: 'public'
 			});
 			publicDriveKey = publicDrive.$key;
@@ -215,18 +207,16 @@ export default async function () {
 		channel.on('join peer', async (corekey) => {
 			// const { peerCore, peerDrive, peerExt } = await Connect(publicHyp, corekey, api);
 		});
-		channel.on('connect-drive', async ({ name, key, replicate = true }) => {
+		channel.on('connect-drive', async ({ name, key, _private }) => {
 			if (!key?.match(/^[a-z0-9]{64}$/)) {
 				emitter.broadcast('notify-warn', 'please input a valid drive key');
 				return;
 			}
-			const network = privateDrivekey !== key;
-			const savedDrives = await getBeeState(drivesBee);
-			emitter.log('saved-drives', savedDrives);
+			_private = _private ?? api.getSavedDrive(key)?._private;
 
 			if (!name) name = getRandomStr();
-			const drive = await startDrive(network ? publicHyp : privateHyp, key, { replicate, name }); /// TODO: announce, lookup
-			api.addDrive({ key: drive.$key, name }, drive);
+			const drive = await startDrive(!_private ? publicHyp : privateHyp, key, { _private, name }); /// TODO: announce, lookup
+			api.addDrive({ key: drive.$key, name, _private }, drive);
 			// channel.signal('drive-connected', key);
 			emitter.broadcast('notify-success', `${name} drive connected`);
 			if (publicDriveKey === key) {
@@ -237,7 +227,7 @@ export default async function () {
 			refreshSavedDrives({ key, name }, true);
 		});
 
-		channel.on('save-drive', async ({ key, name, network = false, replicate = true }) => {
+		channel.on('save-drive', async ({ key, name, _private, connected = true }) => {
 			if (!key?.match(/[a-z0-9]{64}/)) {
 				emitter.broadcast('notify-warn', 'please input a valid drive key');
 				return;
@@ -247,16 +237,36 @@ export default async function () {
 				if (drive) name = drive.name;
 				else name = getRandomStr();
 			}
-			await drivesBee.put(name, { key, network, replicate }); // the drives bee
-			api.addSavedDrive(key, name, true);
+			const connectionDrive = api.getDrive(key);
+			if (connectionDrive) {
+				_private = _private ?? connectionDrive?._private;
+			}
+			await drivesBee.put(name, { key, _private }); // the drives bee
+			api.addSavedDrive({ key, name, connected, _private });
 			// channel.signal('drive-saved', key);
 			emitter.broadcast('notify-success', `${name} drive saved`);
 			emitter.log('saved-drive');
 		});
 
-		channel.on('add-drive', async ({ name, key, network = false, replicate = true }) => {
-			channel.emit('connect-drive', { name, key, network, replicate });
-			channel.emit('save-drive', { name, key, network, replicate });
+		channel.on('add-drive', async ({ name, key, _private }) => {
+			channel.emit('save-drive', { name, key, _private, connected: false });
+			channel.emit('connect-drive', { name, key, _private });
+		});
+		channel.on('create-drive', async ({ name, _private = false }) => {
+			if (!name) {
+				emitter.broadcast('notify-danger', 'sorry drive must have a name');
+				return;
+			}
+			const drive = await startDrive(!_private ? publicHyp : privateHyp, undefined, {
+				_private,
+				name
+			}); /// TODO: announce, lookup
+			api.addDrive({ key: drive.$key, name, _private }, drive);
+			await drivesBee.put(name, { key: drive.$key, _private }); // the drives bee
+			api.addSavedDrive({ key: drive.$key, name, connected: true, _private });
+			// channel.signal('drive-saved', key);
+			emitter.broadcast('notify-success', `${name} drive created and connected`);
+			emitter.log('created drive ' + drive.$key);
 		});
 
 		channel.on('check-drive', async (name) => {
@@ -274,20 +284,35 @@ export default async function () {
 			if (!drive) return;
 
 			emitter.log('closing-drive', name);
-			await drive.close();
+			drive.close();
 
 			emitter.log('closed-drive', name);
 
 			api.removeDrive(key);
 			refreshSavedDrives({ key, name });
+			if (!api.getSavedDrive(key)) {
+				// await drive.promises.destroyStorage();
+				// emitter.broadcast('notify-info', name + ' drive storage destroyed');
+			}
 		});
 
 		channel.on('delete-drive', async ({ key, name }) => {
-			const drive = drivesBee.del(name) || { name };
+			const _drive = drivesBee.del(name) || { name };
 			api.removeSavedDrive(key);
 			emitter.broadcast('notify-success', `drive "${name}" deleted`);
 			// channel.signal('deleted-drive', drive);
 			emitter.log(colors.red('deleted-drive'));
+			if (!api.getDrive(key)) {
+				// let namespace = await getNamespace(key);
+				// const driveStore = (_drive._private ? privateHyp : publicHyp).corestore.namespace(
+				// 	namespace
+				// );
+				// const drive = new Drive(driveStore, key);
+				// await drive.promises.ready();
+				// //@ts-ignore
+				// await drive.promises.destroyStorage();
+				// emitter.broadcast('notify-info', name + ' drive storage destroyed');
+			}
 		});
 		channel.on('log', async (log) => {
 			// core.append(log);
@@ -297,17 +322,23 @@ export default async function () {
 			const drive = await api.drives.get(dkey);
 			const items = await drive?.$list?.(dir, false, { ...opts, paginate: true });
 			// emitter.log('drive-listitems', items);
-			channel.signal('folder', items);
+			channel.signal('folder-items', items);
 		});
 
-		channel.on('drive-download', async ({ dkey, dir }) => {
+		channel.on('offline-access', async ({ dkey, path, start, end }) => {
 			const drive = await api.drives.get(dkey);
-			await drive?.$download?.(dir);
+			channel.signal('offline-access-in-progress', { dkey, path });
+			api.addOfflinePending(dkey, path);
+			await drive?.$download?.(path, { start, end });
+			channel.signal('offline-access', { dkey, path });
+		});
+		emitter.on('rm-offline-pending', (dkey, path) => {
+			api.rmOfflinePending(dkey, path);
 		});
 		channel.on('fs-list', async ({ dir, ...opts }) => {
 			emitter.log('fs-list', dir);
 			const items = await privateDrive.$listfs(dir, { ...opts, paginate: true });
-			channel.signal('folder', items);
+			channel.signal('folder-items', items);
 		});
 		channel.on('privateDrive:makedir', privateDrive.$makedir);
 		channel.on('paste-copied', async ({ src, dest }) => {
@@ -344,6 +375,26 @@ export default async function () {
 		channel.on('child-process:kill', (pid) => {
 			emitter.log('child-process:kill', pid);
 			emitter.emit('child-process:kill', pid);
+		});
+		channel.on('share send', ({ phrase = 'yeay share test', dkey, path, ...stat }) => {
+			// if (dkey === 'fs') {
+			// const stream = fs.createWriteStream(path);
+			initiate(api, { phrase, dkey, path, stat });
+			// } else {
+			// 	const drive = api.drives.get(dkey);
+			// 	// const stream = drive.createReadStream(path);
+			// 	initiate({ key, dkey, path, stat });
+			// }
+		});
+		channel.on('share receive', ({ phrase = 'yeay share test', dkey, path, ...stat }) => {
+			// if (dkey === 'fs') {
+			// const stream = fs.createWriteStream(path);
+			connect(api, { phrase, dkey, path, stat });
+			// } else {
+			// 	const drive = api.drives.get(dkey);
+			// 	// const stream = drive.createWriteStream(path);
+			// 	connect({ key, dkey, path, stat });
+			// }
 		});
 		channel.on('disconnect', async () => {
 			// NOTE:: allow to run in background for now

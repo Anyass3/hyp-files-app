@@ -62,11 +62,12 @@ export const getBeeState = async (bee) => {
 interface Store {
 	state: {
 		isMpvInstalled?: boolean;
-		savedDrives?: Array<{ key: string; name: string; connected: boolean }>;
-		drives?: Array<{ key: string; name: string }>;
+		savedDrives?: Array<{ key: string; name: string; connected: boolean; _private: boolean }>;
+		drives?: Array<{ key: string; name: string; writable: boolean; _private: boolean }>;
 		peers?: Array<{ corekey: string; drivekey: string; username: string }>;
 		child_processes?: Array<{ pid: number; cm: string }>;
 		dataUsage?: {};
+		offlinePending?: Record<string, string[]>;
 	};
 }
 export function makeApi(
@@ -80,6 +81,7 @@ export function makeApi(
 	state.drives = [];
 	state.peers = [];
 	state.child_processes = [];
+	state.offlinePending = {};
 	state.dataUsage = {
 		total: 0,
 		today: 0,
@@ -148,8 +150,8 @@ export function makeApi(
 			return peer;
 		},
 		/// state.savedDrives
-		async addSavedDrive(key, name, connected = false) {
-			state.savedDrives.push({ key, name, connected });
+		async addSavedDrive({ key, name, connected = true, _private = false }) {
+			state.savedDrives.push({ key, name, connected, _private });
 			//@ts-ignore
 			store.announceStateChange();
 		},
@@ -170,8 +172,8 @@ export function makeApi(
 			store.announceStateChange();
 		},
 		/// state.drives
-		async addDrive({ key, name }, drive) {
-			state.drives.push({ key, name });
+		async addDrive({ key, name, _private }, drive) {
+			state.drives.push({ key, name, writable: drive.writable, _private });
 			//@ts-ignore
 			store.announceStateChange();
 			if (drive) drives.set(key, drive);
@@ -206,6 +208,21 @@ export function makeApi(
 		},
 		getChildProcesses() {
 			return state.child_processes;
+		},
+		getOfflinePending(dkey?) {
+			return !dkey ? state.offlinePending : state.offlinePending[dkey] || [];
+		},
+		addOfflinePending(dkey, path) {
+			const offlinePending = this.getOfflinePending(dkey);
+			console.log('offlinePending,', offlinePending, dkey, state.offlinePending[dkey]);
+			state.offlinePending[dkey] = offlinePending.concat(path);
+			//@ts-ignore
+			store.announceStateChange();
+		},
+		rmOfflinePending(dkey, path) {
+			state.offlinePending[dkey] = this.getOfflinePending(dkey).filter((p) => p !== path);
+			//@ts-ignore
+			store.announceStateChange();
 		}
 	};
 }

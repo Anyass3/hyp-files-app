@@ -8,15 +8,20 @@
 </script>
 
 <div class="md:flex md:justify-between {cls}">
-	<div class="hidden md:block">
-		<a href="/" sveltekit:prefetch class:active={$page.path === '/'} class="anchor text-3xl">Hyp</a>
+	<div class="hidden md:block h-[fit-content]">
+		<a
+			href="/"
+			sveltekit:prefetch
+			class:active={$page.path === '/'}
+			class="anchor text-3xl nav-item py-1 pr-2">Hyp</a
+		>
 	</div>
 	<div class="flex justify-between flex-md-row flex-col">
 		{#each ['files'] as navLink}
-			<div class="nav-link lead3">
+			<div>
 				<a
 					sveltekit:prefetch
-					class="anchor p-3 capitalize"
+					class="anchor text-3xl capitalize nav-item"
 					class:active={$page.path === '/' + navLink}
 					href={`/${navLink}`}>{navLink}</a
 				>

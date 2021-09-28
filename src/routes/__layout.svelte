@@ -39,11 +39,11 @@
 <Prompt />
 <div
 	id="main"
-	class="w-full min-h-screen mx-auto flex flex-col justify-between bg-white dark:bg-gray-800 shadow-md select-none"
+	class="w-full min-h-screen mx-auto flex flex-col justify-between bg shadow-md select-none"
 >
 	<div class="h-full flex flex-col flex-grow">
 		<Header />
-		<div class="w-screen h-2" use:NavInterObserver />
+		<!-- <div class="w-screen h-2" use:NavInterObserver /> -->
 
 		<!-- <div
 			class="w-screen h-1"
@@ -61,11 +61,3 @@
 {#if $page.path === '/files'}
 	<ContextMenu />
 {/if}
-
-<style>
-	@media (min-width: 480px) {
-		footer {
-			padding: 40px 0;
-		}
-	}
-</style>

@@ -23,13 +23,23 @@
 			<div class="flex gap-1">
 				{#if !['public', 'private'].includes(name)}
 					<button
-						on:click={() => socket.signal('delete-drive', { key, name })}
+						on:click={() =>
+							store.dispatch('showPrompt', {
+								onaccept: () => socket.signal('delete-drive', { key, name }),
+								acceptText: 'Delete Drive',
+								message: 'Just trying to make sure'
+							})}
 						class="bg-red-200 p-1 mx-1 active:ring-1 rounded-md text-red-700">delete</button
 					>
 				{/if}
 				{#if connected}
 					<button
-						on:click={() => socket.signal('close-drive', { key, name })}
+						on:click={() =>
+							store.dispatch('showPrompt', {
+								onaccept: () => socket.signal('close-drive', { key, name }),
+								acceptText: 'Disconnect Drive',
+								message: 'Just trying to make sure'
+							})}
 						class="bg-red-200 p-1 mx-1 active:ring-1 rounded-md text-red-700">off</button
 					>
 					<button class="bg-green-200 p-1 rounded-sm text-green-700">connected</button>
@@ -59,7 +69,12 @@
 					>
 				{/if}
 				<button
-					on:click={() => socket.signal('close-drive', { key, name })}
+					on:click={() =>
+						store.dispatch('showPrompt', {
+							onaccept: () => socket.signal('close-drive', { key, name }),
+							acceptText: 'Disconnect Drive',
+							message: 'Just trying to make sure'
+						})}
 					class="bg-red-200 p-1 mx-1 active:ring-1 rounded-md text-red-700">disconnect</button
 				>
 			</div>

@@ -7,14 +7,22 @@
 	// $: console.log('opened', $opened);
 </script>
 
-<div id="nav-sm" class="mobile mb-1 p-2 sticky-top">
+<div id="nav-sm" class="mobile mb-1 p-2 sticky-top bg">
 	<div class="flex justify-between">
-		<div>
+		<div class="nav-item">
 			<a href="/" sveltekit:prefetch class:active={$page.path === '/'} class="btn lead3 anchor"
 				>Hyp</a
 			>
 		</div>
-		<button class="" on:click={toggle}>
+		<div class="nav-item">
+			<a
+				sveltekit:prefetch
+				class="anchor btn capitalize lead3"
+				class:active={$page.path === '/files'}
+				href={`/files`}>files</a
+			>
+		</div>
+		<button class="nav-item" on:click={toggle}>
 			<MenuIcon size="2x" class="dark:text-blue-100" />
 		</button>
 	</div>
@@ -30,6 +38,6 @@
 	><NavItems />
 </SideBarSwipe>
 
-<div id="nav-md" class="desktop bg-transparent select-none md:px-10 py-2 sticky-top">
+<div id="nav-md" class="desktop bg select-none md:px-10 py-2 sticky-top">
 	<NavItems />
 </div>

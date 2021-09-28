@@ -136,8 +136,10 @@ button:focus:not(:focus-visible) {
 }
 
 .tooltip {
-	@apply bg-gray-400 text-blue-800 border-2 border-solid rounded-sm overflow-hidden bottom-[2em] text-[0.7em] opacity-0 absolute text-center transform translate-y-[-.25em] w-[16em] invisible z-10;
-	left: calc(50% - 8em);
+	@apply bg-gray-400 text-blue-800 border-2 border-solid rounded-sm overflow-hidden bottom-[2em] text-[0.7em] opacity-0 fixed text-center transform translate-y-[-.25em] w-[max-content] invisible z-30;
+	left: 0;
+	position: fixed;
+	bottom: 0;
 	padding: 0.25em 0.5em;
 	transition: visibility 0s 0.5s, opacity 0.2s ease-out, transform 0.5s cubic-bezier(0, 1, 0.5, 1);
 }
@@ -237,7 +239,10 @@ button:focus:not(:focus-visible) {
 }
 
 .nav-intersecting {
-	@apply shadow-md bg-white dark:bg-gray-600;
+	@apply drop-shadow-lg bg-white dark:bg-gray-800;
+}
+.bg {
+	@apply bg-white dark:bg-gray-800;
 }
 
 #svelte-sidebar-swipe {
@@ -261,4 +266,7 @@ body {
 }
 .btn {
 	@apply p-1 px-3 rounded active:opacity-95 transform active:scale-95;
+}
+.nav-item {
+	@apply shadow-sm rounded-lg;
 }

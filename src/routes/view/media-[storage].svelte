@@ -24,14 +24,16 @@
 	import { backOut, quintOut } from 'svelte/easing';
 	import { API } from '$lib/getAPi';
 	import { toQueryString } from '$lib/utils';
-	import { onDestroy } from 'svelte';
+	import { onDestroy, onMount } from 'svelte';
 	import { navigating } from '$app/stores';
 	// {path,size,ctype,storage,dkey}
-	// console.log('url', url);
-
-	onDestroy(() => {
-		url = null;
+	onDestroy(async () => {
 		if (node) node.src = null;
+	});
+	onMount(async () => {
+		if (node) {
+			if (!node.src) node.src = url;
+		}
 	});
 	let node;
 </script>
@@ -48,13 +50,13 @@
 		<!-- svelte-ignore a11y-media-has-caption -->
 		<audio bind:this={node} id="media" controls autoplay alt={filename}>
 			<source src={url} type={ctype} />
-			This media file is supported by this browser
+			This media file is not supported by this browser
 		</audio>
 	{:else if ctype?.includes('video')}
 		<!-- svelte-ignore a11y-media-has-caption -->
 		<video bind:this={node} id="media" controls autoplay alt={filename}>
 			<source src={url} type={ctype.includes('x-matroska') ? 'video/webm' : ctype} />
-			This media file is supported by this browser
+			This media file is not supported by this browser
 		</video>
 	{:else}
 		<img id="media" src={url} alt={filename} />

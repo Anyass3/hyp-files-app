@@ -42,7 +42,7 @@ export const destroyFns = (...args) => {
 			if (!!fn) fn();
 		});
 };
-export const truncate = (text = '', max = 10) => {
+export const truncate = (text = '', max = 20) => {
 	// console.log('truncate', text);
 	const len = text.length;
 	const r = /(.+)\.([\w]+)$/.exec(text);
@@ -53,6 +53,18 @@ export const truncate = (text = '', max = 10) => {
 	}
 	text = text.slice(0, max);
 	return len > max ? text + '..' : text;
+};
+
+const gb = 1073741824;
+
+const mb = 1048576;
+
+const kb = 1024;
+export const getSize = (size: number) => {
+	if (size >= gb) return (size / gb).toFixed(1) + ' GB';
+	else if (size >= mb) return (size / mb).toFixed(1) + ' MB';
+	else if (size >= kb) return (size / kb).toFixed(1) + ' KB';
+	else return size + ' Bytes';
 };
 
 const intersectingFunc = (node, entry, observer) => {};
@@ -105,7 +117,7 @@ export const NavInterObserver = (node, cls = 'nav-intersecting') => {
 	};
 
 	InterObserver(node, {
-		options: { rootMargin: '-9.5% 0% 0% 0%' },
+		options: { rootMargin: '-5% 0% 0% 0%' },
 		isIntersecting,
 		notIntersecting
 	});

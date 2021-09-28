@@ -231,16 +231,22 @@ export default class extends hyperdrive {
 				total = list.length;
 				list = list.slice(offset, offset + limit);
 			}
-			list = list.map((item) => ({
-				name: item.name,
-				path: join(dir, item.name),
-				stat: {
-					isFile: item.stat.isFile(),
-					size: item.stat.size,
-					ctype: mime.lookup(extname(item.name)),
-					mtime: item.stat.mtime
-				}
-			}));
+			list = await Promise.all(
+				list.map(async (item) => {
+					const stats = await this.promises.stats(item.path);
+					return {
+						name: item.name,
+						path: join(dir, item.name),
+						stat: {
+							isFile: item.stat.isFile(),
+							ctype: mime.lookup(extname(item.name)),
+							mtime: item.stat.mtime,
+							size: stats.size || item.stat.size,
+							offline: stats.blocks === stats.downloadedBlocks
+						}
+					};
+				})
+			);
 			emitter.log('dir:', list);
 			return paginate ? { items: list, total, page } : list;
 		});
@@ -275,8 +281,8 @@ export default class extends hyperdrive {
 		let total = 0;
 		return await this.check(async () => {
 			let list = fs.readdirSync(dir);
-			console.log({ page, paginate, show_hidden, limit, offset });
-			console.log('list', list);
+			// console.log({ page, paginate, show_hidden, limit, offset });
+			// console.log('list', list);
 			if (paginate) {
 				if (!show_hidden) list = list.filter((file) => !/^\./.exec(file));
 				total = list.length;
@@ -322,18 +328,23 @@ export default class extends hyperdrive {
 			return content;
 		});
 	}
-	async $download(...dirs) {
+	async $download(paths = [], { name = '', ...opts } = {}) {
+		if (typeof paths === 'string') paths = [paths];
 		return await this.check(async () => {
-			if (dirs.length === 0) {
-				await this.promises.download('/');
+			if (paths.length === 0) {
+				await this.promises.download('/', opts);
 				emitter.log(colors.green('\t downloaded all '));
-				return 'downloaded all';
+				emitter.broadcast('notify-success', 'Downloaded all files in ' + name + ' drive');
 			} else
-				for (let dir of dirs) {
-					await this.promises.download(dir);
-					emitter.log(colors.green('\t downloaded: ' + dir));
+				for (let path of paths) {
+					await this.promises.download(path, opts);
+					emitter.emit('rm-offline-pending', this.key, path);
+					emitter.log(colors.green('\t downloaded: ' + path));
 				}
-			return 'downloaded' + dirs.join(', ');
+			emitter.broadcast(
+				'notify-success',
+				`Downloaded ${paths.map((p) => last(p.split('/'))).join(',')} in ${name} drive`
+			);
 		});
 	}
 	async $makedir(...dirs) {

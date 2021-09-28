@@ -8,20 +8,20 @@
 	import { throttle, debounce, getPosition, truncate, InterObserver } from '$lib/utils';
 	import Spinner from '$components/spinner.svelte';
 	import type { Writable } from 'svelte/store';
+	import { onMount } from 'svelte';
 	const dkey = store.g('dkey');
 	const loading: Writable<loading> = store.g('loading');
 	const show_hidden = store.g('show_hidden');
 	// const hideFilemenu = store.g('hideFilemenu');
-	let pagination = {} as any;
+	let pagination = store.state.pagination;
 	const isIntersecting = () => {
-		pagination = store.state.pagination;
-		if (pagination.has_next) {
+		if ($pagination.has_next) {
 			// console.log('is intersecting', { ...pagination, offset: pagination.offset });
-			pagination.next();
+			$pagination.next();
 			const opts = {
 				dir,
-				offset: pagination.offset,
-				page: pagination.page,
+				offset: $pagination.offset,
+				page: $pagination.page,
 				show_hidden: $show_hidden
 			};
 			if (storage === 'drive') opts['dkey'] = $dkey;
@@ -30,7 +30,6 @@
 		}
 	};
 	$: dirs = store.g('dirs', $dkey);
-	// $: console.log('dirs', $dirs);
 
 	$: dir = $dirs[$dkey];
 	$: storage = $dkey !== 'fs' ? 'drive' : 'fs';
@@ -43,21 +42,26 @@
 
 	const open = async (detail: any = {}) => {
 		// if (detail.path && !detail.isFile) $dir = detail.path;
+		console.log('options', options);
 		store.dispatch('open', { ...detail, ...options });
 	};
 
-	const setContextMenu = async (data: ContextMenuEventDetail) => {
-		$pos = data.pos;
-		store.dispatch('setupMenuItems', { ...data, ...options });
-	};
 	const setMainContextMenu = async (ev) => {
-		if (ev.target.id === 'files') {
+		if (ev.target.dataset?.files) {
 			ev.preventDefault();
 			$pos = getPosition(ev);
 			const name = options.dir.endsWith('/')
 				? options.dir.split('/').reverse()[1]
 				: options.dir.split('/').reverse()[0];
 			store.dispatch('setupMainMenuItems', { ...options, name });
+		} else {
+			const element = ev.path.find((el) => el?.dataset?.data);
+			if (element) {
+				ev.preventDefault();
+				$pos = getPosition(ev);
+				const data = JSON.parse(element.dataset.data);
+				store.dispatch('setupMenuItems', { ...data, ...options });
+			}
 		}
 	};
 
@@ -76,12 +80,13 @@
 	// $: console.log('dirlist', dirlist);
 	// $: console.log('$loading', $loading);
 
-	$: if (browser || $dkey || $show_hidden) {
+	$: if ($dkey || $show_hidden) {
 		open();
 	}
+	onMount(() => open());
 	let scrollY = 0;
 	let lastScroll = scrollY;
-	$: hideFilemenu = scrollY > lastScroll;
+	$: hideFilemenu = scrollY > 0 && scrollY >= lastScroll;
 </script>
 
 <svelte:window
@@ -96,10 +101,15 @@
 	<title>Files</title>
 </svelte:head>
 
-<div class="px-2 flex-grow md:px-10 relative" id="files" on:contextmenu={setMainContextMenu}>
+<div
+	class="px-2 flex-grow md:px-10 relative pb-2 flex flex-col"
+	id="files"
+	data-files={true}
+	on:contextmenu={setMainContextMenu}
+>
 	<div
 		class:hidden={hideFilemenu}
-		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-10 top-[7%] bg-white dark:bg-gray-800 shadow border-b-2 pb-1"
+		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-30 top-[7%] bg shadow border-b-2 pb-1"
 	>
 		<div class="flex text-base md:text-2xl overflow-x-auto gap-1">
 			{#if dir === '/'}
@@ -124,7 +134,7 @@
 								{#if item.name === 'root'}
 									<FolderIcon class=" w-6 h-6 md:h-8 md:w-8" />
 								{:else}
-									{truncate(item.name)}
+									{truncate(item.name, 10)}
 								{/if}
 							</span>
 							<span class="tooltip">{item.name}</span>
@@ -145,29 +155,26 @@
 			<!-- <ConnectDrive /> -->
 		</div>
 	</div>
-	<Files
-		on:contextmenu={({ detail }) => setContextMenu(detail)}
-		on:open={(ev) => open(ev.detail)}
+	<Files on:open={(ev) => open(ev.detail)} />
+	<div
+		class="w-full h-1"
+		use:InterObserver={{
+			isIntersecting
+		}}
 	/>
-	{#if pagination.has_next}
+	{#if $pagination.has_next}
 		<div class="grid place-items-center">
 			{#if $loading === 'load-next-page'}
-				<Spinner />
+				<div class="grid place-items-center w-full pt-10">
+					<Spinner />
+				</div>
 			{:else if !$loading}
 				<button
 					on:click={isIntersecting}
 					class="btn bg-blue-500 text-white p-2 m-2 dark:bg-blue-200 dark:text-gray-500"
-					>more</button
+					>next</button
 				>
 			{/if}
 		</div>
 	{/if}
-
-	<div
-		class="w-full h-1"
-		use:InterObserver={{
-			isIntersecting,
-			unobserve: true
-		}}
-	/>
 </div>
