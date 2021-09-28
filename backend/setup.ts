@@ -1,13 +1,10 @@
 import colors from 'colors';
-import Hyperswarm from 'hyperswarm';
 import type { CorestoreNetworker } from './types';
 import Corestore from 'corestore';
 import Networker from '@corestore/networker';
 import { Settings, setSettings } from './settings.js';
 import Hyperbee from 'hyperbee';
-import Hypercore from 'hypercore';
 import { getEmitter, getBeeState } from './state.js';
-import startCore from './core.js';
 import { v4 as uuidV4 } from 'uuid';
 import { resolve, join } from 'path';
 import { toPromises } from 'hypercore-promisifier';
@@ -23,9 +20,9 @@ export const setupCorestore = async (
 	}
 ) => {
 	let parentStorage = Settings().storage;
-	if (parentStorage) {
+	if (!parentStorage) {
 		parentStorage = './.storage';
-		setSettings('publicStorage', parentStorage);
+		setSettings('storage', parentStorage);
 	}
 	if (!storage) {
 		storage = 'public';
@@ -71,8 +68,6 @@ export async function setupBee(newbee = false) {
 	setSettings('privateStorage', storage);
 
 	const { corestore, cleanup } = await setupCorestore({ storage, oldStorage, network: false });
-	// console.log('Hyperspace daemon connected, status:');
-	// console.log(await client.status());
 
 	if (!newbee) beekey = Settings().beekey || undefined;
 	const mainStore = corestore.namespace('main-feeds-store');

@@ -109,14 +109,14 @@ export default async function () {
 			colors.red('!publicDriveKey && publicDrive.writable'),
 			!publicDriveKey && publicDrive.writable
 		);
-		await drivesBee.put('public', { key: publicDrive?.$key, replicate: true });
+		await drivesBee.put('public', { key: publicDrive?.$key, _private: false });
 	}
 	if (!privateDrivekey && privateDrive.writable) {
 		emitter.log(
 			colors.red('!privateDrivekey && privateDrive.writable'),
 			!privateDrivekey && privateDrive.writable
 		);
-		await drivesBee.put('private', { key: privateDrive?.$key, replicate: false });
+		await drivesBee.put('private', { key: privateDrive?.$key, _private: true });
 	}
 
 	return async ({ channel, api = makeApi() }) => {
@@ -176,7 +176,6 @@ export default async function () {
 		// 	announce: true,
 		// 	lookup: true
 		// });
-		// publicHyp.replicate(core);
 		if (!(publicDrive.closed || publicDrive.closing))
 			publicHyp.networker.configure(publicDrive.discoveryKey, { server: true, client: false });
 

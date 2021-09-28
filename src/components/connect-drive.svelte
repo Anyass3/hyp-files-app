@@ -1,7 +1,7 @@
-<script>
+<script lang="ts">
 	import store from '$store';
 	const socket = store.g('socket');
-	let key, name, _private;
+	let key, name, _private: boolean;
 	const clear = () => {
 		name = '';
 		key = '';
@@ -32,7 +32,7 @@
 				<input
 					id="connect-drive-key"
 					type="checkbox"
-					bind:value={_private}
+					bind:checked={_private}
 					class="dark:ring-gray-400 w-8 h-8"
 					placeholder="[a-z0-9]{'{64}'}"
 				/>

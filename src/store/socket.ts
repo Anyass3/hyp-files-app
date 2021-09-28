@@ -1,7 +1,7 @@
 import { browser } from '$app/env';
 import connection from '$lib/socket';
 import { Pagination } from '$lib/utils';
-import _ from 'lodash-es';
+import _ from 'lodash';
 let connectionMsg = 'connections ready';
 const notifyConnected = _.debounce((notify, settings) => {
 	console.log('settings', settings);
