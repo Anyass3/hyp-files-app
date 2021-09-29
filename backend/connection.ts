@@ -5,7 +5,7 @@ import { Settings, setSettings } from './settings.js';
 import { getRandomStr, debounce } from './utils.js';
 import Drive, { setDriveEvents } from './drive.js';
 import startCore from './core.js';
-import { getEmitter, getBeeState, makeApi } from './state.js';
+import { getEmitter, getBeeState, API } from './state.js';
 import { Connect, Extention } from './peers.js';
 import Path from 'path';
 import { initiate, connect } from './share.js';
@@ -119,7 +119,7 @@ export default async function () {
 		await drivesBee.put('private', { key: privateDrive?.$key, _private: true });
 	}
 
-	return async ({ channel, api = makeApi() }) => {
+	return async ({ channel, api }: { channel; api: API }) => {
 		emitter.log('channel::connect', channel.key);
 		api.channels.set(channel.key, channel);
 
@@ -135,6 +135,9 @@ export default async function () {
 		const broadcast = (ev, data) => {
 			channel.signal(ev, data);
 		};
+		channel.on('cancel-sharing', ({ send, phrase}) => {
+			emitter.emit('cancel-sharing-'+send+phrase)
+		})
 
 		if (!api.getDrive(privateDrive.$key) && !(privateDrive.closed || privateDrive.closing)) {
 			api.addDrive({ key: privateDrive.$key, name: 'private', _private: true }, privateDrive);
@@ -339,7 +342,7 @@ export default async function () {
 			const items = await privateDrive.$listfs(dir, { ...opts, paginate: true });
 			channel.signal('folder-items', items);
 		});
-		channel.on('privateDrive:makedir', privateDrive.$makedir);
+		// channel.on('privateDrive:makedir', privateDrive.$makedir);
 		channel.on('paste-copied', async ({ src, dest }) => {
 			emitter.log({ src, dest });
 			publicDrive.$__copy__(
@@ -369,31 +372,16 @@ export default async function () {
 				emitter.broadcast('storage-updated', 'fs');
 			}
 		});
-		channel.on('privateDrive:list', privateDrive.$list);
 		emitter.on('broadcast', broadcast);
 		channel.on('child-process:kill', (pid) => {
 			emitter.log('child-process:kill', pid);
 			emitter.emit('child-process:kill', pid);
 		});
 		channel.on('share send', ({ phrase = 'yeay share test', dkey, path, ...stat }) => {
-			// if (dkey === 'fs') {
-			// const stream = fs.createWriteStream(path);
 			initiate(api, { phrase, dkey, path, stat });
-			// } else {
-			// 	const drive = api.drives.get(dkey);
-			// 	// const stream = drive.createReadStream(path);
-			// 	initiate({ key, dkey, path, stat });
-			// }
 		});
 		channel.on('share receive', ({ phrase = 'yeay share test', dkey, path, ...stat }) => {
-			// if (dkey === 'fs') {
-			// const stream = fs.createWriteStream(path);
 			connect(api, { phrase, dkey, path, stat });
-			// } else {
-			// 	const drive = api.drives.get(dkey);
-			// 	// const stream = drive.createWriteStream(path);
-			// 	connect({ key, dkey, path, stat });
-			// }
 		});
 		channel.on('disconnect', async () => {
 			// NOTE:: allow to run in background for now

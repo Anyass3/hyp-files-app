@@ -2,15 +2,13 @@
 	import store from '$store';
 	const serverStore = store.g('serverStore');
 	const socket = store.g('socket');
-	let cls =
-		'mt-2 p-2 rounded bg-gray-100 dark:bg-gray-600 border-gray-200 shadow border-t-2 dark:border-t-0';
-
-	export { cls as class };
 
 	$: child_processes = $serverStore?.child_processes || [];
 </script>
 
-<div class={cls}>
+<div
+	class="mt-2  p-2 rounded-lg border-gray-500 shadow-sm border-[.3px] text-gray-800 text-xl  dark:text-blue-100"
+>
 	<h3 class="text-blue-500 dark:text-white text-3xl">child process</h3>
 	{#each child_processes as { pid, cm } (pid)}
 		<div
@@ -24,4 +22,7 @@
 			>
 		</div>
 	{/each}
+	{#if !child_processes.length}
+		<p class="dark:text-gray-100">No app child_process running</p>
+	{/if}
 </div>

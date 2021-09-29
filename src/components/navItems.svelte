@@ -16,8 +16,8 @@
 			class="anchor text-3xl nav-item py-1 pr-2">Hyp</a
 		>
 	</div>
-	<div class="flex justify-between flex-md-row flex-col">
-		{#each ['files'] as navLink}
+	<div class="flex justify-between flex-md-row flex-col gap-6">
+		{#each ['files', 'activity'] as navLink}
 			<div>
 				<a
 					sveltekit:prefetch

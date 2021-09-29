@@ -7,15 +7,36 @@ import fs, { ReadStream, WriteStream } from 'fs';
 import zlib from 'zlib';
 import _ from 'lodash';
 import { join } from 'path';
-import { Writable } from 'stream';
-import { getEmitter, makeApi } from './state.js';
+import { Writable, Transform } from 'stream';
+import { getEmitter, API } from './state.js';
 import colors from 'colors';
 import { Settings } from './settings.js';
 
 const config = Settings();
 const emitter = getEmitter();
 
-const handleConnection = async (api, { dkey, path, stat, remoteStream, send, phrase }, server?) => {
+const hasPermission = ({ path, dkey, send }) => {
+	if (dkey === 'fs') {
+		try {
+			fs.accessSync(path, send ? fs.constants.R_OK : fs.constants.W_OK);
+		} catch (err) {
+			emitter.broadcast(
+				'notify-danger',
+				`sorry you do not have ${send ? 'read' : 'write'} access to '${
+					_.last(path.split('/')) || path
+				}'`
+			);
+			return false;
+		}
+	}
+	return true;
+};
+
+const handleConnection = async (
+	api: API,
+	{ dkey, path, stat, remoteStream, send, phrase, node },
+	server?
+) => {
 	// remoteStream is E2E between you and the other peer
 	// pipe  it somewhere like any duplex stream
 	stat['name'] = _.last(path.split('/'));
@@ -24,14 +45,31 @@ const handleConnection = async (api, { dkey, path, stat, remoteStream, send, phr
 
 	let open = { local: true, remote: true };
 	const localEnd = async () => {
-		// if (open.local) localStream.end();
+		if (open.local)
+			try {
+				localStream.end();
+			} catch (error) {}
+
 		open.local = false;
-		if (!open.remote && server) await server.close();
+		if (!open.remote && server) {
+			await server.close();
+		} else if (!open.remote) {
+			api.removeSharing(phrase, send);
+			await node.destroy();
+		}
 	};
 	const remoteEnd = async () => {
-		// if (open.remote) remoteStream.end();
+		if (open.remote)
+			try {
+				remoteStream.end();
+			} catch (error) {}
 		open.remote = false;
-		if (!open.local && server) await server.close();
+		if (!open.local && server) {
+			await node.destroy();
+		} else if (!open.local) {
+			api.removeSharing(phrase, send);
+			await node.destroy();
+		}
 	};
 	const handleEvents = (stream, endFn) => {
 		stream.on('error', endFn);
@@ -40,8 +78,22 @@ const handleConnection = async (api, { dkey, path, stat, remoteStream, send, phr
 	};
 
 	if (send) {
+		const reportProgress = new Transform({
+			transform(chunk, encoding, callback) {
+				_.debounce(async () => {
+					uploaded += chunk.length;
+					emitter.broadcast('sharing-progress', {
+						size: stat.size,
+						loadedBytes: uploaded,
+						phrase,
+						send
+					});
+				})();
+				callback(null, chunk);
+			}
+		});
 		// local ==> remote
-
+		let uploaded = 0;
 		if (dkey === 'fs') {
 			if (!stat.isFile) {
 				localStream = archiver('zip', {
@@ -49,6 +101,7 @@ const handleConnection = async (api, { dkey, path, stat, remoteStream, send, phr
 				});
 				localStream.directory(path, '/', { name: stat.name });
 				stat.name = stat.name + '.zip';
+				stat.size = localStream._readableState.length;
 				localStream.finalize();
 			} else localStream = fs.createReadStream(path);
 		} else {
@@ -62,22 +115,22 @@ const handleConnection = async (api, { dkey, path, stat, remoteStream, send, phr
 					localStream.append(await drive.$read(name), { name });
 				}
 				stat.name = stat.name + '.zip';
+				stat.size = localStream._readableState.length;
 				localStream.finalize();
 			} else localStream = drive.createReadStream(path);
 		}
 
 		remoteStream.write(zlib.gzipSync(JSON.stringify(stat)));
-		localStream.pipe(zlib.createGzip()).on('error', localEnd).pipe(remoteStream);
+		localStream.pipe(reportProgress).pipe(zlib.createGzip()).pipe(remoteStream);
 		handleEvents(localStream, localEnd);
 	} else {
 		// local <== remote
-
-		let writing = false;
+		let remoteStat;
+		let downloaded = 0;
 		const writeChunck = (chunk) => {
-			if (!writing) {
-				writing = true;
-				let remoteStat = JSON.parse(chunk.toString());
-				if (stat) console.log('recieve', stat, remoteStat);
+			if (!remoteStat) {
+				remoteStat = JSON.parse(chunk.toString()) || {};
+				emitter.log('recieving::stats', stat, remoteStat);
 				if (!stat.isFile) path = join(path, remoteStat.name);
 				if (dkey === 'fs') {
 					localStream = fs.createWriteStream(path);
@@ -85,11 +138,20 @@ const handleConnection = async (api, { dkey, path, stat, remoteStream, send, phr
 					const drive = api.drives.get(dkey);
 					localStream = drive.createWriteStream(path);
 				}
-				handleEvents(localStream, localEnd);
+				api.updateSharing({ phrase, name: remoteStat.name, send });
+				// handleEvents(localStream, localEnd);
 			} else {
 				//@ts-ignore
 				localStream.write(chunk);
-				console.log(chunk);
+				_.debounce(async () => {
+					downloaded += chunk.length;
+					emitter.broadcast('sharing-progress', {
+						size: remoteStat.size,
+						loadedBytes: downloaded,
+						phrase,
+						send
+					});
+				})();
 			}
 		};
 
@@ -101,46 +163,115 @@ const handleConnection = async (api, { dkey, path, stat, remoteStream, send, phr
 			}
 		});
 		remoteStream.pipe(zlib.createGunzip()).pipe(stream);
-		stream.on('finish', () => {
+		let streamOpened = true;
+		handleEvents(stream, () => {
 			//@ts-ignore
-			localStream.end();
+			if (open.local) localStream?.end?.();
+			open.local = true;
+			if (streamOpened) stream.end();
 		});
 	}
 	handleEvents(remoteStream, remoteEnd);
 };
 
-export const initiate = async (api, { dkey, path, stat, send = true, phrase }) => {
+export const initiate = async (api: API, { dkey, path, stat, send = true, phrase }) => {
+	if (!hasPermission({ path, dkey, send })) return;
 	const node = new DHT({});
 	if (!phrase) phrase = randomWords({ exactly: 3, join: ' ' });
 	const seed = hypercrypto.data(Buffer.from(phrase));
 	const server = node.createServer();
+	let connection = false;
+	let cancelled = false;
+	const cancelShare = () => {
+		if (cancelled) return;
+		server.close();
+		emitter.broadcast('notify-success', 'Cancelled Sharing "' + _.last(path.split('/')) + '"');
+		cancelled = true;
+	};
 	server.on('connection', function (remoteStream) {
+		if (connection) {
+			remoteStream.end();
+			connection = true;
+			return;
+		}
+		// remoteStream.on('close', server.close);
+
 		console.log('server Remote public key', remoteStream.remotePublicKey);
 		console.log('server Local public key', remoteStream.publicKey); // same as keyPair.publicKey
-		handleConnection(api, { dkey, path, stat, send, remoteStream, phrase }, server);
+		handleConnection(api, { dkey, path, stat, send, remoteStream, phrase, node }, server);
 	});
-	server.on('close', () => {
-		console.log('sharing server connection closed');
+	server.on('close', async () => {
+		if (!cancelled)
+			emitter.broadcast(
+				'notify-info',
+				`sharing server closed for '${_.last(path.split('/')) || path}'`
+			);
+		emitter.log('sharing server connection closed');
+		emitter.off('cancel-sharing-' + send + phrase, cancelShare);
+		api.removeSharing(phrase, send);
+		await node.destroy();
 	});
-
+	emitter.on('cancel-sharing-' + send + phrase, cancelShare);
 	// make a ed25519 keypair to listen on
 	const keyPair = DHT.keyPair(seed);
 
 	// this makes the server accept connections on this keypair
 	await server.listen(keyPair);
+
+	api.addSharing({
+		send,
+		name: _.last(path.split('/')) || path,
+		phrase,
+		drive: api.getDrive(dkey)?.name || 'fs'
+	});
+
+	emitter.broadcast(
+		'notify-info',
+		`sharing server listening for '${_.last(path.split('/')) || path}'`
+	);
 	return phrase;
 };
 
-export const connect = (api, { dkey, path, stat, send = false, phrase }) => {
+export const connect = (api: API, { dkey, path, stat, send = false, phrase }) => {
+	if (!hasPermission({ path, dkey, send })) return;
 	if (!phrase) phrase = randomWords({ exactly: 3, join: ' ' });
 	const seed = hypercrypto.data(Buffer.from(phrase));
 	const keyPair = DHT.keyPair(seed);
 	const node = new DHT({});
 	const remoteStream = node.connect(keyPair.publicKey, { keyPair });
+	let destroyed = false;
+	const cancelShare = async () => {
+		if (destroyed) return;
+		remoteStream.end();
+		api.removeSharing(phrase, send);
+		emitter.off('cancel-sharing-' + send + phrase, cancelShare);
+		destroyed = true;
+		emitter.broadcast('notify-success', 'Cancelled Sharing "' + _.last(path.split('/')) + '"');
+		await node.destroy();
+	};
+	emitter.on('cancel-sharing-' + send + phrase, cancelShare);
 
 	remoteStream.on('open', function () {
 		console.log('Remote public key', remoteStream.remotePublicKey);
 		console.log('Local public key', remoteStream.publicKey); // same as keyPair.publicKey
-		handleConnection(api, { dkey, path, stat, send, remoteStream, phrase });
+		handleConnection(api, { dkey, path, stat, send, remoteStream, phrase, node });
+	});
+	remoteStream.on('error', (error) => {
+		emitter.broadcast('notify-danger', error?.message);
+		api.removeSharing(phrase, send);
+		node.destroy();
+	});
+	// remoteStream.on('close', async () => {
+	// 	if (destroyed) return;
+	// 	api.removeSharing(phrase);
+	// 	emitter.off('cancel-sharing-' + send + phrase, cancelShare);
+	// 	destroyed = true;
+	// 	await node.destroy();
+	// });
+	api.addSharing({
+		send,
+		name: _.last(path.split('/')) || path,
+		phrase,
+		drive: api.getDrive(dkey)?.name || 'fs'
 	});
 };

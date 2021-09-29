@@ -42,7 +42,6 @@
 
 	const open = async (detail: any = {}) => {
 		// if (detail.path && !detail.isFile) $dir = detail.path;
-		console.log('options', options);
 		store.dispatch('open', { ...detail, ...options });
 	};
 

@@ -9,7 +9,7 @@ import {
 	spawnChildProcess,
 	mime
 } from './utils.js';
-import { getEmitter, makeApi } from './state.js';
+import { getEmitter, API } from './state.js';
 import fs from 'fs';
 import cors from 'cors';
 import colors from 'colors';
@@ -28,7 +28,7 @@ const showError = (storage: string, mediaPath: string, message = 'media-path do 
 	emitter.log(colors.red(storage + '::' + mediaPath + '::' + message));
 };
 
-export default async function (app, api = makeApi()) {
+export default async function (app, api: API) {
 	// ROUTES
 
 	app.use(bodyParser.json());

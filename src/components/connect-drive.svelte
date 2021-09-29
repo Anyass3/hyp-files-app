@@ -50,7 +50,7 @@
 			<div class="">
 				<label class="  " for="connect-drive-key">Drive Key</label><br />
 				<input
-					id="connect-drive-name"
+					id="connect-drive-key"
 					bind:value={key}
 					class="dark:ring-gray-400"
 					placeholder="[a-z0-9]{'{64}'}"

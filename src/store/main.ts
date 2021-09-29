@@ -79,7 +79,7 @@ export default {
 				if (isFile) {
 					dispatch('openFile', { path, size, storage, dkey, ctype, inBrowser });
 				} else {
-					dispatch('openFolder', { dir, path, dkey, silent, storage, offline });
+					dispatch('openFolder', { dir, path, dkey, silent, storage, offline, size });
 				}
 		},
 		async openFile({ state }, { path, size, storage, dkey, ctype, inBrowser = false }: any = {}) {
@@ -128,7 +128,10 @@ export default {
 				else if (ctype) state.notify.warning('sorry  cannot open file type: ' + ctype);
 			}
 		},
-		async openFolder({ state, commit, dispatch }, { dir, path, dkey, silent, storage, offline }) {
+		async openFolder(
+			{ state, commit, dispatch },
+			{ dir, path, dkey, silent, storage, offline, size }
+		) {
 			dir = dir || '/';
 			if (path) {
 				dir = path;
@@ -139,7 +142,7 @@ export default {
 				// commit('folderItems', []);
 				dispatch('loading', 'load-page');
 				dispatch('selected', null);
-				dispatch('folder', { path, storage, dkey, offline });
+				dispatch('folder', { path, storage, dkey, offline, size });
 			}
 			const opts = { dir, show_hidden: state.show_hidden.get() };
 			const getFiles = () => {
@@ -171,12 +174,12 @@ export default {
 					action() {
 						dispatch('showPrompt', {
 							onaccept: (phrase) =>
-								state.socket.signal('share send', { dkey, isFile, phrase, path }),
-							message: `Send ${_.last(path.split('/'))}${!isFile ? ' as zip' : ''}`,
+								state.socket.signal('share send', { dkey, isFile, phrase, path, size }),
+							message: `Send "${_.last(path.split('/'))}" ${!isFile ? 'Zipped' : ''}`,
 							input: {
 								value: randomWords({ exactly: 3, join: ' ' }),
-								label: 'You can replace phrase',
-								required: 'cannot send without a phrase'
+								label: 'Change Phrase',
+								required: 'Cannot send without a phrase'
 							},
 							acceptText: 'send file'
 						});
@@ -189,10 +192,10 @@ export default {
 						dispatch('showPrompt', {
 							onaccept: (phrase) =>
 								state.socket.signal('share receive', { dkey, isFile, phrase, path }),
-							message: `Receive file ${isFile ? 'and Replace' : 'in'} ${_.last(path.split('/'))}`,
+							message: `Receive File ${isFile ? 'and Replace' : 'in'} "${_.last(path.split('/'))}"`,
 							input: {
 								value: '',
-								label: 'Enter phrase',
+								label: 'Enter Phrase',
 								required: 'cannot receive a file without a phrase'
 							},
 							acceptText: 'receive file'
@@ -261,7 +264,11 @@ export default {
 				{
 					name: 'delete',
 					action: () => {
-						state.socket.signal('delete-path-item', { path, dkey, name });
+						dispatch('showPrompt', {
+							onaccept: () => state.socket.signal('delete-path-item', { path, dkey, name }),
+							acceptText: `Delete ${isFile ? 'File' : 'Folder'}`,
+							message: `Deleting "${_.last(path.split('/'))}"`
+						});
 						dispatch('context_menu', []);
 					},
 					disabled: !isWritable
@@ -280,7 +287,7 @@ export default {
 			];
 			dispatch('context_menu', items);
 		},
-		setupMainMenuItems({ dispatch, commit, g, state }, { storage, dkey, dir, name }) {
+		setupMainMenuItems({ dispatch, commit, g, state }, { storage, dkey, dir, name, size }) {
 			const offlinePending = state.serverStore.get()?.offlinePending[dkey] || [];
 			const isWritable = g('drives', dkey)?.writable ?? true;
 			const item = state.folder.get();
@@ -303,11 +310,11 @@ export default {
 					action() {
 						dispatch('showPrompt', {
 							onaccept: (phrase) =>
-								state.socket.signal('share send', { dkey, isFile: false, phrase, path: dir }),
-							message: `Send ${_.last(dir.split('/'))} as zip`,
+								state.socket.signal('share send', { dkey, isFile: false, phrase, size, path: dir }),
+							message: `Send "${_.last(dir.split('/'))}" Zipped`,
 							input: {
 								value: randomWords({ exactly: 3, join: ' ' }),
-								label: 'You can replace phrase',
+								label: 'Change Phrase',
 								required: 'cannot send without a phrase'
 							},
 							acceptText: 'send file'
@@ -321,10 +328,10 @@ export default {
 						dispatch('showPrompt', {
 							onaccept: (phrase) =>
 								state.socket.signal('share receive', { dkey, isFile: false, phrase, path: dir }),
-							message: `Receive file in ${_.last(dir.split('/'))}`,
+							message: `Receive file in "${_.last(dir.split('/')) || dir}"`,
 							input: {
 								value: '',
-								label: 'Enter phrase',
+								label: 'Enter Phrase',
 								required: 'cannot receive a file without a phrase'
 							},
 							acceptText: 'receive file'

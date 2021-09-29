@@ -27,7 +27,7 @@ export class Emitter {
 		this.events[event] = fns.filter((f) => f != fn);
 	}
 
-	broadcast(event, data) {
+	broadcast(event, data?) {
 		this.emit('broadcast', event, data);
 	}
 	log(...data) {
@@ -41,7 +41,7 @@ export class Emitter {
 	}
 }
 
-let emitter;
+let emitter: Emitter;
 export const getEmitter = () => {
 	// console.log('get emitter');
 	if (!emitter) {
@@ -66,18 +66,20 @@ interface Store {
 		drives?: Array<{ key: string; name: string; writable: boolean; _private: boolean }>;
 		peers?: Array<{ corekey: string; drivekey: string; username: string }>;
 		child_processes?: Array<{ pid: number; cm: string }>;
+		sharing?: { send: boolean; name: string; phrase: string; drive: string }[];
 		dataUsage?: {};
 		offlinePending?: Record<string, string[]>;
 	};
 }
-export function makeApi(
+export const makeApi = (
 	store: Store = {
 		state: {}
 	}
-) {
+) => {
 	const { state } = store;
 
 	state.savedDrives = [];
+	state.sharing = [];
 	state.drives = [];
 	state.peers = [];
 	state.child_processes = [];
@@ -209,12 +211,13 @@ export function makeApi(
 		getChildProcesses() {
 			return state.child_processes;
 		},
+		/// state.offlinePending
 		getOfflinePending(dkey?) {
 			return !dkey ? state.offlinePending : state.offlinePending[dkey] || [];
 		},
 		addOfflinePending(dkey, path) {
 			const offlinePending = this.getOfflinePending(dkey);
-			console.log('offlinePending,', offlinePending, dkey, state.offlinePending[dkey]);
+			emitter.log('offlinePending,', offlinePending, dkey, state.offlinePending[dkey]);
 			state.offlinePending[dkey] = offlinePending.concat(path);
 			//@ts-ignore
 			store.announceStateChange();
@@ -223,9 +226,31 @@ export function makeApi(
 			state.offlinePending[dkey] = this.getOfflinePending(dkey).filter((p) => p !== path);
 			//@ts-ignore
 			store.announceStateChange();
+		},
+		/// state.sharing
+		async addSharing({ send, name, phrase, drive }) {
+			state.sharing.push({ send, name, phrase, drive });
+			//@ts-ignore
+			store.announceStateChange();
+		},
+		getSharing(phrase?, send?) {
+			return phrase && send
+				? state.sharing.find((s) => s.phrase === phrase && s.send === send)
+				: state.sharing;
+		},
+		async updateSharing({ phrase, name, send }) {
+			state.sharing.map((s) => {
+				if (s.phrase === phrase && s.send === send) s.name = name;
+				return s;
+			});
+			//@ts-ignore
+			store.announceStateChange();
+		},
+		async removeSharing(phrase, send) {
+			state.sharing = state.sharing.filter((s) => s.phrase !== phrase && s.send !== send);
+			//@ts-ignore
+			store.announceStateChange();
 		}
 	};
-}
-
-const api = makeApi();
-export type API = typeof api;
+};
+export type API = ReturnType<typeof makeApi>;

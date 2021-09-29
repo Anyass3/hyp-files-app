@@ -27,7 +27,8 @@ export default {
 		folder: {},
 		folderItems: [],
 		dirs: { fs: '/' },
-		show_hidden: true
+		show_hidden: true,
+		sharingProgress: {}
 	},
 	actions: {
 		async startConnection({ state, commit, dispatch, g }) {
@@ -75,6 +76,12 @@ export default {
 						folder.stat.offline = true;
 						return folder;
 					});
+			});
+			socket.on('sharing-progress', ({ size, loadedBytes, phrase, send }) => {
+				state.sharingProgress.update((sharingProgress) => {
+					sharingProgress[send + phrase] = `${((loadedBytes / size) * 100).toFixed(1)}%`;
+					return sharingProgress;
+				});
 			});
 			// socket.on('offline-access-in-progress', ({ dkey, path }) => {
 			// 	if (state.dkey.get() === dkey)
