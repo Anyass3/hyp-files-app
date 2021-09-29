@@ -16,26 +16,25 @@
 		<div
 			class="flex flex-col gap-4 mt-1 bg-blue-100 p-1 rounded dark:bg-gray-700 ring-blue-200 dark:ring-gray-600 flex-wrap"
 		>
-			<div class="flex justify-between">
+			<div class="flex justify-between gap-4">
 				<div class="flex gap-4">
-					<div class="uppercase">{send ? 'Sending' : 'Receiving'}</div>
-					:
+					<div class="uppercase">{send ? 'Sending' : 'Receiving'}:</div>
 					<div class="text-blue-600">{drive}</div>
 				</div>
 				<div>{name}</div>
 			</div>
-			<div class="flex justify-between">
+			<div class="flex justify-between gap-4">
 				<div>
 					PHRASE: <span
 						class:select-text={!$sharingProgress[send + phrase]}
-						class="text-lg text-blue-400">{phrase}</span
+						class="select-text text-lg text-blue-400">{phrase}</span
 					>
 				</div>
-				<div class="bg-green-200 p-1 rounded-sm text-green-700 flex items-center">
+				<div class="bg-green-200 p-1 rounded text-green-700 flex items-center">
 					{#if $sharingProgress[send + phrase]}
 						{$sharingProgress[send + phrase]}
 					{:else}
-						<Spinner size={20} thickness={2} />
+						<Spinner size={25} thickness={4} />
 					{/if}
 				</div>
 				<button
