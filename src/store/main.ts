@@ -177,7 +177,7 @@ export default {
 								state.socket.signal('share send', { dkey, isFile, phrase, path, size }),
 							message: `Send "${_.last(path.split('/'))}" ${!isFile ? 'Zipped' : ''}`,
 							input: {
-								value: randomWords({ exactly: 3, join: ' ' }),
+								value: randomWords({ exactly: 4, join: ' ' }),
 								label: 'Change Phrase',
 								required: 'Cannot send without a phrase'
 							},
@@ -313,7 +313,7 @@ export default {
 								state.socket.signal('share send', { dkey, isFile: false, phrase, size, path: dir }),
 							message: `Send "${_.last(dir.split('/'))}" Zipped`,
 							input: {
-								value: randomWords({ exactly: 3, join: ' ' }),
+								value: randomWords({ exactly: 4, join: ' ' }),
 								label: 'Change Phrase',
 								required: 'cannot send without a phrase'
 							},

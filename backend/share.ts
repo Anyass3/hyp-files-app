@@ -53,9 +53,6 @@ const handleConnection = async (
 		open.local = false;
 		if (!open.remote && server) {
 			await server.close();
-		} else if (!open.remote) {
-			api.removeSharing(phrase, send);
-			await node.destroy();
 		}
 	};
 	const remoteEnd = async () => {
@@ -65,10 +62,7 @@ const handleConnection = async (
 			} catch (error) {}
 		open.remote = false;
 		if (!open.local && server) {
-			await node.destroy();
-		} else if (!open.local) {
-			api.removeSharing(phrase, send);
-			await node.destroy();
+			await server.close();
 		}
 	};
 	const handleEvents = (stream, endFn) => {
@@ -261,13 +255,13 @@ export const connect = (api: API, { dkey, path, stat, send = false, phrase }) =>
 		api.removeSharing(phrase, send);
 		node.destroy();
 	});
-	// remoteStream.on('close', async () => {
-	// 	if (destroyed) return;
-	// 	api.removeSharing(phrase);
-	// 	emitter.off('cancel-sharing-' + send + phrase, cancelShare);
-	// 	destroyed = true;
-	// 	await node.destroy();
-	// });
+	remoteStream.on('close', async () => {
+		if (destroyed) return;
+		api.removeSharing(phrase, send);
+		emitter.off('cancel-sharing-' + send + phrase, cancelShare);
+		destroyed = true;
+		await node.destroy();
+	});
 	api.addSharing({
 		send,
 		name: _.last(path.split('/')) || path,

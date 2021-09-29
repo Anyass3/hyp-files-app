@@ -247,7 +247,7 @@ export const makeApi = (
 			store.announceStateChange();
 		},
 		async removeSharing(phrase, send) {
-			state.sharing = state.sharing.filter((s) => s.phrase !== phrase && s.send !== send);
+			state.sharing = state.sharing.filter((s) => !(s.phrase === phrase && s.send === send));
 			//@ts-ignore
 			store.announceStateChange();
 		}
