@@ -176,20 +176,36 @@ export const initiate = async (api: API, { dkey, path, stat, send = true, phrase
 	const server = node.createServer();
 	let connection = false;
 	let cancelled = false;
+	let destroyed = false;
+	let _remoteStream;
 	const cancelShare = () => {
 		if (cancelled) return;
+		_remoteStream.end();
 		server.close();
 		emitter.broadcast('notify-success', 'Cancelled Sharing "' + _.last(path.split('/')) + '"');
 		cancelled = true;
 	};
+	const destroy = async () => {
+		if (destroyed) return;
+		api.removeSharing(phrase, send);
+		emitter.off('cancel-sharing-' + send + phrase, cancelShare);
+		emitter.log('sharing server connection closed');
+		destroyed = true;
+		await node.destroy();
+	};
 	server.on('connection', function (remoteStream) {
 		if (connection) {
 			remoteStream.end();
-			connection = true;
 			return;
 		}
-		// remoteStream.on('close', server.close);
+		connection = true;
 
+		remoteStream.on('error', (error) => {
+			emitter.broadcast('notify-danger', error?.message);
+			destroy();
+		});
+		remoteStream.on('close', destroy);
+		_remoteStream = remoteStream;
 		console.log('server Remote public key', remoteStream.remotePublicKey);
 		console.log('server Local public key', remoteStream.publicKey); // same as keyPair.publicKey
 		handleConnection(api, { dkey, path, stat, send, remoteStream, phrase, node }, server);
@@ -200,10 +216,7 @@ export const initiate = async (api: API, { dkey, path, stat, send = true, phrase
 				'notify-info',
 				`sharing server closed for '${_.last(path.split('/')) || path}'`
 			);
-		emitter.log('sharing server connection closed');
-		emitter.off('cancel-sharing-' + send + phrase, cancelShare);
-		api.removeSharing(phrase, send);
-		await node.destroy();
+		destroy();
 	});
 	emitter.on('cancel-sharing-' + send + phrase, cancelShare);
 	// make a ed25519 keypair to listen on

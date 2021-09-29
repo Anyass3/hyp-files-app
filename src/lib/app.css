@@ -246,7 +246,7 @@ button:focus:not(:focus-visible) {
 }
 
 #svelte-sidebar-swipe {
-	z-index: 20;
+	z-index: 70;
 	@apply md:px-10 md:hidden;
 }
 
