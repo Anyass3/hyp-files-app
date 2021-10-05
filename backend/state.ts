@@ -54,7 +54,7 @@ export const getEmitter = () => {
 export const getBeeState = async (bee) => {
 	let state = [];
 	for await (const { key, value } of bee.createReadStream()) {
-		state.push({ name: key, ...value });
+		state.push({ name: key, ...value, saved: true });
 	}
 	return state || [];
 };
@@ -62,8 +62,14 @@ export const getBeeState = async (bee) => {
 interface Store {
 	state: {
 		isMpvInstalled?: boolean;
-		savedDrives?: Array<{ key: string; name: string; connected: boolean; _private: boolean }>;
-		drives?: Array<{ key: string; name: string; writable: boolean; _private: boolean }>;
+		drives?: Array<{
+			key: string;
+			name: string;
+			writable: boolean;
+			_private: boolean;
+			connected: boolean;
+			saved: boolean;
+		}>;
 		peers?: Array<{ corekey: string; drivekey: string; username: string }>;
 		child_processes?: Array<{ pid: number; cm: string }>;
 		sharing?: { send: boolean; name: string; phrase: string; drive: string }[];
@@ -78,7 +84,6 @@ export const makeApi = (
 ) => {
 	const { state } = store;
 
-	state.savedDrives = [];
 	state.sharing = [];
 	state.drives = [];
 	state.peers = [];
@@ -97,7 +102,6 @@ export const makeApi = (
 	const bees = new Map();
 	const channels = new Map();
 	const clients = new Map();
-	const connectedDrives = [];
 	const cleanups = [];
 	return {
 		bees,
@@ -109,7 +113,6 @@ export const makeApi = (
 		peerCores,
 		peerDrives,
 		peersObj,
-		connectedDrives,
 		async setIsMpvInstalled(val) {
 			if (val !== state.isMpvInstalled) {
 				state.isMpvInstalled = val;
@@ -151,35 +154,19 @@ export const makeApi = (
 			}
 			return peer;
 		},
-		/// state.savedDrives
-		async addSavedDrive({ key, name, connected = true, _private = false }) {
-			state.savedDrives.push({ key, name, connected, _private });
-			//@ts-ignore
-			store.announceStateChange();
-		},
-		async setSavedDrive(_drives) {
-			state.savedDrives = _drives;
-			//@ts-ignore
-			store.announceStateChange();
-		},
-		getSavedDrives() {
-			return state.savedDrives || [];
-		},
-		getSavedDrive(key) {
-			return state.savedDrives.find((drive) => drive.key === key);
-		},
-		async removeSavedDrive(key) {
-			state.savedDrives = state.savedDrives.filter((drive) => drive.key !== key);
-			//@ts-ignore
-			store.announceStateChange();
-		},
 		/// state.drives
-		async addDrive({ key, name, _private }, drive) {
-			state.drives.push({ key, name, writable: drive.writable, _private });
+		async addDrive(
+			{ key, name, _private, saved = false, connected = true, writable = false },
+			drive?
+		) {
+			if (drive) {
+				drives.set(key, drive);
+				writable = drive.writable;
+			}
+
+			state.drives.push({ key, name, writable: drive.writable, _private, saved, connected });
 			//@ts-ignore
 			store.announceStateChange();
-			if (drive) drives.set(key, drive);
-			connectedDrives.push(key);
 		},
 		getDrive(key) {
 			return state.drives.find((drive) => drive.key === key);
@@ -189,10 +176,28 @@ export const makeApi = (
 			//@ts-ignore
 			store.announceStateChange();
 			drives.delete(key);
-			connectedDrives.find((dk) => dk !== key);
 		},
 		getDrives() {
 			return state.drives;
+		},
+		initDrives(drives) {
+			return (state.drives = drives);
+		},
+		async updateDrive({ key, name, _private, saved, writable, connected }, drive?) {
+			if (drive) {
+				drives.set(key, drive);
+				writable = drive.writable;
+			}
+
+			state.drives = state.drives.map((d) => {
+				if (d.key === key) d = { key, name, _private, saved, writable, connected };
+				return d;
+			});
+			//@ts-ignore
+			store.announceStateChange();
+		},
+		doesDriveNameExist(name, connected?) {
+			return state.drives.find((drive) => drive.name === name && drive.connected === connected);
 		},
 		/// state.child_processes
 		async addChildProcess({ pid, cm }) {

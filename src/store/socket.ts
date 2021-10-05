@@ -8,27 +8,14 @@ const notifyConnected = _.debounce((notify, settings) => {
 	notify.info(connectionMsg);
 	connectionMsg = 'reconnected';
 });
+const pathname = () => window.location.pathname;
 
 export default {
-	noStore: ['api', 'socket', 'serverStore'],
-	storeType: {
-		dkey: 'sessionPersistantStore',
-		show_hidden: 'sessionPersistantStore',
-		dirs: 'sessionPersistantStore'
-	},
+	noStore: true,
 	state: {
 		api: null,
-		pagination: {},
-		loading: 'load-page',
 		socket: null,
-		serverStore: null,
-		drives: [],
-		dkey: 'fs',
-		folder: {},
-		folderItems: [],
-		dirs: { fs: '/' },
-		show_hidden: true,
-		sharingProgress: {}
+		serverStore: null
 	},
 	actions: {
 		async startConnection({ state, commit, dispatch, g }) {
@@ -55,6 +42,7 @@ export default {
 			});
 
 			socket.on('folder-items', ({ items = [], page = 0, total = 0 } = {}) => {
+				if (pathname() !== '/files') return;
 				// console.log('folderItems', { items, page, total });
 				dispatch('pagination', new Pagination({ total, page }));
 				if (page === 1) {
@@ -64,6 +52,7 @@ export default {
 				}
 			});
 			socket.on('offline-access', ({ dkey, path }) => {
+				// if (pathname() !== '/files') return;
 				if (state.dkey.get() === dkey)
 					state.folderItems.update((folderItems) =>
 						folderItems.map((item) => {
@@ -78,10 +67,12 @@ export default {
 					});
 			});
 			socket.on('sharing-progress', ({ size, loadedBytes, phrase, send }) => {
+				// if (pathname() !== '/tasks') return;
 				state.sharingProgress.update((sharingProgress) => {
 					sharingProgress[send + phrase] = `${((loadedBytes / size) * 100).toFixed(1)}%`;
 					return sharingProgress;
 				});
+				// console.log('loadedBytes / size', loadedBytes, size, (loadedBytes / size) * 100);
 			});
 			// socket.on('offline-access-in-progress', ({ dkey, path }) => {
 			// 	if (state.dkey.get() === dkey)
@@ -95,7 +86,7 @@ export default {
 			// });
 			socket.on('notify-danger', async (msg) => {
 				// console.log(msg);
-				state.notify.danger(msg, 10000);
+				state.notify.danger(msg, 5000);
 			});
 			socket.on('notify-info', async (msg) => {
 				// console.log(msg);
@@ -154,6 +145,7 @@ export default {
 			// 	// commit('drives', drives);
 			// });
 			socket.on('storage-updated', (_dkey) => {
+				if (pathname() !== '/files') return;
 				const dkey = state.dkey.get();
 				if (dkey === dkey) {
 					const dir = g('dirs', dkey, true);

@@ -1,21 +1,29 @@
 <script lang="ts">
 	import store from '$store';
 	import { createEventDispatcher } from 'svelte';
-	import { truncate, debounce, getPosition } from '$lib/utils';
+	import { truncate, debounce, getPosition, doubleTap } from '$lib/utils';
 	import { crossfade } from 'svelte/transition';
 	import { quintOut } from 'svelte/easing';
 	import Spinner from '$components/spinner.svelte';
 	import BottomInfo from '$components/bottom-info.svelte';
 	import FolderIcon from 'icons/FolderIcon.svelte';
 	import FileIcon from 'icons/FileIcon.svelte';
+	import FileTextIcon from 'icons/FileTextIcon.svelte';
+	import MusicIcon from 'icons/MusicIcon.svelte';
+	import ImageIcon from 'icons/ImageIcon.svelte';
+	import CodeIcon from 'icons/CodeIcon.svelte';
+	import FilmIcon from 'icons/FilmIcon.svelte';
 	import type { Writable } from 'svelte/store';
+	import { extractLang } from '$lib/md-hljs';
 	const files = store.g('folderItems');
 
 	const loading: Writable<loading | false> = store.g('loading');
 
 	const dispatch = createEventDispatcher();
 	const selected: Writable<ToolTip> = store.g('selected');
+
 	const mainEvent = (ev, open = true) => {
+		onDoubletap(ev);
 		const element = ev.path.find((el) => el?.dataset?.data);
 		if (element) {
 			ev.preventDefault();
@@ -29,14 +37,15 @@
 			$selected = null;
 		}
 	};
+	const onDoubletap = doubleTap(mainEvent);
 	const [send, receive] = crossfade({
-		duration: (d) => Math.sqrt(d * 100),
+		duration: (d) => Math.sqrt(d * 50),
 		fallback(node, params) {
 			const style = getComputedStyle(node);
 			const transform = style.transform === 'none' ? '' : style.transform;
 
 			return {
-				duration: 400,
+				duration: 200,
 				easing: quintOut,
 				css: (t) => `
 					transform: ${transform} scale(${t});
@@ -46,14 +55,10 @@
 		}
 	});
 	$: if ($files) $loading = false;
+	$: console.log($files);
 </script>
 
-<div
-	data-files={true}
-	class="flex-grow"
-	on:dblclick={(ev) => mainEvent(ev)}
-	on:click={(ev) => mainEvent(ev, false)}
->
+<div data-files={true} class="flex-grow" on:click={(ev) => mainEvent(ev, false)}>
 	{#if $loading === 'load-page'}
 		<div class="grid place-items-center w-full pt-10">
 			<Spinner />
@@ -73,10 +78,32 @@
 				data-data={JSON.stringify({ ...stat, path, name })}
 			>
 				<div class="relative">
+					<!-- <div class="tooltip -top-8 h-[min-content]">
+						<p>{name}</p>
+						<p>Type: {stat.isFile ? stat.ctype : 'Folder'}</p>
+						<p>
+							Modified: {new Date(stat.mtime).toLocaleString('en', {
+								dateStyle: 'short',
+								timeStyle: 'short'
+							})}
+						</p>
+					</div> -->
 					<button class="cursor-pointer w-36 h-32 overflow-hidden">
 						<div class="flex justify-center">
-							{#if stat.isFile === true || (stat.isFile !== false && stat.isFile !== 'dir')}
-								<FileIcon size="4x" />
+							{#if stat.isFile}
+								{#if stat.ctype.includes('audio')}
+									<MusicIcon size="4x" />
+								{:else if stat.ctype.includes('video')}
+									<FilmIcon size="4x" />
+								{:else if stat.ctype.includes('image')}
+									<ImageIcon size="4x" />
+								{:else if extractLang(stat.ctype, path)}
+									<CodeIcon size="4x" />
+								{:else if stat.ctype.includes('text')}
+									<FileTextIcon size="4x" />
+								{:else}
+									<FileIcon size="4x" />
+								{/if}
 							{:else}
 								<FolderIcon size="4x" />
 							{/if}

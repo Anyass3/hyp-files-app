@@ -2,8 +2,9 @@ import colors from 'colors';
 import readChunk from 'read-chunk';
 import fileType from 'file-type';
 import child_process from 'child_process';
+import _ from 'lodash';
 import mime from 'mime';
-import { extname } from 'path';
+import { extname, join } from 'path';
 import type { ReadStream } from 'fs';
 
 mime.define({ 'text/python': ['py'] });
@@ -85,13 +86,19 @@ export const spawnChildProcess: SpawnChildProcess = async (
 
 		(child.stderr as { on }).on('data', (error) => {
 			errors += error;
-			if (log) console.error(`error:${cm}\n${error}`);
-			if (emitter) emitter.emit('child-process:error', { cm, pid: child.pid, error, broadcast });
+			if (log) console.error(colors.red(`error:${cm}\n${error}`));
+			if (emitter) {
+				emitter.emit('child-process:error', { cm, pid: child.pid, error, broadcast });
+				emitter.log(colors.red(error.message));
+			}
 		});
 		if (stdin) {
 			stdin.on('error', (err) => {
-				console.error(err);
-				emitter.broadcast('notify-danger', err.message);
+				if (log) console.log(colors.red(err.message));
+				if (emitter) {
+					emitter.broadcast('notify-danger', err.message);
+					emitter.log(colors.red(err.message));
+				}
 				// emitter.emit('child-process:kill', child.pid);
 				child.kill();
 			});
@@ -112,18 +119,23 @@ export const getRandomStr = () => {
 	return Math.floor(2147483648 * Math.random()).toString(36);
 };
 
-export const getFileType = async (buffer) => {
-	// const buffer = readChunk.sync(path, 0, 4100);
-	let _type = await fileType.fromBuffer(buffer);
-	// if (!_type) {
-	// 	const res = await execChildProcess(`"file" "${path}"`);
-	// 	const typeOfFile = res?.replace('\n', '')?.split?.(':')?.[1] || '';
-	// 	//@ts-ignore
-	// 	if (typeOfFile.includes('text')) _type = 'plain/text';
-	// }
-	// if (!_type) _type = mime.lookup(extname(path));
-	console.log({ _type });
-	return _type;
+export const getFileType = async ({ path, drive }, emitter?) => {
+	let ctype = mime.lookup(extname(path));
+	if (['application/octet-stream', 'video/mp2t'].includes(ctype) || !ctype) {
+		try {
+			const stream = await drive.createReadStream(path, {
+				start: 0,
+				end: 100
+			});
+			const { data } = await spawnChildProcess('file --mime-type -', {
+				broadcast: false,
+				emitter,
+				stdin: stream
+			});
+			ctype = _.last(data.split(':')).trim();
+		} catch (error) {}
+	}
+	return ctype;
 };
 export const getDriveFileType = async (stream) => {
 	let _type = (await fileType.fromStream(stream))?.mime;

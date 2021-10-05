@@ -26,7 +26,12 @@
 			in:fade={{ delay: 50, duration: 100 }}
 			class="p-1 bg bg-opacity-95 dark:bg-opacity-95  border min-w-[fit-content] min-h-[fit-content] rounded-md shadow-2xl text-gray-800 dark:text-blue-200"
 		>
-			"{$selected?.name}" selected ({getSize($selected?.size)})
+			"{$selected?.name}" selected
+			{#if $selected?.isFile}
+				({getSize($selected.size)})
+			{:else}
+				(containing {$selected?.items} items)
+			{/if}
 		</div>
 	{/key}
 </div>

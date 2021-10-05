@@ -2,7 +2,8 @@ import { func } from './utils';
 
 export const initPrompt = ({
 	visible = false,
-	message = 'Here is a Prompt',
+	backdrop = true,
+	message = '',
 	input = null,
 	acceptText = 'accept',
 	dismissText = 'dismiss',
@@ -11,6 +12,7 @@ export const initPrompt = ({
 } = {}) => ({
 	input,
 	visible,
+	backdrop,
 	message,
 	onaccept() {
 		return new Promise((resolve, reject) => {

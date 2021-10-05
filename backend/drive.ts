@@ -2,9 +2,8 @@ import colors from 'colors';
 import last from 'lodash/last.js';
 import debounce from 'lodash/debounce.js';
 import hyperdrive from 'hyperdrive';
-import { EventEmitter } from 'events';
 
-import fs from 'fs';
+import fs, { ReadStream, WriteStream } from 'fs';
 import { getEmitter } from './state.js';
 import { extname, resolve, join } from 'path';
 import { handleError, getFileType, mime } from './utils.js';
@@ -179,9 +178,20 @@ export default class extends hyperdrive {
 					if (items.length) await this.$fsWriteDir(items, fs_dest, { drive });
 				} else {
 					await this.$fsMakeDir(item.new_path.split('/')[0]);
-					const destFile = fs.createWriteStream(join(config.fs, item.new_path));
-					if (drive) drive.createReadStream(item.path).pipe(destFile);
-					else fs.createReadStream(join(config.fs, item.path)).pipe(destFile);
+					const destStream: WriteStream = fs.createWriteStream(join(config.fs, item.new_path));
+					// emitter.log('b4 read stream');
+					const srcStream: ReadStream = drive
+						? drive.createReadStream(item.path)
+						: fs.createReadStream(join(config.fs, item.path));
+					srcStream.pipe(destStream);
+					// await new Promise((resolve) => {
+					// 	srcStream.on('end', resolve);
+					// 	srcStream.on('close', resolve);
+					// 	srcStream.on('error', resolve);
+					// 	destStream.on('finish', resolve);
+					// 	destStream.on('error', resolve);
+					// });
+					// emitter.broadcast('notify-info', 'copy success ' + last(item.path.split('/')));
 				}
 			}
 		});
@@ -204,10 +214,18 @@ export default class extends hyperdrive {
 					if (items?.length) await this.$driveWriteDir(items, dest, { drive, isdrive });
 				} else {
 					await this.$driveMakeDir(item.new_path.split('/')[0]);
-					const destFile = this.createWriteStream(item.new_path);
+					const destStream: WriteStream = this.createWriteStream(item.new_path);
 					// emitter.log('b4 read stream');
-					if (drive) drive.createReadStream(item.path).pipe(destFile);
-					else fs.createReadStream(join(config.fs, item.path)).pipe(destFile);
+					const srcStream: ReadStream = drive
+						? drive.createReadStream(item.path)
+						: fs.createReadStream(join(config.fs, item.path));
+					srcStream.pipe(destStream);
+					// await new Promise((resolve) => {
+					// 	srcStream.on('end', resolve);
+					// 	srcStream.on('close', resolve);
+					// 	srcStream.on('error', resolve);
+					// 	destStream.on('finish', resolve);
+					// });
 				}
 			}
 		});
@@ -231,17 +249,24 @@ export default class extends hyperdrive {
 				total = list.length;
 				list = list.slice(offset, offset + limit);
 			}
+			const self = this;
 			list = await Promise.all(
 				list.map(async (item) => {
 					const stats = await this.promises.stats(item.path);
+					const isFile = item.stat.isFile();
+					const path = join(dir, item.name);
 					return {
 						name: item.name,
-						path: join(dir, item.name),
+						path,
 						stat: {
-							isFile: item.stat.isFile(),
-							ctype: mime.lookup(extname(item.name)),
+							isFile,
+							ctype: isFile ? await getFileType({ path, drive: self }) : false,
 							mtime: item.stat.mtime,
-							size: stats.size || item.stat.size,
+							...(isFile
+								? { size: item.stat.size }
+								: {
+										items: (await this.promises.readdir(item.path)).length
+								  }),
 							offline: stats.blocks === stats.downloadedBlocks
 						}
 					};
@@ -279,6 +304,7 @@ export default class extends hyperdrive {
 	) {
 		dir = join(config.fs, dir);
 		let total = 0;
+		const self = this;
 		return await this.check(async () => {
 			let list = fs.readdirSync(dir);
 			// console.log({ page, paginate, show_hidden, limit, offset });
@@ -288,23 +314,34 @@ export default class extends hyperdrive {
 				total = list.length;
 				list = list.slice(offset, offset + limit);
 			}
+			const getItems = (path) => {
+				try {
+					return fs.readdirSync(path).length;
+				} catch (error) {
+					emitter.log(colors.red(error.message));
+					return 0;
+				}
+			};
 			//@ts-ignore
-			list = list.map((item) => {
-				let _path = join(dir, item);
-				const stat = fs.statSync(_path);
-				_path = _path.replace(config.fs, '');
-				if (!_path.startsWith('/')) _path = '/' + _path;
-				return {
-					name: item,
-					path: _path,
-					stat: {
-						isFile: stat.isFile(),
-						size: stat.size,
-						ctype: mime.lookup(extname(item)),
-						mtime: stat.mtime
-					}
-				};
-			});
+			list = await Promise.all(
+				list.map(async (item) => {
+					let path = join(dir, item);
+					const stat = fs.statSync(path);
+					path = path.replace(config.fs, '');
+					if (!path.startsWith('/')) path = '/' + path;
+					const isFile = stat.isFile();
+					return {
+						name: item,
+						path,
+						stat: {
+							isFile,
+							...(isFile ? { size: stat.size } : { items: getItems(path) }),
+							ctype: isFile ? await getFileType({ path, drive: fs }) : false,
+							mtime: stat.mtime
+						}
+					};
+				})
+			);
 			emitter.log('dir:', list);
 			return paginate ? { items: list, total, page } : list;
 		});
@@ -322,9 +359,9 @@ export default class extends hyperdrive {
 			await this.$write(...args);
 		});
 	}
-	async $read(file, endcoding) {
+	async $read(file, encoding) {
 		return await this.check(async () => {
-			const content = await this.promises.readFile(file, endcoding);
+			const content = await this.promises.readFile(file, encoding);
 			return content;
 		});
 	}

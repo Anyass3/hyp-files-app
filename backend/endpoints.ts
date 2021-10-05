@@ -9,6 +9,7 @@ import {
 	spawnChildProcess,
 	mime
 } from './utils.js';
+import { extname, join } from 'path';
 import { getEmitter, API } from './state.js';
 import fs from 'fs';
 import cors from 'cors';
@@ -42,28 +43,15 @@ export default async function (app, api: API) {
 
 	app.post('/get-file-type', async function (req, res) {
 		let storage = req?.body?.storage; //drive || fs
-		const filePath = decodeURIComponent(req.body.path);
 		const dkey = req?.body?.dkey;
 		if (!storage) storage = dkey?.match(/[a-z0-9]{64}/) ? 'drive' : 'fs';
-		let ctype = mime.lookup(Path.extname(filePath));
-		const drive = api.drives.get(dkey);
-		if (ctype === 'application/octet-stream' || !ctype) {
-			const stream = await (storage === 'fs' ? fs : drive).createReadStream(
-				Path.join(storage === 'fs' ? config.fs : '', filePath),
-				{
-					start: 0,
-					end: 100
-				}
-			);
-			const { data } = await spawnChildProcess('file --mime-type -', {
-				broadcast: false,
-				emitter,
-				stdin: stream
-			});
-			ctype = _.last(data.split(':')).trim();
-		}
+		const path = join(storage === 'fs' ? config.fs : '', decodeURIComponent(req.body.path));
+		const drive = storage === 'fs' ? fs : api.drives.get(dkey);
+
+		const ctype = await getFileType({ path, drive }, emitter);
+
 		res.send({ ctype });
-		emitter.log('/get-file-type', { ctype, storage, path: filePath, dkey });
+		emitter.log('/get-file-type', { ctype, storage, path, dkey });
 	});
 
 	app.get('/download', async (req, res) => {
@@ -77,7 +65,7 @@ export default async function (app, api: API) {
 		const filename = path.split('/').reverse()[0];
 
 		if (storage === 'fs') {
-			if (!fs.existsSync(Path.join(config.fs, path))) {
+			if (!fs.existsSync(join(config.fs, path))) {
 				showError(storage, path);
 				res.status(404).end();
 				return;
@@ -98,7 +86,7 @@ export default async function (app, api: API) {
 				emitter.broadcast('notify-danger', error.message);
 			}
 			if (storage === 'fs') {
-				fs.createReadStream(Path.join(config.fs, path)).pipe(res);
+				fs.createReadStream(join(config.fs, path)).pipe(res);
 			} else {
 				drive.createReadStream(path).pipe(res);
 			}
@@ -109,7 +97,7 @@ export default async function (app, api: API) {
 				zlib: { level: 9 } // Sets the compression level.
 			});
 			if (storage === 'fs') {
-				zip.directory(Path.join(config.fs, path), '/', { name: filename });
+				zip.directory(join(config.fs, path), '/', { name: filename });
 			} else {
 				const files = await drive.$listAllFiles(path);
 				for (const name of files) {
@@ -124,7 +112,7 @@ export default async function (app, api: API) {
 		let fileSize: string | number = req.query.size;
 		const _path = req.query.path;
 		let filePath;
-		if (_.isArray(_path)) filePath = Path.join(..._path.map((pth) => decodeURIComponent(pth)));
+		if (_.isArray(_path)) filePath = join(..._path.map((pth) => decodeURIComponent(pth)));
 		else filePath = decodeURIComponent(_path);
 		const ctype: string = req.query.ctype || mime.lookup(filePath);
 		const storage: string = req.query.storage || 'fs'; //drive || fs
@@ -138,16 +126,16 @@ export default async function (app, api: API) {
 
 		res.setHeader('Content-Type', ctype);
 		if (storage === 'fs') {
-			if (!fs.existsSync(Path.join(config.fs, filePath))) {
+			if (!fs.existsSync(join(config.fs, filePath))) {
 				showError(storage, filePath);
 				res.status(404).end();
 				return;
 			}
 			if (!fileSize) {
-				fileSize = fs.statSync(Path.join(config.fs, filePath)).size;
+				fileSize = fs.statSync(join(config.fs, filePath)).size;
 			}
 			res.setHeader('Content-Length', fileSize);
-			fs.createReadStream(Path.join(config.fs, filePath)).pipe(res);
+			fs.createReadStream(join(config.fs, filePath)).pipe(res);
 		} else {
 			const drive = api.drives.get(dkey);
 
@@ -178,7 +166,7 @@ export default async function (app, api: API) {
 		let mediaSize: number = req.query.size;
 		const ctype: string = req.query.ctype;
 		const storage: string = req.query.storage || 'fs'; //drive || fs
-		const mediaPath: string = Path.join(
+		const mediaPath: string = join(
 			storage === 'fs' ? config.fs : '',
 			decodeURIComponent(req.query.path)
 		);
@@ -198,7 +186,7 @@ export default async function (app, api: API) {
 
 		if (!mediaSize) {
 			try {
-				if (storage === 'fs') mediaSize = fs.statSync(Path.join(config.fs, mediaPath)).size;
+				if (storage === 'fs') mediaSize = fs.statSync(join(config.fs, mediaPath)).size;
 				else mediaSize = await drive.promises.stat(mediaPath).size;
 			} catch (err) {
 				showError(storage, mediaPath, err.message);

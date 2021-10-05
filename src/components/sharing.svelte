@@ -1,11 +1,27 @@
 <script>
+	import { copyToClipboard, doubleTap } from '$lib/utils';
+
 	import store from '$store';
+	const snackBar = store.g('snackBar');
 	const serverStore = store.g('serverStore');
 	const socket = store.g('socket');
 	import Spinner from '$components/spinner.svelte';
 
 	$: sharing = $serverStore?.sharing || [];
 	const sharingProgress = store.g('sharingProgress');
+	const copyPhrase = (node, key) => {
+		const ondoubleTap = doubleTap(() =>
+			copyToClipboard(key)
+				.then((r) => {
+					if (r) snackBar.show('Copied phrase to clipboard');
+					else snackBar.show('Could not copy phrase to clipboard');
+				})
+				.catch((_) => snackBar.show('Could not copy phrase to clipboard'))
+		);
+		node.onclick = () => {
+			ondoubleTap(key);
+		};
+	};
 </script>
 
 <div
@@ -14,6 +30,7 @@
 	<h3 class="text-blue-500 dark:text-white text-3xl">Sharing</h3>
 	{#each sharing as { send, name, phrase, drive } (send + phrase)}
 		<div
+			use:copyPhrase={phrase}
 			class="flex flex-col gap-4 mt-1 bg-blue-100 p-1 rounded dark:bg-gray-700 ring-blue-200 dark:ring-gray-600 flex-wrap"
 		>
 			<div class="flex justify-between gap-4">

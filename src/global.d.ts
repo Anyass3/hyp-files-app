@@ -26,6 +26,7 @@ interface ToolTip {
 	ctype: string;
 	mtime: string;
 	blocks: number;
+	items: number;
 }
 
 interface ImportMetaEnv {

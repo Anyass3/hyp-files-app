@@ -18,7 +18,10 @@
 	}
 
 	function backdrop(ev) {
-		if (ev.target === ev.currentTarget) backdrop_key = Math.random();
+		if (ev.target === ev.currentTarget) {
+			if ($prompt.backdrop) dismiss();
+			else backdrop_key = Math.random();
+		}
 	}
 </script>
 
@@ -40,7 +43,9 @@
 				</div>
 				{#if $prompt.input}
 					<div class="p-4">
-						<label for="prompt-input" class="dark:text-blue-300">{$prompt.input.label}</label>
+						{#if $prompt.input.label}
+							<label for="prompt-input" class="dark:text-blue-300">{$prompt.input.label}</label>
+						{/if}
 						<!-- svelte-ignore a11y-autofocus -->
 						<input
 							id="prompt-input"
