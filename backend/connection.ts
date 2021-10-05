@@ -202,7 +202,7 @@ export default async function () {
 		channel.on('join peer', async (corekey) => {
 			// const { peerCore, peerDrive, peerExt } = await Connect(publicHyp, corekey, api);
 		});
-		channel.on('connect-drive', async ({ name, key, _private }) => {
+		channel.on('connect-drive', async ({ name, key, _private, storage }) => {
 			if (!key?.match(/^[a-z0-9]{64}$/)) {
 				emitter.broadcast('notify-warn', 'Please input a valid drive key');
 				return;
@@ -212,12 +212,17 @@ export default async function () {
 				emitter.broadcast('notify-warn', 'Drive is already connected');
 				return;
 			}
-			_private = _private ?? _drive?._private;
 			name = _drive?.name || name || getRandomStr();
-
-			const drive = await startDrive(!_private ? publicHyp : privateHyp, key, { _private, name }); /// TODO: announce, lookup
+			let drive: Drive;
+			if (storage) {
+				drive = new Drive(storage, key);
+				await drive.$ready(name);
+			} else {
+				_private = _private ?? _drive?._private;
+				drive = await startDrive(!_private ? publicHyp : privateHyp, key, { _private, name }); /// TODO: announce, lookup
+			}
 			if (_drive) {
-				api.updateDrive({ ..._drive, connected: true });
+				api.updateDrive({ ..._drive, connected: true }, drive);
 			} else api.addDrive({ key: drive.$key, name, _private }, drive);
 			// channel.signal('drive-connected', key);
 			emitter.broadcast('notify-success', `"${name}" drive connected`);
@@ -226,6 +231,7 @@ export default async function () {
 			} else if (privateDrivekey === key) {
 				privateDrive = drive;
 			}
+
 			// refreshSavedDrives({ key, name }, true);
 		});
 
@@ -305,11 +311,12 @@ export default async function () {
 			emitter.log('closed-drive', name);
 			{
 				const drive = api.getDrive(key);
-				if (!drive?.saved) {
-					api.removeDrive(key);
-					// await drive.promises.destroyStorage();
-					// emitter.broadcast('notify-info', name + ' drive storage destroyed');
-				} else if (drive) {
+				if (drive) {
+					if (!drive.saved) {
+						api.removeDrive(key);
+						// await drive.promises.destroyStorage();
+						// emitter.broadcast('notify-info', name + ' drive storage destroyed');
+					}
 					api.updateDrive({ ...drive, connected: false });
 				}
 			}
@@ -329,7 +336,6 @@ export default async function () {
 			const drive = api.getDrive(key);
 			if (!drive.connected) {
 				api.removeDrive(key);
-
 				//Todo
 				// let namespace = await getNamespace(key);
 				// const driveStore = (_drive._private ? privateHyp : publicHyp).corestore.namespace(

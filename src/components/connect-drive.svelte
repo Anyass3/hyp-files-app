@@ -1,11 +1,12 @@
 <script lang="ts">
 	import store from '$store';
 	const socket = store.g('socket');
-	let key, name, _private: boolean;
+	let key, name, _private: boolean, storage;
 	const clear = () => {
 		name = '';
 		key = '';
 		_private = false;
+		storage = '';
 	};
 	clear();
 	let new_drive = false;
@@ -56,6 +57,15 @@
 					placeholder="[a-z0-9]{'{64}'}"
 				/>
 			</div>
+			<!-- <div class="">
+				<label for="connect-drive-name">storage(optional)</label><br />
+				<input
+					id="connect-drive-name"
+					bind:value={storage}
+					class="dark:ring-gray-400"
+					placeholder="awesome"
+				/>
+			</div> -->
 		{/if}
 	</div>
 	<div class="flex pt-3">
@@ -79,7 +89,7 @@
 			>
 			<button
 				on:click={() => {
-					socket.signal('connect-drive', { name, key });
+					socket.signal('connect-drive', { name, key, storage });
 					clear();
 				}}
 				class="text-white mr-1 p-2  rounded-md text-xl active:ring ring-blue-500 dark:ring-gray-500  bg-blue-600 dark:bg-gray-600"

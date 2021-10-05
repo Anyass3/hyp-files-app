@@ -78,6 +78,16 @@
 				data-data={JSON.stringify({ ...stat, path, name })}
 			>
 				<div class="relative">
+					<!-- <div class="tooltip -top-8 h-[min-content]">
+						<p>{name}</p>
+						<p>Type: {stat.isFile ? stat.ctype : 'Folder'}</p>
+						<p>
+							Modified: {new Date(stat.mtime).toLocaleString('en', {
+								dateStyle: 'short',
+								timeStyle: 'short'
+							})}
+						</p>
+					</div> -->
 					<button class="cursor-pointer w-36 h-32 overflow-hidden">
 						<div class="flex justify-center">
 							{#if stat.isFile}
