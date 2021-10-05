@@ -95,8 +95,8 @@ const handleConnection = async (
 				});
 				localStream.directory(path, '/', { name: stat.name });
 				stat.name = stat.name + '.zip';
-				stat.size = localStream._readableState.length;
 				localStream.finalize();
+				stat.size = localStream._readableState.length || stat.size;
 			} else localStream = fs.createReadStream(path);
 		} else {
 			const drive = api.drives.get(dkey);
@@ -109,8 +109,8 @@ const handleConnection = async (
 					localStream.append(await drive.$read(name), { name });
 				}
 				stat.name = stat.name + '.zip';
-				stat.size = localStream._readableState.length;
 				localStream.finalize();
+				stat.size = localStream._readableState.length || stat.size;
 			} else localStream = drive.createReadStream(path);
 		}
 
@@ -170,6 +170,7 @@ const handleConnection = async (
 
 export const initiate = async (api: API, { dkey, path, stat, send = true, phrase }) => {
 	if (!hasPermission({ path, dkey, send })) return;
+	console.log({ dkey, path, stat, send, phrase });
 	const node = new DHT({});
 	if (!phrase) phrase = randomWords({ exactly: 3, join: ' ' });
 	const seed = hypercrypto.data(Buffer.from(phrase));
@@ -180,7 +181,7 @@ export const initiate = async (api: API, { dkey, path, stat, send = true, phrase
 	let _remoteStream;
 	const cancelShare = () => {
 		if (cancelled) return;
-		_remoteStream.end();
+		_remoteStream?.end();
 		server.close();
 		emitter.broadcast('notify-success', 'Cancelled Sharing "' + _.last(path.split('/')) + '"');
 		cancelled = true;

@@ -9,7 +9,7 @@
 	};
 	clear();
 	let new_drive = false;
-	$: console.log(key, name, _private);
+	// $: console.log(key, name, _private);
 </script>
 
 <div>
@@ -58,7 +58,7 @@
 			</div>
 		{/if}
 	</div>
-	<div class="flex pt-1">
+	<div class="flex pt-3">
 		{#if new_drive}
 			<button
 				on:click={() => {
@@ -71,7 +71,7 @@
 		{:else}
 			<button
 				on:click={() => {
-					socket.signal('add-drive', { name, key });
+					socket.signal('save-and-connect-drive', { name, key });
 					clear();
 				}}
 				class="text-white mr-1 p-2 rounded-md text-xl active:ring ring-blue-500 dark:ring-gray-500  bg-blue-600 dark:bg-gray-600"

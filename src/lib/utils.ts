@@ -54,6 +54,47 @@ export const truncate = (text = '', max = 20) => {
 	text = text.slice(0, max);
 	return len > max ? text + '..' : text;
 };
+export const doubleTap = (func, timeout = 400) => {
+	//using this for double click and tap
+	//because there's none for double tap
+	//only for double click which is not fired in touch screens
+	// so should work for both
+	let doubleTaped = 0 as any;
+	return (...args) => {
+		if (doubleTaped === 0) {
+			doubleTaped = 1;
+			doubleTaped = setTimeout(() => (doubleTaped = 0), timeout);
+		} else {
+			doubleTaped = 0;
+			func(...args);
+		}
+	};
+};
+export const copyToClipboard = async (text: string) => {
+	if (!text) return false;
+	if (navigator.clipboard) {
+		try {
+			await navigator.clipboard.writeText(text);
+			return true;
+		} catch (error) {
+			//
+			console.error(error);
+		}
+	}
+	try {
+		const input = document.createElement('textarea');
+		input.innerHTML = text;
+		document.body.appendChild(input);
+		input.select();
+		const copied = document.execCommand('copy');
+		document.body.removeChild(input);
+		console.log(copied);
+		return true;
+	} catch (error) {
+		console.error(error);
+		return false;
+	}
+};
 
 const gb = 1073741824;
 

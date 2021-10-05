@@ -97,8 +97,14 @@ async function start() {
 		// 	await cleanup();
 		// 	console.log('doen');
 		// });
+		const timeout = setTimeout(() => {
+			emitter.broadcast('notify-danger', 'server closed');
+			process.exit();
+		}, 50000);
 		for (const cleanup of api.cleanups) await cleanup();
+		clearTimeout(timeout);
 		console.log('process exit');
+		emitter.broadcast('notify-danger', 'server closed');
 		process.exit();
 	});
 	let uncaughtExceptions = 0;

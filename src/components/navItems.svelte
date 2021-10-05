@@ -17,7 +17,7 @@
 		>
 	</div>
 	<div class="flex justify-between flex-md-row flex-col gap-6">
-		{#each ['files', 'activity'] as navLink}
+		{#each ['files', 'tasks'] as navLink}
 			<div>
 				<a
 					sveltekit:prefetch

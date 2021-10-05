@@ -13,6 +13,7 @@
 <script lang="ts">
 	import { NotificationDisplay } from '@beyonk/svelte-notifications';
 	import ContextMenu from '$components/context-menu.svelte';
+	import Snackbar from '$components/snack-bar.svelte';
 	import 'tailwindcss/tailwind.css';
 	import '$lib/app.css';
 	import Header from '$components/nav.svelte';
@@ -21,7 +22,6 @@
 	import { dev, browser } from '$app/env';
 	import { page } from '$app/stores';
 	const colorScheme = store.g('colorScheme');
-	// const hideFilemenu = store.g('hideFilemenu');
 	import { InterObserver, NavInterObserver } from '$lib/utils';
 
 	$: ((theme) => {
@@ -44,19 +44,10 @@
 	<div class="h-full flex flex-col flex-grow">
 		<Header />
 		<!-- <div class="w-screen h-2" use:NavInterObserver /> -->
-
-		<!-- <div
-			class="w-screen h-1"
-			use:InterObserver={{
-				isIntersecting: () => {
-					$hideFilemenu = !$hideFilemenu;
-				}
-			}}
-		/> -->
 		<slot />
 	</div>
 </div>
-
+<Snackbar />
 <NotificationDisplay />
 {#if $page.path === '/files'}
 	<ContextMenu />

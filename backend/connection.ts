@@ -7,7 +7,7 @@ import Drive, { setDriveEvents } from './drive.js';
 import startCore from './core.js';
 import { getEmitter, getBeeState, API } from './state.js';
 import { Connect, Extention } from './peers.js';
-import Path from 'path';
+import { join } from 'path';
 import { initiate, connect } from './share.js';
 import { v4 as uuidV4 } from 'uuid';
 
@@ -120,30 +120,37 @@ export default async function () {
 	}
 
 	return async ({ channel, api }: { channel; api: API }) => {
+		//init drives
+		{
+			if (!startedSignals) {
+				const _drives = await getBeeState(drivesBee);
+				api.initDrives(_drives);
+				api.cleanups.push(cleanup);
+				api.cleanups.push(pcleanup);
+				api.clients.set(publicDriveKey, { publicHyp });
+			}
+		}
+
 		emitter.log('channel::connect', channel.key);
 		api.channels.set(channel.key, channel);
 
-		const refreshSavedDrives = async ({ key, name }, connected = false) => {
-			if (await drivesBee.get(name)) {
-				const drives = api.getSavedDrives().map((drive) => {
-					if (drive.key === key) drive.connected = connected;
-					return drive;
-				});
-				api.setSavedDrive(drives);
-			}
-		};
 		const broadcast = (ev, data) => {
 			channel.signal(ev, data);
 		};
-		channel.on('cancel-sharing', ({ send, phrase}) => {
-			emitter.emit('cancel-sharing-'+send+phrase)
-		})
-
-		if (!api.getDrive(privateDrive.$key) && !(privateDrive.closed || privateDrive.closing)) {
-			api.addDrive({ key: privateDrive.$key, name: 'private', _private: true }, privateDrive);
+		channel.on('cancel-sharing', ({ send, phrase }) => {
+			emitter.emit('cancel-sharing-' + send + phrase);
+		});
+		{
+			const drive = api.getDrive(privateDrive.$key);
+			if (!drive.connected && !(privateDrive.closed || privateDrive.closing)) {
+				api.updateDrive({ ...drive, saved: true, connected: true, writable: true }, privateDrive);
+			}
 		}
-		if (!api.getDrive(publicDrive.$key) && !(publicDrive.closed || publicDrive.closing)) {
-			api.addDrive({ key: publicDrive.$key, name: 'public', _private: false }, publicDrive);
+		{
+			const drive = api.getDrive(publicDrive.$key);
+			if (!drive.connected && !(publicDrive.closed || publicDrive.closing)) {
+				api.updateDrive({ ...drive, saved: true, connected: true, writable: true }, publicDrive);
+			}
 		}
 		// if (!core?.opened) {
 		// 	emitter.log(colors.blue(`!core?.opened`), !core?.opened, core);
@@ -158,20 +165,6 @@ export default async function () {
 			});
 			publicDriveKey = publicDrive.$key;
 		}
-		//init saved drives
-		(async function () {
-			if (startedSignals) return;
-			const _drives = (await getBeeState(drivesBee)).map(({ key, ...kvs }) => ({
-				key,
-				...kvs,
-				connected: api.connectedDrives.includes(key)
-			}));
-			api.setSavedDrive(_drives);
-			api.cleanups.push(cleanup);
-			api.cleanups.push(pcleanup);
-			api.clients.set(publicDriveKey, { publicHyp });
-		})();
-
 		// advertise me
 		// if (!(await core.has(0))) await core.append(publicDrive.$key);
 		// NOTE:: allow to run in background for now
@@ -211,63 +204,84 @@ export default async function () {
 		});
 		channel.on('connect-drive', async ({ name, key, _private }) => {
 			if (!key?.match(/^[a-z0-9]{64}$/)) {
-				emitter.broadcast('notify-warn', 'please input a valid drive key');
+				emitter.broadcast('notify-warn', 'Please input a valid drive key');
 				return;
 			}
-			_private = _private ?? api.getSavedDrive(key)?._private;
+			const _drive = api.getDrive(key);
+			if (_drive?.connected) {
+				emitter.broadcast('notify-warn', 'Drive is already connected');
+				return;
+			}
+			_private = _private ?? _drive?._private;
+			name = _drive?.name || name || getRandomStr();
 
-			if (!name) name = getRandomStr();
 			const drive = await startDrive(!_private ? publicHyp : privateHyp, key, { _private, name }); /// TODO: announce, lookup
-			api.addDrive({ key: drive.$key, name, _private }, drive);
+			if (_drive) {
+				api.updateDrive({ ..._drive, connected: true });
+			} else api.addDrive({ key: drive.$key, name, _private }, drive);
 			// channel.signal('drive-connected', key);
-			emitter.broadcast('notify-success', `${name} drive connected`);
+			emitter.broadcast('notify-success', `"${name}" drive connected`);
 			if (publicDriveKey === key) {
 				publicDrive = drive;
 			} else if (privateDrivekey === key) {
 				privateDrive = drive;
 			}
-			refreshSavedDrives({ key, name }, true);
+			// refreshSavedDrives({ key, name }, true);
 		});
 
 		channel.on('save-drive', async ({ key, name, _private, connected = true }) => {
 			if (!key?.match(/[a-z0-9]{64}/)) {
-				emitter.broadcast('notify-warn', 'please input a valid drive key');
+				emitter.broadcast('notify-warn', 'Please input a valid drive key');
 				return;
 			}
-			if (!name) {
-				let drive = api.getSavedDrive(key);
-				if (drive) name = drive.name;
-				else name = getRandomStr();
+			if (api.doesDriveNameExist(name, false)) {
+				emitter.broadcast('notify-danger', 'Sorry drive with the same name is already saved');
+				return;
 			}
-			const connectionDrive = api.getDrive(key);
-			if (connectionDrive) {
-				_private = _private ?? connectionDrive?._private;
+			const drive = api.getDrive(key);
+			if (drive) {
+				if (drive.saved) {
+					emitter.broadcast('notify-warn', `Drive is already saved as "${drive.name}"`);
+					return;
+				}
+				_private = _private ?? drive._private;
+				name = drive.name;
+				drive.saved = true;
+				api.updateDrive(drive);
+			} else {
+				api.addDrive({ key, name, _private, connected, saved: true });
+			}
+			if (!name) {
+				name = getRandomStr();
 			}
 			await drivesBee.put(name, { key, _private }); // the drives bee
-			api.addSavedDrive({ key, name, connected, _private });
 			// channel.signal('drive-saved', key);
-			emitter.broadcast('notify-success', `${name} drive saved`);
-			emitter.log('saved-drive');
+			emitter.broadcast('notify-success', `"${name}" drive saved`);
+			emitter.log(`"${name}" drive saved`);
 		});
 
-		channel.on('add-drive', async ({ name, key, _private }) => {
+		channel.on('save-and-connect-drive', async ({ name, key, _private }) => {
 			channel.emit('save-drive', { name, key, _private, connected: false });
 			channel.emit('connect-drive', { name, key, _private });
 		});
+
 		channel.on('create-drive', async ({ name, _private = false }) => {
 			if (!name) {
-				emitter.broadcast('notify-danger', 'sorry drive must have a name');
+				emitter.broadcast('notify-danger', 'Sorry drive must have a name');
+				return;
+			}
+			if (api.doesDriveNameExist(name)) {
+				emitter.broadcast('notify-danger', 'Sorry drive with the same name already exists');
 				return;
 			}
 			const drive = await startDrive(!_private ? publicHyp : privateHyp, undefined, {
 				_private,
 				name
 			}); /// TODO: announce, lookup
-			api.addDrive({ key: drive.$key, name, _private }, drive);
+			api.addDrive({ key: drive.$key, name, _private, saved: true }, drive);
 			await drivesBee.put(name, { key: drive.$key, _private }); // the drives bee
-			api.addSavedDrive({ key: drive.$key, name, connected: true, _private });
 			// channel.signal('drive-saved', key);
-			emitter.broadcast('notify-success', `${name} drive created and connected`);
+			emitter.broadcast('notify-success', `"${name}" drive created and connected`);
 			emitter.log('created drive ' + drive.$key);
 		});
 
@@ -289,22 +303,34 @@ export default async function () {
 			drive.close();
 
 			emitter.log('closed-drive', name);
-
-			api.removeDrive(key);
-			refreshSavedDrives({ key, name });
-			if (!api.getSavedDrive(key)) {
-				// await drive.promises.destroyStorage();
-				// emitter.broadcast('notify-info', name + ' drive storage destroyed');
+			{
+				const drive = api.getDrive(key);
+				if (!drive?.saved) {
+					api.removeDrive(key);
+					// await drive.promises.destroyStorage();
+					// emitter.broadcast('notify-info', name + ' drive storage destroyed');
+				} else if (drive) {
+					api.updateDrive({ ...drive, connected: false });
+				}
 			}
+
+			// refreshSavedDrives({ key, name });
 		});
 
 		channel.on('delete-drive', async ({ key, name }) => {
-			const _drive = drivesBee.del(name) || { name };
-			api.removeSavedDrive(key);
-			emitter.broadcast('notify-success', `drive "${name}" deleted`);
+			if (key === publicDriveKey || key === privateDrivekey) {
+				emitter.broadcast('notify-danger', 'Sorry cannot delete default drives');
+				return;
+			}
+			await drivesBee.del(name);
+			emitter.broadcast('notify-success', `Drive "${name}" deleted`);
 			// channel.signal('deleted-drive', drive);
-			emitter.log(colors.red('deleted-drive'));
-			if (!api.getDrive(key)) {
+			emitter.log(`Drive "${colors.red(name)}" deleted`);
+			const drive = api.getDrive(key);
+			if (!drive.connected) {
+				api.removeDrive(key);
+
+				//Todo
 				// let namespace = await getNamespace(key);
 				// const driveStore = (_drive._private ? privateHyp : publicHyp).corestore.namespace(
 				// 	namespace
@@ -314,7 +340,39 @@ export default async function () {
 				// //@ts-ignore
 				// await drive.promises.destroyStorage();
 				// emitter.broadcast('notify-info', name + ' drive storage destroyed');
+			} else {
+				api.updateDrive({ ...drive, saved: false });
 			}
+		});
+		channel.on('rename-drive', async ({ key, name }) => {
+			if (key === publicDriveKey || key === privateDrivekey) {
+				emitter.broadcast('notify-danger', 'Sorry cannot rename default drives');
+				return;
+			}
+			if (!name) {
+				emitter.broadcast('notify-danger', 'Cannot rename to empty name');
+				return;
+			}
+			if (!key?.match(/[a-z0-9]{64}/)) {
+				emitter.broadcast('notify-warn', 'Please input a valid drive key');
+				return;
+			}
+			const drive = api.getDrive(key);
+			// console.log(savedDrive, connectedDrive);
+			if (!drive) {
+				emitter.broadcast('notify-warn', 'Sorry drive does not exist');
+				return;
+			}
+
+			if (drive.saved) {
+				await drivesBee.del(drive.name);
+				await drivesBee.put(name, { key, _private: drive._private }); // the drives bee
+				api.updateDrive({ ...drive, name });
+			}
+			// channel.signal('drive-saved', key);
+			const msg = `"${drive?.name}" drive renamed "${name}"`;
+			emitter.broadcast('notify-success', msg);
+			emitter.log(msg);
 		});
 		channel.on('log', async (log) => {
 			// core.append(log);
@@ -365,9 +423,9 @@ export default async function () {
 				else drive.$remove(path);
 				emitter.broadcast('notify-success', `${name} deleted`);
 			} else {
-				path = Path.join(config.fs, path);
-				if (fs.statSync(path).isDirectory()) fs.rmdirSync(path, { recursive: true });
-				else fs.unlinkSync(path);
+				path = join(config.fs, path);
+				if (fs.statSync(path).isDirectory()) fs.rmSync(path, { recursive: true });
+				else fs.rmSync(path);
 				emitter.broadcast('notify-success', `${name} deleted`);
 				emitter.broadcast('storage-updated', 'fs');
 			}

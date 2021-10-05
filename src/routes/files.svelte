@@ -12,7 +12,6 @@
 	const dkey = store.g('dkey');
 	const loading: Writable<loading> = store.g('loading');
 	const show_hidden = store.g('show_hidden');
-	// const hideFilemenu = store.g('hideFilemenu');
 	let pagination = store.state.pagination;
 	const isIntersecting = () => {
 		if ($pagination.has_next) {
@@ -119,7 +118,7 @@
 							on:click={() => open({ path: '/' })}
 							><FolderIcon size="1x" class=" w-6 h-6 md:h-8 md:w-8" /></span
 						>
-						<span class="tooltip">{'root'}</span>
+						<span class="tooltip" style="position: fixed;left:0;bottom:0">{'root'}</span>
 					</div>
 				</button>
 			{:else}
@@ -136,7 +135,7 @@
 									{truncate(item.name, 10)}
 								{/if}
 							</span>
-							<span class="tooltip">{item.name}</span>
+							<span class="tooltip" style="position: fixed;left:0;bottom:0">{item.name}</span>
 						</div>
 					</button>
 				{/each}
