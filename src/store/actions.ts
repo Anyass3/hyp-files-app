@@ -42,12 +42,12 @@ export default {
 			const view_args =
 				storage + toQueryString({ path: encodeURIComponent(path), dkey, ctype, size });
 			if (isMedia(ctype, true)) {
-				state.socket.signal('offline-access', {
-					path,
-					dkey,
-					start: 0,
-					end: Math.min(512000, size)
-				}); // intended to start streaming faster
+				// state.socket.signal('offline-access', {
+				// 	path,
+				// 	dkey,
+				// 	start: 0,
+				// 	end: Math.min(512000, size)
+				// });
 				if (!ctype.includes('image') && !inBrowser && state.serverStore.get().isMpvInstalled) {
 					const url =
 						API +

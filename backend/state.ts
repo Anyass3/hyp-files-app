@@ -1,4 +1,6 @@
 import colors from 'colors';
+//@ts-ignore
+import { MirroringStore } from 'connectome/stores';
 
 export class Emitter {
 	events;
@@ -41,25 +43,8 @@ export class Emitter {
 	}
 }
 
-let emitter: Emitter;
-export const getEmitter = () => {
-	// console.log('get emitter');
-	if (!emitter) {
-		// console.log('new emitter');
-		emitter = new Emitter();
-	}
-	return emitter;
-};
-
-export const getBeeState = async (bee) => {
-	let state = [];
-	for await (const { key, value } of bee.createReadStream()) {
-		state.push({ name: key, ...value, saved: true });
-	}
-	return state || [];
-};
-
 interface Store {
+	mirror(channelList: any);
 	state: {
 		isMpvInstalled?: boolean;
 		drives?: Array<{
@@ -77,12 +62,13 @@ interface Store {
 		offlinePending?: Record<string, string[]>;
 	};
 }
-export const makeApi = (
-	store: Store = {
+
+export const makeApi = <A extends Store>(
+	mirroringStore = {
 		state: {}
-	}
+	} as A
 ) => {
-	const { state } = store;
+	const { state } = mirroringStore;
 
 	state.sharing = [];
 	state.drives = [];
@@ -103,8 +89,11 @@ export const makeApi = (
 	const channels = new Map();
 	const clients = new Map();
 	const cleanups = [];
+	let bootstrap_nodes: { host: string; port: number }[] = [];
 	return {
+		mirroringStore,
 		bees,
+		bootstrap_nodes,
 		clients,
 		channels,
 		cleanups,
@@ -117,7 +106,7 @@ export const makeApi = (
 			if (val !== state.isMpvInstalled) {
 				state.isMpvInstalled = val;
 				//@ts-ignore
-				store.announceStateChange();
+				mirroringStore.announceStateChange();
 			}
 		},
 		get isMpvInstalled() {
@@ -127,20 +116,20 @@ export const makeApi = (
 		async addPeer(peer) {
 			state.peers.push(peer);
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		async setUsername(corekey, username) {
 			const { peer, idx } = await this.getPeer({ corekey }, true);
 			peer['username'] = username;
 			state.peers[idx] = peer;
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		async removePeer(corekey) {
 			const peer = await this.getPeer({ corekey });
 			state.peers = state.peers.filter((peer) => corekey !== peer.corekey);
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 			this.peersObj.delete(corekey);
 			this.peerCores.delete(corekey);
 			this.peerDrives.delete(peer.drivekey);
@@ -166,7 +155,7 @@ export const makeApi = (
 
 			state.drives.push({ key, name, writable: drive.writable, _private, saved, connected });
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		getDrive(key) {
 			return state.drives.find((drive) => drive.key === key);
@@ -174,7 +163,7 @@ export const makeApi = (
 		async removeDrive(key) {
 			state.drives = state.drives.filter((drive) => drive.key !== key);
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 			drives.delete(key);
 		},
 		getDrives() {
@@ -194,7 +183,7 @@ export const makeApi = (
 				return d;
 			});
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		doesDriveNameExist(name, connected?) {
 			return state.drives.find((drive) => drive.name === name && drive.connected === connected);
@@ -203,7 +192,7 @@ export const makeApi = (
 		async addChildProcess({ pid, cm }) {
 			state.child_processes.push({ pid, cm });
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		getChildProcess(pid) {
 			return state.child_processes.find((c_p) => c_p.pid === pid);
@@ -211,7 +200,7 @@ export const makeApi = (
 		async removeChildProcess(pid) {
 			state.child_processes = state.child_processes.filter((c_p) => c_p.pid !== pid);
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		getChildProcesses() {
 			return state.child_processes;
@@ -225,18 +214,18 @@ export const makeApi = (
 			emitter.log('offlinePending,', offlinePending, dkey, state.offlinePending[dkey]);
 			state.offlinePending[dkey] = offlinePending.concat(path);
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		rmOfflinePending(dkey, path) {
 			state.offlinePending[dkey] = this.getOfflinePending(dkey).filter((p) => p !== path);
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		/// state.sharing
 		async addSharing({ send, name, phrase, drive }) {
 			state.sharing.push({ send, name, phrase, drive });
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		getSharing(phrase?, send?) {
 			return phrase && send
@@ -249,13 +238,39 @@ export const makeApi = (
 				return s;
 			});
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		},
 		async removeSharing(phrase, send) {
 			state.sharing = state.sharing.filter((s) => !(s.phrase === phrase && s.send === send));
 			//@ts-ignore
-			store.announceStateChange();
+			mirroringStore.announceStateChange();
 		}
 	};
 };
 export type API = ReturnType<typeof makeApi>;
+
+let emitter: Emitter;
+export const getEmitter = () => {
+	// console.log('get emitter');
+	if (!emitter) {
+		// console.log('new emitter');
+		emitter = new Emitter();
+	}
+	return emitter;
+};
+
+export const getBeeState = async (bee) => {
+	let state = [];
+	for await (const { key, value } of bee.createReadStream()) {
+		state.push({ name: key, ...value, saved: true });
+	}
+	return state || [];
+};
+let api: API;
+export const getApi = () => {
+	if (!api) {
+		const mirroringStore = new MirroringStore();
+		api = makeApi(mirroringStore);
+	}
+	return api;
+};

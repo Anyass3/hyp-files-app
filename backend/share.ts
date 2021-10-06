@@ -8,11 +8,12 @@ import zlib from 'zlib';
 import _ from 'lodash';
 import { join } from 'path';
 import { Writable, Transform } from 'stream';
-import { getEmitter, API } from './state.js';
+import { getEmitter, getApi } from './state.js';
 import colors from 'colors';
 import { Settings } from './settings.js';
 
 const config = Settings();
+const api = getApi();
 const emitter = getEmitter();
 
 const hasPermission = ({ path, dkey, send }) => {
@@ -33,7 +34,6 @@ const hasPermission = ({ path, dkey, send }) => {
 };
 
 const handleConnection = async (
-	api: API,
 	{ dkey, path, stat, remoteStream, send, phrase, node },
 	server?
 ) => {
@@ -168,10 +168,10 @@ const handleConnection = async (
 	handleEvents(remoteStream, remoteEnd);
 };
 
-export const initiate = async (api: API, { dkey, path, stat, send = true, phrase }) => {
+export const initiate = async ({ dkey, path, stat, send = true, phrase }) => {
 	if (!hasPermission({ path, dkey, send })) return;
-	console.log({ dkey, path, stat, send, phrase });
-	const node = new DHT({});
+	emitter.log({ dkey, path, stat, send, phrase });
+	const node = new DHT({ bootstrap: api.bootstrap_nodes });
 	if (!phrase) phrase = randomWords({ exactly: 3, join: ' ' });
 	const seed = hypercrypto.data(Buffer.from(phrase));
 	const server = node.createServer();
@@ -207,9 +207,12 @@ export const initiate = async (api: API, { dkey, path, stat, send = true, phrase
 		});
 		remoteStream.on('close', destroy);
 		_remoteStream = remoteStream;
-		console.log('server Remote public key', remoteStream.remotePublicKey);
-		console.log('server Local public key', remoteStream.publicKey); // same as keyPair.publicKey
-		handleConnection(api, { dkey, path, stat, send, remoteStream, phrase, node }, server);
+		emitter.log(
+			colors.gray('server Remote public key'),
+			remoteStream.remotePublicKey.toString('hex')
+		);
+		emitter.log(colors.gray('server Local public key'), remoteStream.publicKey.toString('hex')); // same as keyPair.publicKey
+		handleConnection({ dkey, path, stat, send, remoteStream, phrase, node }, server);
 	});
 	server.on('close', async () => {
 		if (!cancelled)
@@ -240,12 +243,12 @@ export const initiate = async (api: API, { dkey, path, stat, send = true, phrase
 	return phrase;
 };
 
-export const connect = (api: API, { dkey, path, stat, send = false, phrase }) => {
+export const connect = ({ dkey, path, stat, send = false, phrase }) => {
 	if (!hasPermission({ path, dkey, send })) return;
 	if (!phrase) phrase = randomWords({ exactly: 3, join: ' ' });
 	const seed = hypercrypto.data(Buffer.from(phrase));
 	const keyPair = DHT.keyPair(seed);
-	const node = new DHT({});
+	const node = new DHT({ bootstrap: api.bootstrap_nodes });
 	const remoteStream = node.connect(keyPair.publicKey, { keyPair });
 	let destroyed = false;
 	const cancelShare = async () => {
@@ -260,14 +263,20 @@ export const connect = (api: API, { dkey, path, stat, send = false, phrase }) =>
 	emitter.on('cancel-sharing-' + send + phrase, cancelShare);
 
 	remoteStream.on('open', function () {
-		console.log('Remote public key', remoteStream.remotePublicKey);
-		console.log('Local public key', remoteStream.publicKey); // same as keyPair.publicKey
-		handleConnection(api, { dkey, path, stat, send, remoteStream, phrase, node });
+		emitter.log(
+			colors.gray('Client Remote public key'),
+			remoteStream.remotePublicKey.toString('hex')
+		);
+		emitter.log(colors.gray('Client Local public key'), remoteStream.publicKey.toString('hex')); // same as keyPair.publicKey
+		handleConnection({ dkey, path, stat, send, remoteStream, phrase, node });
 	});
-	remoteStream.on('error', (error) => {
+	remoteStream.on('error', async (error) => {
+		if (destroyed) return;
 		emitter.broadcast('notify-danger', error?.message);
 		api.removeSharing(phrase, send);
-		node.destroy();
+		emitter.off('cancel-sharing-' + send + phrase, cancelShare);
+		destroyed = true;
+		await node.destroy();
 	});
 	remoteStream.on('close', async () => {
 		if (destroyed) return;

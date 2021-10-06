@@ -10,7 +10,7 @@ import {
 	mime
 } from './utils.js';
 import { extname, join } from 'path';
-import { getEmitter, API } from './state.js';
+import { getEmitter, getApi } from './state.js';
 import fs from 'fs';
 import cors from 'cors';
 import colors from 'colors';
@@ -20,6 +20,7 @@ import _ from 'lodash';
 
 const config = Settings();
 const emitter = getEmitter();
+const api = getApi();
 
 const showError = (storage: string, mediaPath: string, message = 'media-path do not exist') => {
 	emitter.broadcast(
@@ -29,7 +30,7 @@ const showError = (storage: string, mediaPath: string, message = 'media-path do 
 	emitter.log(colors.red(storage + '::' + mediaPath + '::' + message));
 };
 
-export default async function (app, api: API) {
+export default async function (app) {
 	// ROUTES
 
 	app.use(bodyParser.json());

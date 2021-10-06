@@ -4,13 +4,15 @@ import Corestore from 'corestore';
 import Networker from '@corestore/networker';
 import { Settings, setSettings } from './settings.js';
 import Hyperbee from 'hyperbee';
-import { getEmitter, getBeeState } from './state.js';
+import { getEmitter, getBeeState, getApi } from './state.js';
 import { v4 as uuidV4 } from 'uuid';
 import { resolve, join } from 'path';
 import { toPromises } from 'hypercore-promisifier';
 import fs from 'fs';
 // const Networker = {};
 // #TODO create a change host name to avoid storage misplacement
+const api = getApi();
+const emitter = getEmitter();
 
 export const setupCorestore = async (
 	{ storage = Settings().publicStorage, oldStorage = null, network = true } = {} as {
@@ -39,7 +41,9 @@ export const setupCorestore = async (
 	const corestore = new Corestore(storage);
 	await corestore.ready();
 	if (network) {
-		const networker = new Networker(corestore) as CorestoreNetworker;
+		const networker = new Networker(corestore, {
+			bootstrap: api.bootstrap_nodes
+		}) as CorestoreNetworker;
 		return {
 			corestore,
 			networker,
@@ -62,7 +66,7 @@ export async function setupBee(newbee = false) {
 	let beekey;
 	const oldStorage = Settings().privateStorage;
 	const storage = uuidV4().replace(/-/g, '');
-	console.log('storage', storage, oldStorage);
+	// console.log('storage', storage, oldStorage);
 	// at every startup it creates a new unique private storage path
 	// for security even our pc cannot access our drive without knowing the storage path
 	setSettings('privateStorage', storage);
@@ -78,7 +82,7 @@ export async function setupBee(newbee = false) {
 	});
 
 	await bee.ready();
-	console.log('Hyperbee ready');
+	// console.log(' ready');
 	if (!bee.feed.writable) {
 		bee.feed.close();
 		bee = new Hyperbee(mainStore.get({ name: 'awesome-bee-db' }), {
@@ -89,16 +93,14 @@ export async function setupBee(newbee = false) {
 		beekey = bee.feed.key.toString('hex');
 		setSettings('beekey', beekey);
 	}
-	console.log('bee initiated, key:', beekey);
+	console.log(colors.gray('Hyperbee initiated, key: ' + beekey));
 
 	if (!beekey) {
 		beekey = bee.feed.key.toString('hex');
 		setSettings('beekey', beekey);
 	}
-
-	const emitter = getEmitter();
 	const loggerKey = await bee.sub('cores').get('logger');
-	console.log('loggerKey', loggerKey);
+	console.log(colors.gray('loggerKey:'), loggerKey);
 
 	const logger = toPromises(mainStore.get({ name: 'logger', valueEncoding: 'json' }));
 	await logger.ready(); // wait for keys to be populated
@@ -121,8 +123,8 @@ export async function setupBee(newbee = false) {
 		await logger.append(log);
 	});
 
-	console.log(colors.gray('Core Key ' + logger?.key?.toString?.('hex')));
-	console.log(colors.gray('Core Writable: ' + logger?.writable)); // do we possess the private key of this core?
+	emitter.log(colors.gray('Core Key ' + logger?.key?.toString?.('hex')));
+	emitter.log(colors.gray('Core Writable: ' + logger?.writable)); // do we possess the private key of this core?
 
 	if (!loggerKey) {
 		bee.sub('cores').put('logger', logger.key.toString('hex'));

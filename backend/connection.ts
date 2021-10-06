@@ -5,13 +5,14 @@ import { Settings, setSettings } from './settings.js';
 import { getRandomStr, debounce } from './utils.js';
 import Drive, { setDriveEvents } from './drive.js';
 import startCore from './core.js';
-import { getEmitter, getBeeState, API } from './state.js';
+import { getEmitter, getBeeState, API, getApi } from './state.js';
 import { Connect, Extention } from './peers.js';
 import { join } from 'path';
 import { initiate, connect } from './share.js';
 import { v4 as uuidV4 } from 'uuid';
 
 const config = Settings();
+const api = getApi();
 const emitter = getEmitter();
 
 export default async function () {
@@ -119,19 +120,15 @@ export default async function () {
 		await drivesBee.put('private', { key: privateDrive?.$key, _private: true });
 	}
 
-	return async ({ channel, api }: { channel; api: API }) => {
-		//init drives
-		{
-			if (!startedSignals) {
-				const _drives = await getBeeState(drivesBee);
-				api.initDrives(_drives);
-				api.cleanups.push(cleanup);
-				api.cleanups.push(pcleanup);
-				api.clients.set(publicDriveKey, { publicHyp });
-			}
-		}
+	//init drives
+	const _drives = await getBeeState(drivesBee);
+	api.initDrives(_drives);
+	api.cleanups.push(cleanup);
+	api.cleanups.push(pcleanup);
+	api.clients.set(publicDriveKey, { publicHyp });
 
-		emitter.log('channel::connect', channel.key);
+	return async ({ channel }) => {
+		emitter.log(colors.blue('channel::connect'), colors.blue(channel.key));
 		api.channels.set(channel.key, channel);
 
 		const broadcast = (ev, data) => {
@@ -442,14 +439,14 @@ export default async function () {
 			emitter.emit('child-process:kill', pid);
 		});
 		channel.on('share send', ({ phrase = 'yeay share test', dkey, path, ...stat }) => {
-			initiate(api, { phrase, dkey, path, stat });
+			initiate({ phrase, dkey, path, stat });
 		});
 		channel.on('share receive', ({ phrase = 'yeay share test', dkey, path, ...stat }) => {
-			connect(api, { phrase, dkey, path, stat });
+			connect({ phrase, dkey, path, stat });
 		});
 		channel.on('disconnect', async () => {
 			// NOTE:: allow to run in background for now
-			emitter.log('channel::disconnect', channel.key);
+			emitter.log(colors.dim('channel::disconnect'), colors.dim(channel.key));
 			// emitter.log(colors.red('websocket client disconnected and client network: '), {
 			// 	announce: false,
 			// 	lookup: false
