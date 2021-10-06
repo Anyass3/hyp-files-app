@@ -265,7 +265,7 @@ export default class extends hyperdrive {
 							...(isFile
 								? { size: item.stat.size }
 								: {
-										items: (await this.promises.readdir(item.path)).length
+										items: (await this.promises.readdir(path)).length
 								  }),
 							offline: stats.blocks === stats.downloadedBlocks
 						}

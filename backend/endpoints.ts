@@ -158,8 +158,8 @@ export default async function (app) {
 	app.post('/mpv_stream', async (req, res) => {
 		const command = 'mpv ' + req.body.url;
 		spawnChildProcess(command, { emitter }).catch((err) => {
-			emitter.log(err);
-			emitter.broadcast(err);
+			// emitter.log(err);
+			// emitter.broadcast(err);
 		});
 		res.status(200).end();
 	});
