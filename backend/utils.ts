@@ -20,14 +20,12 @@ export const debounce = (fn, delay = 500) => {
 };
 
 export const handleError = (fn: (...args) => void, emitter) => {
-	return async (...args) => {
-		// console.log('handling');
+	return (...args) => {
 		try {
-			// console.log('handling fn');
-			return await fn(...args);
+			return fn(...args);
 		} catch (error) {
 			emitter.broadcast('notify-danger', error.message);
-			console.log(colors.red('error: handle'), error.stack);
+			emitter.log(colors.red('handleError:'), colors.red(error.stack));
 		}
 	};
 };
@@ -40,6 +38,7 @@ export const execChildProcess: (command: string) => Promise<string> = async (com
 		});
 	});
 };
+
 interface SpawnChildProcessOptions {
 	shell?: boolean;
 	log?: boolean;
@@ -55,7 +54,7 @@ type SpawnChildProcess = (
 
 export const spawnChildProcess: SpawnChildProcess = async (
 	command,
-	{ shell = false, log = false, emitter, stdin, broadcast = true, ...kwargs } = {}
+	{ shell = false, emitter, stdin, broadcast = true, ...kwargs } = {}
 ) => {
 	return new Promise((resolve, reject) => {
 		const [cm, ...cms] = command
@@ -70,8 +69,7 @@ export const spawnChildProcess: SpawnChildProcess = async (
 		}
 		//@ts-ignore
 		const child = child_process.spawn(...command, { ...kwargs, shell });
-		console.log(...command);
-		if (log) console.log(child.pid);
+		if (emitter) emitter.log(...command);
 		if (emitter) emitter.emit('child-process:spawn', { cm, pid: child.pid, broadcast });
 
 		let data = '';
@@ -79,22 +77,19 @@ export const spawnChildProcess: SpawnChildProcess = async (
 
 		(child.stdout as { on }).on('data', (_data) => {
 			data += _data;
-			if (log) console.log(`data:${cm}\n${_data}`);
 			if (emitter)
 				emitter.emit(`child-process:data`, { cm, pid: child.pid, data: _data, broadcast });
 		});
 
 		(child.stderr as { on }).on('data', (error) => {
 			errors += error;
-			if (log) console.error(colors.red(`error:${cm}\n${error}`));
 			if (emitter) {
 				emitter.emit('child-process:error', { cm, pid: child.pid, error, broadcast });
-				emitter.log(colors.red(error.message));
+				// emitter.log(colors.red(error.toString('hex')));
 			}
 		});
 		if (stdin) {
 			stdin.on('error', (err) => {
-				if (log) console.log(colors.red(err.message));
 				if (emitter) {
 					emitter.broadcast('notify-danger', err.message);
 					emitter.log(colors.red(err.message));
@@ -110,7 +105,6 @@ export const spawnChildProcess: SpawnChildProcess = async (
 			if (code) {
 				reject({ msg, data, errors });
 			} else resolve({ msg, data, errors });
-			if (log) console.log(msg);
 			if (emitter) emitter.emit('child-process:exit', { pid: child.pid, msg, broadcast });
 		});
 	});
