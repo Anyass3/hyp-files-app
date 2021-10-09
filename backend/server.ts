@@ -9,19 +9,15 @@ import { getEmitter, getApi } from './state.js';
 import express from 'express';
 import http from 'http';
 import endpoints from './endpoints.js';
-// import { Settings } from './settings.js';
-
-// const config = Settings();
 
 const stdin = process.stdin;
 stdin.resume();
 stdin.setEncoding('utf8');
 let HOST = 'localhost';
-const _h = process.argv.indexOf('-h');
-if (process.argv[_h] === '-h') HOST = process.argv[_h + 1];
+if (process.argv.includes('--host')) HOST = '0.0.0.0';
+
 const emitter = getEmitter();
 const api = getApi();
-// console.log('process.argv', process.argv, 'host=' + HOST);
 
 const enhanceChannel = (channel) => {
 	return {

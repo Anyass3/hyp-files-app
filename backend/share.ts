@@ -183,7 +183,10 @@ export const initiate = async ({ dkey, path, stat, send = true, phrase }) => {
 		if (cancelled) return;
 		_remoteStream?.end();
 		server.close();
-		emitter.broadcast('notify-success', 'Cancelled Sharing "' + _.last(path.split('/')) + '"');
+		emitter.broadcast(
+			'notify-warning',
+			`Cancelled ${send ? 'Sending' : 'Recieving in'} "${_.last(path.split('/')) || path}"`
+		);
 		cancelled = true;
 	};
 	const destroy = async () => {
@@ -215,10 +218,10 @@ export const initiate = async ({ dkey, path, stat, send = true, phrase }) => {
 		handleConnection({ dkey, path, stat, send, remoteStream, phrase, node }, server);
 	});
 	server.on('close', async () => {
-		if (!cancelled)
+		if (!cancelled && !destroyed)
 			emitter.broadcast(
-				'notify-info',
-				`sharing server closed for '${_.last(path.split('/')) || path}'`
+				'notify-success', //@ts-ignore
+				`${send ? 'Sent' : 'Recieved'} "${api.getSharing(phrase, send)?.name}"`
 			);
 		destroy();
 	});
@@ -238,7 +241,7 @@ export const initiate = async ({ dkey, path, stat, send = true, phrase }) => {
 
 	emitter.broadcast(
 		'notify-info',
-		`sharing server listening for '${_.last(path.split('/')) || path}'`
+		`${send ? 'Sending' : 'Recieving in'} "${_.last(path.split('/')) || path}"`
 	);
 	return phrase;
 };
@@ -257,7 +260,10 @@ export const connect = ({ dkey, path, stat, send = false, phrase }) => {
 		api.removeSharing(phrase, send);
 		emitter.off('cancel-sharing-' + send + phrase, cancelShare);
 		destroyed = true;
-		emitter.broadcast('notify-success', 'Cancelled Sharing "' + _.last(path.split('/')) + '"');
+		emitter.broadcast(
+			'notify-warning',
+			`Cancelled ${send ? 'Sending' : 'Recieving in'} "${_.last(path.split('/')) || path}"`
+		);
 		await node.destroy();
 	};
 	emitter.on('cancel-sharing-' + send + phrase, cancelShare);
@@ -280,6 +286,11 @@ export const connect = ({ dkey, path, stat, send = false, phrase }) => {
 	});
 	remoteStream.on('close', async () => {
 		if (destroyed) return;
+		console.log(api.getSharing(phrase, send), api.getSharing());
+		emitter.broadcast(
+			'notify-success', //@ts-ignore
+			`${send ? 'Sent' : 'Recieved'} "${api.getSharing(phrase, send)?.name}"`
+		);
 		api.removeSharing(phrase, send);
 		emitter.off('cancel-sharing-' + send + phrase, cancelShare);
 		destroyed = true;
@@ -291,4 +302,8 @@ export const connect = ({ dkey, path, stat, send = false, phrase }) => {
 		phrase,
 		drive: api.getDrive(dkey)?.name || 'fs'
 	});
+	emitter.broadcast(
+		'notify-info',
+		`${send ? 'Sending' : 'Recieving in'} "${_.last(path.split('/')) || path}"`
+	);
 };

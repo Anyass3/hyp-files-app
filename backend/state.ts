@@ -47,16 +47,16 @@ interface Store {
 	mirror(channelList: any);
 	state: {
 		isMpvInstalled?: boolean;
-		drives?: Array<{
+		drives?: {
 			key: string;
 			name: string;
 			writable: boolean;
 			_private: boolean;
 			connected: boolean;
 			saved: boolean;
-		}>;
-		peers?: Array<{ corekey: string; drivekey: string; username: string }>;
-		child_processes?: Array<{ pid: number; cm: string }>;
+		}[];
+		peers?: { corekey: string; drivekey: string; username: string }[];
+		child_processes?: { pid: number; cm: string }[];
 		sharing?: { send: boolean; name: string; phrase: string; drive: string }[];
 		dataUsage?: {};
 		offlinePending?: Record<string, string[]>;
@@ -79,7 +79,7 @@ export const makeApi = <A extends Store>(
 		total: 0,
 		today: 0,
 		drives: []
-	}; // {total; today; drives:[ {dkey;name;today;total} ] }
+	}; //TODO: {total; today; drives:[ {dkey;name;today;total} ] }
 	const cores = new Map();
 	const drives = new Map();
 	const peerCores = new Map();
@@ -153,7 +153,7 @@ export const makeApi = <A extends Store>(
 				writable = drive.writable;
 			}
 
-			state.drives.push({ key, name, writable: drive.writable, _private, saved, connected });
+			state.drives.push({ key, name, writable: writable, _private, saved, connected });
 			//@ts-ignore
 			mirroringStore.announceStateChange();
 		},
@@ -228,7 +228,7 @@ export const makeApi = <A extends Store>(
 			mirroringStore.announceStateChange();
 		},
 		getSharing(phrase?, send?) {
-			return phrase && send
+			return phrase
 				? state.sharing.find((s) => s.phrase === phrase && s.send === send)
 				: state.sharing;
 		},

@@ -264,6 +264,10 @@ export default async function () {
 		});
 
 		channel.on('save-and-connect-drive', async ({ name, key, _private }) => {
+			if (!name) {
+				emitter.broadcast('notify-danger', 'Sorry drive must have a name');
+				return;
+			}
 			channel.emit('save-drive', { name, key, _private, connected: false });
 			channel.emit('connect-drive', { name, key, _private });
 		});
@@ -429,6 +433,18 @@ export default async function () {
 				path = join(config.fs, path);
 				if (fs.statSync(path).isDirectory()) fs.rmSync(path, { recursive: true });
 				else fs.rmSync(path);
+				emitter.broadcast('notify-success', `${name} deleted`);
+				emitter.broadcast('storage-updated', 'fs');
+			}
+		});
+		channel.on('rename-item', async ({ oldPath, dkey, name }) => {
+			if (dkey?.match(/[a-z0-9]{64}/)) {
+				// const drive = await api.drives.get(dkey);
+				// if ((await drive.promises.stat(path)).isDirectory()) drive.$removedir(path);
+				// else drive.$remove(path);
+				// emitter.broadcast('notify-success', `${name} deleted`);
+			} else {
+				fs.renameSync(join(config.fs, oldPath), join(config.fs, oldPath, '../', name));
 				emitter.broadcast('notify-success', `${name} deleted`);
 				emitter.broadcast('storage-updated', 'fs');
 			}

@@ -15,6 +15,7 @@ export default async function ({ corestore, networker, key, valueEncoding = 'utf
 		core = corestore.get();
 		await core.ready(); // wait for keys to be populated
 	}
+
 	if (networker)
 		networker.configure(core.discoveryKey, {
 			server: core.writable,

@@ -42,7 +42,7 @@
 		<div
 			class="flex justify-between mt-1 bg-blue-100 p-1 rounded dark:bg-gray-700 active:ring-1 ring-blue-200 dark:ring-gray-600"
 		>
-			<div class="flex gap-2">
+			<div class="flex gap-2 items-center">
 				<button
 					class="anchor-tooltip relative"
 					on:click={() =>
