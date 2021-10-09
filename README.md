@@ -22,7 +22,7 @@ npm run serve:dev
 
 ## Production
 
-#### builds frontend and compiles backend ts
+#### builds frontend and compiles backend typescipt
 
 ```shell
 npm run build
