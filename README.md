@@ -4,6 +4,11 @@
 
 [PDF Docs](https://abu.zetaseek.com/file/hyp-files-app.pdf?place=localhost-2f686f6d652f6162752f46696c6573)
 
+## Install Dependencies
+```shell
+npm install
+```
+
 ## Development
 
 #### Frontend
