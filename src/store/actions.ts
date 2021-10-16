@@ -3,7 +3,7 @@ import { browser } from '$app/env';
 import { API, api } from '$lib/getAPi';
 import { toQueryString } from '$lib/utils';
 import { extractLang } from '$lib/md-hljs';
-import _ from 'lodash';
+import _ from 'lodash-es';
 import randomWords from 'random-words';
 
 const isMedia = (ctype, img = true) => {

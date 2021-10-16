@@ -5,7 +5,7 @@ import archiver from 'archiver';
 import randomWords from 'random-words';
 import fs, { ReadStream, WriteStream } from 'fs';
 import zlib from 'zlib';
-import _ from 'lodash';
+import _ from 'lodash-es';
 import { join } from 'path';
 import { Writable, Transform } from 'stream';
 import { getEmitter, getApi } from './state.js';

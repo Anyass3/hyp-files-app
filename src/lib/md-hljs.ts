@@ -1,6 +1,6 @@
 import Markdown, { highlightCode, setHljs, getLang, setLang } from 'markdown-hljs';
 import hljs from 'highlight.js';
-import _ from 'lodash';
+import _ from 'lodash-es';
 
 setHljs(hljs);
 

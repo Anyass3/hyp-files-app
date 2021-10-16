@@ -2,7 +2,7 @@
 	import { page } from '$app/stores';
 	import store from '$store';
 	import ArrowLeftIcon from 'icons/ArrowLeftIcon.svelte';
-	import _ from 'lodash';
+	import _ from 'lodash-es';
 	import light_mode from '$lib/light_mode.svg';
 	import dark_mode from '$lib/dark_mode.svg';
 	const colorScheme = store.state.colorScheme;

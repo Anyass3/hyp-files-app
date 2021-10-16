@@ -16,7 +16,7 @@ import cors from 'cors';
 import colors from 'colors';
 import compression from 'compression';
 import { Settings } from './settings.js';
-import _ from 'lodash';
+import _ from 'lodash-es';
 
 const config = Settings();
 const emitter = getEmitter();

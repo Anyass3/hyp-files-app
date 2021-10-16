@@ -1,6 +1,6 @@
 import colors from 'colors';
-import last from 'lodash/last.js';
-import debounce from 'lodash/debounce.js';
+import last from 'lodash-es/last.js';
+import debounce from 'lodash-es/debounce.js';
 import hyperdrive from 'hyperdrive';
 
 import fs, { ReadStream, WriteStream } from 'fs';

@@ -56,7 +56,7 @@
 		storage = 'fs',
 		language: string,
 		dkey = '';
-	import _ from 'lodash';
+	import _ from 'lodash-es';
 	// {path,size,ctype,storage,dkey}
 	import store from '$store';
 	const colorScheme = store.g('colorScheme');

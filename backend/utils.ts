@@ -2,7 +2,7 @@ import colors from 'colors';
 import readChunk from 'read-chunk';
 import fileType from 'file-type';
 import child_process from 'child_process';
-import _ from 'lodash';
+import _ from 'lodash-es';
 import mime from 'mime';
 import { extname, join } from 'path';
 import type { ReadStream } from 'fs';

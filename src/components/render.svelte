@@ -5,7 +5,7 @@
 	export let storage;
 	export let dkey;
 	export let dir;
-	import _ from 'lodash';
+	import _ from 'lodash-es';
 	let shadowroot;
 	$: style = codeStyle
 		? `<link rel="stylesheet" href=${codeStyle} />
