@@ -1,18 +1,7 @@
 import { browser } from '$app/env';
 
 export default {
-	storeType: {
-		//
-		//store persists in localStorage
-		colorScheme: 'localPersistantStore',
-		render: 'localPersistantStore',
-		//
-		//persists in sessionStorage
-		clipboard: 'sessionPersistantStore',
-		dirs: 'sessionPersistantStore',
-		show_hidden: 'sessionPersistantStore',
-		dkey: 'sessionPersistantStore'
-	},
+	storeType: 'localPersistantStore',
 	state: {
 		clipboard: null,
 		colorScheme:
