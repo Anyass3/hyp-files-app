@@ -12,6 +12,7 @@
 	const dkey = store.g('dkey');
 	const loading: Writable<loading> = store.g('loading');
 	const show_hidden = store.g('show_hidden');
+	const selected: Writable<ToolTip> = store.g('selected');
 	let pagination = store.state.pagination;
 	const isIntersecting = () => {
 		if ($pagination.has_next) {
@@ -59,6 +60,7 @@
 				$pos = getPosition(ev);
 				const data = JSON.parse(element.dataset.data);
 				store.dispatch('setupMenuItems', { ...data, ...options });
+				$selected = data;
 			}
 		}
 	};
@@ -100,23 +102,23 @@
 </svelte:head>
 
 <div
-	class="px-2 flex-grow md:px-10 relative pb-2 flex flex-col"
+	class="px-2 flex-grow md:px-10 relative pb-6 flex flex-col"
 	id="files"
 	data-files={true}
 	on:contextmenu={setMainContextMenu}
 >
 	<div
 		class:hidden={hideFilemenu}
-		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-30 top-[7%] bg shadow border-b-2 pb-1"
+		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-30 top-[7%] bg shadow border-b-2"
 	>
-		<div class="flex text-base md:text-2xl overflow-x-auto gap-1">
+		<div class="flex text-base md:text-lg overflow-x-auto gap-[2px]">
 			{#if dir === '/'}
 				<button class="anchor-tooltip">
 					<div class="flex">
 						<span
 							class="text-blue-500  dark:text-blue-100 dark:active:text-blue-300 active:text-blue-500 cursor-pointer border-2 border-gray-400 dark:border-gray-200 rounded"
 							on:click={() => open({ path: '/' })}
-							><FolderIcon size="1x" class=" w-6 h-6 md:h-8 md:w-8" /></span
+							><FolderIcon size="1x" class=" w-4 h-4 md:h-8 md:w-6" /></span
 						>
 						<span class="tooltip" style="position: fixed;left:0;bottom:0">{'root'}</span>
 					</div>
@@ -126,11 +128,11 @@
 					<button class="anchor-tooltip">
 						<div class="flex">
 							<span
-								class="text-blue-600 dark:text-blue-100 dark:active:text-blue-300 active:text-blue-400 cursor-pointer border-2 border-gray-400 dark:border-gray-200 rounded"
+								class="text-blue-600 dark:text-blue-100 dark:active:text-blue-300 active:text-blue-400 cursor-pointer border border-gray-400 dark:border-gray-200 rounded"
 								on:click={() => open({ path: item.path })}
 							>
 								{#if item.name === 'root'}
-									<FolderIcon class=" w-6 h-6 md:h-8 md:w-8" />
+									<FolderIcon class=" w-4 h-4 md:h-8 md:w-6" />
 								{:else}
 									{truncate(item.name, 10)}
 								{/if}
@@ -149,7 +151,7 @@
 					>hidden</label
 				><input id="show-hidden" type="checkbox" bind:checked={$show_hidden} /></button
 			>
-			<StorageSelect />
+			<StorageSelect label={false} />
 			<!-- <ConnectDrive /> -->
 		</div>
 	</div>
