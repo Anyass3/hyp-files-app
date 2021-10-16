@@ -2,6 +2,7 @@
 	import { browser } from '$app/env';
 
 	import store from '$store';
+	export let label = true;
 	const serverStore = store.g('serverStore');
 	const dkey = store.g('dkey');
 	$: drives = [
@@ -16,10 +17,12 @@
 </script>
 
 <div class="p-1">
-	<label class=" text-blue-700 dark:text-blue-300" for="select">storage</label>
+	{#if label}
+		<label class=" text-blue-700 dark:text-blue-300" for="select">storage</label>
+	{/if}
 	<select
 		bind:value={$dkey}
-		class="w-full border bg-gray-100 focus:bg-gray-50 rounded px-3 py-2 outline-none"
+		class="w-full border bg-gray-100 focus:bg-gray-50 rounded p-1 outline-none"
 	>
 		{#each drives as { key, name }}
 			<option class="py-1" value={key}>{name}</option>
