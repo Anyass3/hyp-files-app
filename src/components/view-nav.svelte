@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/stores';
 	import store from '$store';
-	import ArrowLeftIcon from 'icons/ArrowLeftIcon.svelte';
+	// import ArrowLeftIcon from 'icons/ArrowLeftIcon.svelte';
 	import _ from 'lodash-es';
 	import light_mode from '$lib/light_mode.svg';
 	import dark_mode from '$lib/dark_mode.svg';
@@ -29,7 +29,7 @@
 				class:active={$page.path === '/files'}
 				class="nav-link font-bold bg-gray-200 dark:bg-gray-800 anchor rounded-md"
 				><div class="flex">
-					<span class="ml-0 md:ml-2 pb-[.4rem]"><ArrowLeftIcon size="20" /></span>
+					<span class="ml-0 md:ml-2 pb-[.4rem]">Files</span>
 				</div></a
 			>
 		</div>

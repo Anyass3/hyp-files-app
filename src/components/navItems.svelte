@@ -35,7 +35,6 @@
 				on:click={() => store.commit('setColorScheme', 'dark')}
 			>
 				<img src={dark_mode} alt="dark" />
-				<span class="inline-block ml-1">dark mode</span>
 			</button>
 		{:else}
 			<button
@@ -43,7 +42,6 @@
 				on:click={() => store.commit('setColorScheme', 'light')}
 			>
 				<img src={light_mode} alt="light" />
-				<span class="inline-block ml-1">light mode</span>
 			</button>
 		{/if}
 	</div>

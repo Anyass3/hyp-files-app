@@ -3,14 +3,17 @@
 	import { createEventDispatcher } from 'svelte';
 	import { truncate, debounce, getPosition, doubleTap } from '$lib/utils';
 	import { crossfade } from 'svelte/transition';
+	import _ from 'lodash-es';
 	import { quintOut } from 'svelte/easing';
 	import Spinner from '$components/spinner.svelte';
+	import FIleExtIcon from '$components/fileExtIcon.svelte';
 	import BottomInfo from '$components/bottom-info.svelte';
 	import FolderIcon from 'icons/FolderIcon.svelte';
 	import FileIcon from 'icons/FileIcon.svelte';
 	import FileTextIcon from 'icons/FileTextIcon.svelte';
 	import MusicIcon from 'icons/MusicIcon.svelte';
 	import ImageIcon from 'icons/ImageIcon.svelte';
+	// import PDFIcon from '$icons/PDFIcon.svelte';
 	import CodeIcon from 'icons/CodeIcon.svelte';
 	import FilmIcon from 'icons/FilmIcon.svelte';
 	import type { Writable } from 'svelte/store';
@@ -55,7 +58,7 @@
 		}
 	});
 	$: if ($files) $loading = false;
-	$: console.log($files);
+	// $: console.log($files);
 </script>
 
 <div data-files={true} class="flex-grow" on:click={(ev) => mainEvent(ev, false)}>
@@ -69,11 +72,11 @@
 		class:hidden={$loading === 'load-page'}
 		data-files={true}
 	>
-		{#each $files || [] as { name, path, stat } (path)}
+		{#each $files || [] as { name, path, stat } (path + stat.isFile)}
 			<div
 				class:selected={$selected?.path === path}
 				in:receive={{ key: path }}
-				class="group anchor-tooltip context-menu__item border border-no-color bg-gray-200 text-gray-800 dark:bg-gray-600 dark:text-white group-hover:bg-gray-300 rounded-[3px]  dark:group-hover:bg-gray-500"
+				class="group anchor-tooltip context-menu__item border border-no-color bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-white group-hover:bg-gray-300 rounded-[3px]  dark:group-hover:bg-gray-500"
 				tabindex="-1"
 				data-data={JSON.stringify({ ...stat, path, name })}
 			>
@@ -101,6 +104,8 @@
 									<CodeIcon size="4x" />
 								{:else if stat.ctype.includes('text')}
 									<FileTextIcon size="4x" />
+								{:else if stat.ctype.includes('pdf')}
+									<FIleExtIcon size="3x" ext={_.last(path.split('.'))} class="" />
 								{:else}
 									<FileIcon size="4x" />
 								{/if}
