@@ -28,7 +28,8 @@ export default {
 		selected: null,
 		canRender: false,
 		notify: notifier,
-		base_url: import.meta.env.BASE_URL.replace('_app/', '')
+		base_url: import.meta.env.BASE_URL.replace('_app/', ''),
+		instruction: undefined
 	},
 	getters: {
 		dirs(state, key, value = false) {

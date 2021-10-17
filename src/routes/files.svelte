@@ -1,22 +1,24 @@
 <script lang="ts">
 	import store from '$store';
 	import Files from '$components/files.svelte';
+	import Search from '$components/search.svelte';
 	import StorageSelect from '$components/storage-select.svelte';
-	import { browser } from '$app/env';
-	import FolderIcon from 'icons/FolderIcon.svelte';
-	import { goto } from '$app/navigation';
-	import { throttle, debounce, getPosition, truncate, InterObserver } from '$lib/utils';
+	import FilesMenu from '$components/files-menu.svelte';
+	import SortView from '$components/sort-view.svelte';
+	import HomeIcon from 'icons/HomeIcon.svelte';
+	import { throttle, getPosition, truncate, InterObserver } from '$lib/utils';
 	import Spinner from '$components/spinner.svelte';
 	import type { Writable } from 'svelte/store';
-	import { onMount } from 'svelte';
 	const dkey = store.g('dkey');
+	import _ from 'lodash-es';
 	const loading: Writable<loading> = store.g('loading');
 	const show_hidden = store.g('show_hidden');
 	const selected: Writable<ToolTip> = store.g('selected');
+	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
 	let pagination = store.state.pagination;
+	let canFetchNext = true;
 	const isIntersecting = () => {
-		if ($pagination.has_next) {
-			// console.log('is intersecting', { ...pagination, offset: pagination.offset });
+		if ($pagination.has_next && canFetchNext) {
 			$pagination.next();
 			const opts = {
 				dir,
@@ -36,14 +38,18 @@
 
 	$: options = { dkey: $dkey, dir, storage };
 
-	// const socket = store.g('socket');
-
 	const pos = store.g('pos');
 
-	const open = async (detail: any = {}) => {
-		// if (detail.path && !detail.isFile) $dir = detail.path;
-		store.dispatch('open', { ...detail, ...options });
-	};
+	const open: (detail?: Record<string, any>) => Promise<void> = _.debounce(async (detail) => {
+		let _instruction = $instruction;
+		$instruction = undefined;
+		if (_instruction === 'reset') {
+			$pagination.page = 0;
+			canFetchNext = false;
+		} else if (_instruction === 'abort' && store.g('folderItems').get().length) return;
+		store.dispatch('open', { ...detail, ...options }).then(() => (canFetchNext = true));
+	});
+	let filesMenuhidden = true;
 
 	const setMainContextMenu = async (ev) => {
 		if (ev.target.dataset?.files) {
@@ -68,7 +74,6 @@
 	let dirlist: Array<{ name; path }>;
 
 	$: dirlist = dir.split('/').reduce((arr, name) => {
-		// console.log(arr, name);
 		let path;
 		if (arr.length === 0) path = name || '';
 		else if (arr[arr.length - 1].path === '/') path = '/' + name;
@@ -76,14 +81,10 @@
 		return [...arr, { name: name || 'root', path: path || '/' }];
 	}, []);
 
-	// $: console.log('dkey', $dkey);
-	// $: console.log('dirlist', dirlist);
-	// $: console.log('$loading', $loading);
-
-	$: if ($dkey || $show_hidden) {
+	$: if ($dkey) {
 		open();
 	}
-	onMount(() => open());
+
 	let scrollY = 0;
 	let lastScroll = scrollY;
 	$: hideFilemenu = scrollY > 0 && scrollY >= lastScroll;
@@ -118,7 +119,10 @@
 						<span
 							class="text-blue-500  dark:text-blue-100 dark:active:text-blue-300 active:text-blue-500 cursor-pointer border-2 border-gray-400 dark:border-gray-200 rounded"
 							on:click={() => open({ path: '/' })}
-							><FolderIcon size="1x" class=" w-4 h-4 md:h-8 md:w-6" /></span
+							><HomeIcon
+								size="1x"
+								class="w-[1.35rem] h-[1.35rem] md:h-[1.7rem] md:w-[1.7rem]"
+							/></span
 						>
 						<span class="tooltip" style="position: fixed;left:0;bottom:0">{'root'}</span>
 					</div>
@@ -132,7 +136,7 @@
 								on:click={() => open({ path: item.path })}
 							>
 								{#if item.name === 'root'}
-									<FolderIcon class=" w-4 h-4 md:h-8 md:w-6" />
+									<HomeIcon class="w-[1.35rem] h-[1.35rem] md:h-[1.7rem] md:w-[1.7rem]" />
 								{:else}
 									{truncate(item.name, 10)}
 								{/if}
@@ -143,27 +147,27 @@
 				{/each}
 			{/if}
 		</div>
-		<div class="flex gap-1">
-			<button
-				><label
-					for="show-hidden"
-					class="text-blue-600 text-2xl dark:text-blue-100 dark:active:text-blue-300 active:text-blue-400 cursor-pointer px-1"
-					>hidden</label
-				><input id="show-hidden" type="checkbox" bind:checked={$show_hidden} /></button
-			>
+		<div class="flex gap-1 justify-between">
+			<Search />
+			<SortView />
+			<FilesMenu
+				on:toggleHidden={() => {
+					$instruction = 'reset';
+					open({ silent: true });
+				}}
+				bind:hidden={filesMenuhidden}
+			/>
 			<StorageSelect label={false} />
-			<!-- <ConnectDrive /> -->
 		</div>
 	</div>
 	<Files on:open={(ev) => open(ev.detail)} />
-	<div
-		class="w-full h-1"
-		use:InterObserver={{
-			isIntersecting
-		}}
-	/>
 	{#if $pagination.has_next}
-		<div class="grid place-items-center">
+		<div
+			class="grid place-items-center transition-opacity "
+			use:InterObserver={{
+				isIntersecting
+			}}
+		>
 			{#if $loading === 'load-next-page'}
 				<div class="grid place-items-center w-full pt-10">
 					<Spinner />

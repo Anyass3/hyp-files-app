@@ -21,8 +21,10 @@
 	import Prompt from '$components/prompt.svelte';
 	import { dev, browser } from '$app/env';
 	import { page } from '$app/stores';
+	import { navigating } from '$app/stores';
 	const colorScheme = store.g('colorScheme');
 	import { InterObserver, NavInterObserver } from '$lib/utils';
+	import type { Writable } from 'svelte/store';
 
 	$: ((theme) => {
 		if (browser) {
@@ -34,6 +36,10 @@
 		}
 	})($colorScheme);
 	// $: console.log('page', $page);
+	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
+	$: if ($navigating?.to.path === '/files') {
+		$instruction = 'abort';
+	}
 </script>
 
 <Prompt />

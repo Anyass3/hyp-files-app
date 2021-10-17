@@ -10,7 +10,7 @@
 	}
 </script>
 
-<script>
+<script lang="ts">
 	import { NotificationDisplay } from '@beyonk/svelte-notifications';
 	import 'tailwindcss/tailwind.css';
 	import '$lib/app.css';
@@ -18,6 +18,7 @@
 	import store from '$store';
 	import { browser } from '$app/env';
 	import { getStores, navigating, page, session } from '$app/stores';
+	import type { Writable } from 'svelte/store';
 	const colorScheme = store.state.colorScheme;
 	// console.log($page.path.includes('media'));
 	// store.dispatch('initColorScheme');
@@ -31,6 +32,10 @@
 			}
 		}
 	})($colorScheme);
+	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
+	$: if ($navigating?.to.path === '/files') {
+		$instruction = 'abort';
+	}
 </script>
 
 <div
