@@ -58,12 +58,12 @@
 				/>
 			</div>
 			<!-- <div class="">
-				<label for="connect-drive-name">storage(optional)</label><br />
+				<label for="connect-drive-storage">storage(optional)</label><br />
 				<input
-					id="connect-drive-name"
+					id="connect-drive-storage"
 					bind:value={storage}
 					class="dark:ring-gray-400"
-					placeholder="awesome"
+					placeholder="storage"
 				/>
 			</div> -->
 		{/if}
