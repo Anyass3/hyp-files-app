@@ -244,7 +244,7 @@ export class Pagination {
 
 	constructor({
 		total = 0,
-		limit = 50,
+		limit = 100,
 		page = 0
 	}: {
 		total: number;

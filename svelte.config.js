@@ -19,7 +19,8 @@ const config = {
 				alias: {
 					$store: resolve('src/store'),
 					$components: resolve('src/components'),
-					icons: resolve('node_modules/svelte-feather-icons/src/icons')
+					icons: resolve('node_modules/svelte-feather-icons/src/icons'),
+					$icons: resolve('src/icons')
 				}
 			},
 			server: {

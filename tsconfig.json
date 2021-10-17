@@ -26,6 +26,7 @@
 			"$lib/*": ["src/lib/*"],
 			"$store": ["src/store"],
 			"$components/*": ["src/components/*"],
+			"$icons/*": ["src/icons/*"],
 			"icons": ["node_modules/svelte-feather-icons/src/icons"]
 		}
 	},

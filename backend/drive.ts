@@ -235,7 +235,7 @@ export default class extends hyperdrive {
 	async $list(
 		dir = '/',
 		recursive = false,
-		{ offset = 0, limit = 50, page = 1, paginate = false, show_hidden = true } = {}
+		{ offset = 0, limit = 100, page = 1, paginate = false, show_hidden = true } = {}
 	) {
 		// returns both files and dirs
 		let total = 0;
@@ -300,7 +300,7 @@ export default class extends hyperdrive {
 	}
 	async $listfs(
 		dir = '/',
-		{ offset = 0, limit = 50, page = 1, paginate = false, show_hidden = true } = {}
+		{ offset = 0, limit = 100, page = 1, paginate = false, show_hidden = true } = {}
 	) {
 		dir = join(config.fs, dir);
 		let total = 0;
