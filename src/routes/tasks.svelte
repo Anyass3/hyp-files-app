@@ -5,9 +5,6 @@
 	import ChildProcess from '$components/child-process.svelte';
 </script>
 
-<svelte:head>
-	<title>tasks</title>
-</svelte:head>
 <div
 	class="flex h-full flex-col px-2 md:px-8 gap-8 flex-grow bg-gray-50 border border-gray-500 dark:bg-gray-800 rounded-sm dark:text-blue-100 select-none"
 >

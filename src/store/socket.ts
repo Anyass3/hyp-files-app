@@ -1,4 +1,3 @@
-import { browser } from '$app/env';
 import connection from '$lib/socket';
 import { Pagination } from '$lib/utils';
 import _ from 'lodash-es';
@@ -42,7 +41,7 @@ export default {
 			});
 
 			socket.on('folder-items', ({ items = [], page = 0, total = 0 } = {}) => {
-				if (pathname() !== '/files') return;
+				// if (pathname() !== '/files') return;
 				// console.log('folderItems', { items, page, total });
 				dispatch('pagination', new Pagination({ total, page }));
 				if (page === 1) {

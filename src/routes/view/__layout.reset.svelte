@@ -17,6 +17,7 @@
 	import Header from '$components/view-nav.svelte';
 	import store from '$store';
 	import { browser } from '$app/env';
+	import _ from 'lodash-es';
 	import { getStores, navigating, page, session } from '$app/stores';
 	import type { Writable } from 'svelte/store';
 	const colorScheme = store.state.colorScheme;
@@ -36,7 +37,16 @@
 	$: if ($navigating?.to.path === '/files') {
 		$instruction = 'abort';
 	}
+	$: filename = _.last(decodeURIComponent($page.query.get('path')).split('/'));
 </script>
+
+<svelte:head>
+	{#key $page.path}
+		{#if $page.path.includes('view')}
+			<title>{filename}</title>
+		{/if}
+	{/key}
+</svelte:head>
 
 <div
 	class="w-full min-h-screen mx-auto flex flex-col justify-between bg-gray-200 dark:bg-gray-800 shadow-md"

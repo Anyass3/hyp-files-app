@@ -127,6 +127,5 @@
 </div>
 
 <svelte:head>
-	<title>{filename}</title>
 	<link rel="stylesheet" href={codeStyle} />
 </svelte:head>

@@ -42,6 +42,14 @@
 	}
 </script>
 
+<svelte:head>
+	{#key $page.path}
+		{#if !$page.path.includes('view')}
+			<title>HYP {$page.path.slice(1)}</title>
+		{/if}
+	{/key}
+</svelte:head>
+
 <Prompt />
 <div
 	id="main"

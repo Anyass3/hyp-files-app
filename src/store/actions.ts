@@ -14,6 +14,19 @@ const isMedia = (ctype, img = true) => {
 };
 
 export default {
+	getters: {
+		opts(state) {
+			return {
+				limit: state.pagination.get().limit,
+				offset: state.pagination.get().offset,
+				page: state.pagination.get().page,
+				show_hidden: state.show_hidden.get(),
+				search: state.search.get(),
+				sorting: state.sorting.get(),
+				ordering: state.ordering.get()
+			};
+		}
+	},
 	actions: {
 		open(
 			{ dispatch },
@@ -74,7 +87,7 @@ export default {
 			}
 		},
 		async openFolder(
-			{ state, commit, dispatch },
+			{ state, commit, dispatch, g },
 			{ dir, path, dkey, silent, storage, offline, size }
 		) {
 			dir = dir || '/';
@@ -89,7 +102,9 @@ export default {
 				dispatch('selected', null);
 				dispatch('folder', { path, storage, dkey, offline, size });
 			}
-			const opts = { dir, show_hidden: state.show_hidden.get() };
+
+			dispatch('pagination', {});
+			const opts = { dir, ...g('opts') };
 			const getFiles = () => {
 				if (storage === 'fs') {
 					state.socket.signal('fs-list', opts);
