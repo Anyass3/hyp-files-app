@@ -265,7 +265,7 @@ export default async function () {
 
 		channel.on('save-and-connect-drive', async ({ name, key, _private }) => {
 			if (!name) {
-				emitter.broadcast('notify-danger', 'Sorry drive must have a name');
+				emitter.broadcast('notify-warn', 'Sorry drive must have a name');
 				return;
 			}
 			channel.emit('save-drive', { name, key, _private, connected: false });
@@ -387,8 +387,13 @@ export default async function () {
 		channel.on('drive-list', async ({ dkey, dir, ...opts }) => {
 			emitter.log('drive-list', dkey, dir, opts);
 			const drive = await api.drives.get(dkey);
-			const items = await drive?.$list?.(dir, false, { ...opts, paginate: true });
+			const items = await drive?.$list?.(dir, false, { ...opts, filter: true });
 			// emitter.log('drive-listitems', items);
+			channel.signal('folder-items', items);
+		});
+		channel.on('fs-list', async ({ dir, ...opts }) => {
+			emitter.log('fs-list', dir);
+			const items = await privateDrive.$listfs(dir, { ...opts, filter: true });
 			channel.signal('folder-items', items);
 		});
 
@@ -401,11 +406,6 @@ export default async function () {
 		});
 		emitter.on('rm-offline-pending', (dkey, path) => {
 			api.rmOfflinePending(dkey, path);
-		});
-		channel.on('fs-list', async ({ dir, ...opts }) => {
-			emitter.log('fs-list', dir);
-			const items = await privateDrive.$listfs(dir, { ...opts, paginate: true });
-			channel.signal('folder-items', items);
 		});
 		// channel.on('privateDrive:makedir', privateDrive.$makedir);
 		channel.on('paste-copied', async ({ src, dest }) => {

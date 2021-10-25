@@ -11,15 +11,14 @@
 			size: page.query.get('size')
 		};
 		const url = API + '/file' + toQueryString(args);
-		const filename = decodeURIComponent(args.path).split('/').reverse()[0];
 		return {
-			props: { ctype: args.ctype, url, filename }
+			props: { ctype: args.ctype, url }
 		};
 	}
 </script>
 
 <script>
-	export let url, ctype, filename;
+	export let url, ctype;
 	import { API } from '$lib/getAPi';
 	import { onDestroy } from 'svelte';
 	import { toQueryString } from '$lib/utils';
@@ -30,7 +29,4 @@
 	let node;
 </script>
 
-<svelte:head>
-	<title>{filename}</title>
-</svelte:head>
 <embed bind:this={node} src={url} type={ctype} class="flex-grow" />

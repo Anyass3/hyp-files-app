@@ -38,9 +38,6 @@
 	let node;
 </script>
 
-<svelte:head>
-	<title>{filename}</title>
-</svelte:head>
 <div
 	in:scale={{ delay: 100, start: 0.8, easing: backOut, duration: 200 }}
 	out:scale={{ start: 0.9, easing: quintOut, duration: 100 }}

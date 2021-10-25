@@ -12,7 +12,6 @@
 	const dkey = store.g('dkey');
 	import _ from 'lodash-es';
 	const loading: Writable<loading> = store.g('loading');
-	const show_hidden = store.g('show_hidden');
 	const selected: Writable<ToolTip> = store.g('selected');
 	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
 	let pagination = store.state.pagination;
@@ -22,9 +21,7 @@
 			$pagination.next();
 			const opts = {
 				dir,
-				offset: $pagination.offset,
-				page: $pagination.page,
-				show_hidden: $show_hidden
+				...store.g('opts')
 			};
 			if (storage === 'drive') opts['dkey'] = $dkey;
 			store.state.socket.signal(`${storage}-list`, opts);
@@ -86,6 +83,7 @@
 	}
 
 	let scrollY = 0;
+
 	let lastScroll = scrollY;
 	$: hideFilemenu = scrollY > 0 && scrollY >= lastScroll;
 </script>
@@ -97,11 +95,6 @@
 		lastScroll = scrollY;
 	}, 10000)}
 />
-
-<svelte:head>
-	<title>Files</title>
-</svelte:head>
-
 <div
 	class="px-2 flex-grow md:px-10 relative pb-6 flex flex-col"
 	id="files"
@@ -110,7 +103,7 @@
 >
 	<div
 		class:hidden={hideFilemenu}
-		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-30 top-[7%] bg shadow border-b-2"
+		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-30 top-[3.5rem] bg shadow border-b-2"
 	>
 		<div class="flex text-base md:text-lg overflow-x-auto gap-[2px]">
 			{#if dir === '/'}
@@ -148,8 +141,18 @@
 			{/if}
 		</div>
 		<div class="flex gap-1 justify-between">
-			<Search />
-			<SortView />
+			<Search
+				on:search={() => {
+					$instruction = 'reset';
+					open();
+				}}
+			/>
+			<SortView
+				on:change={() => {
+					$instruction = 'reset';
+					open();
+				}}
+			/>
 			<FilesMenu
 				on:toggleHidden={() => {
 					$instruction = 'reset';

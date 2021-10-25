@@ -230,12 +230,45 @@ export default class extends hyperdrive {
 			}
 		});
 	}
+	async $sort(list, { sorting, ordering }) {
+		if (sorting === 'name') {
+			list.sort((a, b) => {
+				return ordering * a.name.localeCompare(b.name);
+			});
+		} else if (sorting === 'date') {
+			list.sort((a, b) => {
+				return ordering * (a.stat.mtime - b.stat.mtime);
+			});
+		} else if (sorting === 'size') {
+			list.sort((a, b) => {
+				return ordering * (a.stat.size - b.stat.size);
+			});
+		} else if (sorting === 'type') {
+			list.sort((a, b) => {
+				let sort = 0;
+				if (a.stat.isFile && b.stat.isFile) sort = a.stat.ctype.localeCompare(b.stat.ctype);
+				else if (!a.stat.isFile && !b.stat.isFile) a.name.localeCompare(b.name);
+				else sort = a.stat.isFile ? 1 : -1;
+				return ordering * sort;
+			});
+		}
+		return list;
+	}
 
-	// GRUD
+	// get items
 	async $list(
 		dir = '/',
 		recursive = false,
-		{ offset = 0, limit = 100, page = 1, paginate = false, show_hidden = true } = {}
+		{
+			offset = 0,
+			limit = 100,
+			page = 1,
+			filter = false,
+			show_hidden = true,
+			ordering = 1,
+			search = '',
+			sorting = 'name'
+		} = {}
 	) {
 		// returns both files and dirs
 		let total = 0;
@@ -243,11 +276,14 @@ export default class extends hyperdrive {
 		const result: Promise<Array<any>> = await this.check(async () => {
 			// emitter.log('in list', dir);
 			// console.log({ page, paginate, show_hidden, limit, offset });
-			let list = await this.promises.readdir(dir, { recursive, includeStats: true });
-			if (paginate) {
+			let list: {
+				name: string;
+				stat: Record<string, any>;
+				path: string;
+			}[] = await this.promises.readdir(dir, { recursive, includeStats: true });
+			if (filter) {
 				if (!show_hidden) list = list.filter((item) => !/^\./.exec(item.name));
-				total = list.length;
-				list = list.slice(offset, offset + limit);
+				if (search) list = list.filter((item) => item.name.includes(search));
 			}
 			const self = this;
 			list = await Promise.all(
@@ -272,35 +308,27 @@ export default class extends hyperdrive {
 					};
 				})
 			);
-			emitter.log('dir:', list);
-			return paginate ? { items: list, total, page } : list;
+			if (filter) {
+				list = await this.$sort(list, { sorting, ordering });
+				total = list.length;
+				list = list.slice(offset, offset + limit);
+			}
+			return filter ? { items: list, total, page } : list;
 		});
-		return result;
-	}
-	async $listAllFiles(dir = '/') {
-		// returns only files
-		//@ts-ignore
-		const result: Promise<Array<any>> = await this.check(async () => {
-			let list = await this.$list(dir, true);
-			list = list.filter((item) => item.stat.isFile);
-			return list.map((item) => item.path);
-		});
-		return result;
-	}
-	async $listAllDirs(dir = '/') {
-		// returns only dir
-		//@ts-ignore
-		const result: Promise<Array<any>> = this.check(async () => {
-			let list = await this.$list(dir, true);
-			list = list.filter((item) => !item.stat.isFile);
-			return list.map((item) => item.path);
-		});
-
 		return result;
 	}
 	async $listfs(
 		dir = '/',
-		{ offset = 0, limit = 100, page = 1, paginate = false, show_hidden = true } = {}
+		{
+			offset = 0,
+			limit = 100,
+			page = 1,
+			filter = false,
+			show_hidden = true,
+			ordering = 1,
+			search = '',
+			sorting = 'type'
+		} = {}
 	) {
 		dir = join(config.fs, dir);
 		let total = 0;
@@ -309,11 +337,11 @@ export default class extends hyperdrive {
 			let list = fs.readdirSync(dir);
 			// console.log({ page, paginate, show_hidden, limit, offset });
 			// console.log('list', list);
-			if (paginate) {
+			if (filter) {
 				if (!show_hidden) list = list.filter((file) => !/^\./.exec(file));
-				total = list.length;
-				list = list.slice(offset, offset + limit);
+				if (search) list = list.filter((item) => item.includes(search));
 			}
+
 			const getItems = (path) => {
 				try {
 					return fs.readdirSync(path).length;
@@ -342,10 +370,38 @@ export default class extends hyperdrive {
 					};
 				})
 			);
+			if (filter) {
+				list = await this.$sort(list, { sorting, ordering });
+				total = list.length;
+				list = list.slice(offset, offset + limit);
+			}
 			emitter.log('dir:', list);
-			return paginate ? { items: list, total, page } : list;
+			return filter ? { items: list, total, page } : list;
 		});
 	}
+	async $listAllFiles(dir = '/') {
+		// returns only files
+		//@ts-ignore
+		const result: Promise<Array<any>> = await this.check(async () => {
+			let list = await this.$list(dir, true);
+			list = list.filter((item) => item.stat.isFile);
+			return list.map((item) => item.path);
+		});
+		return result;
+	}
+	async $listAllDirs(dir = '/') {
+		// returns only dir
+		//@ts-ignore
+		const result: Promise<Array<any>> = this.check(async () => {
+			let list = await this.$list(dir, true);
+			list = list.filter((item) => !item.stat.isFile);
+			return list.map((item) => item.path);
+		});
+
+		return result;
+	}
+
+	// GRUD
 	async $write(file, ...content) {
 		return await this.check(async () => {
 			await this.promises.writeFile(file, content.join(' '));

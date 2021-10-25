@@ -6,25 +6,27 @@
 	import GridIcon from 'icons/GridIcon.svelte';
 	import CaretDown from '$icons/CaretDown.svelte';
 
-	const show_hidden = store.g('show_hidden');
+	const ordering = store.g('ordering');
+	const sorting = store.g('sorting');
 	export let hidden = true;
 	export let layout: 'grid' | 'list' = 'grid';
 	import { createEventDispatcher } from 'svelte';
 	const emit = createEventDispatcher();
+	let canEmit = false;
+
 	const toggleSort = () => {
 		hidden = !hidden;
+		canEmit = true;
 	};
 	const toggleView = () => {
 		layout = layout === 'grid' ? 'list' : 'grid';
 	};
 	let selecteds = false;
 	const size = '1.5x';
-	let sorting = 'name';
-	let ordering = '+';
-
-	$: if (ordering) emit('ordering', ordering);
-
-	$: if (sorting) emit('sort', sorting);
+	const change = (..._) => {
+		if (canEmit) emit('change');
+	};
+	$: change($sorting, $ordering);
 </script>
 
 <div class="relative flexy">
@@ -65,7 +67,7 @@
 					class="text-blue-600 dark:text-blue-100 flex-grow dark:active:text-blue-300 active:text-blue-400 cursor-pointer px-1"
 					>Name</label
 				>
-				<input id="sorting-name" type="radio" bind:group={sorting} name="name" value={'name'} />
+				<input id="sorting-name" type="radio" bind:group={$sorting} name="name" value={'name'} />
 			</button>
 			<button class=" flexy w-full">
 				<label
@@ -76,7 +78,7 @@
 				<input
 					id="sorting-date-modified"
 					type="radio"
-					bind:group={sorting}
+					bind:group={$sorting}
 					name="date"
 					value={'date'}
 				/>
@@ -87,7 +89,7 @@
 					class="text-blue-600 dark:text-blue-100 flex-grow dark:active:text-blue-300 active:text-blue-400 cursor-pointer px-1"
 					>Size</label
 				>
-				<input id="sorting-size" type="radio" bind:group={sorting} name="size" value={'size'} />
+				<input id="sorting-size" type="radio" bind:group={$sorting} name="size" value={'size'} />
 			</button>
 			<button class=" flexy w-full">
 				<label
@@ -95,7 +97,7 @@
 					class="text-blue-600 dark:text-blue-100 flex-grow dark:active:text-blue-300 active:text-blue-400 cursor-pointer px-1"
 					>Type</label
 				>
-				<input id="sorting-type" type="radio" bind:group={sorting} name="type" value={'type'} />
+				<input id="sorting-type" type="radio" bind:group={$sorting} name="type" value={'type'} />
 			</button>
 		</div>
 
@@ -110,9 +112,9 @@
 				<input
 					id="sorting-ascending"
 					type="radio"
-					bind:group={ordering}
+					bind:group={$ordering}
 					name="ascending"
-					value={'+'}
+					value={1}
 				/>
 			</button>
 			<button class=" flexy w-full">
@@ -124,9 +126,9 @@
 				<input
 					id="sorting-descending"
 					type="radio"
-					bind:group={ordering}
+					bind:group={$ordering}
 					name="descending"
-					value={'-'}
+					value={-1}
 				/>
 			</button>
 		</div>

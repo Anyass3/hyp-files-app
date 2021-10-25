@@ -2,7 +2,7 @@ import { browser } from '$app/env';
 import { notifier } from '@beyonk/svelte-notifications';
 import { writable } from 'svelte/store';
 function createSnackBar() {
-	const { subscribe, set, update } = writable(null);
+	const { subscribe, update } = writable(null);
 
 	return {
 		subscribe,
@@ -29,7 +29,10 @@ export default {
 		canRender: false,
 		notify: notifier,
 		base_url: import.meta.env.BASE_URL.replace('_app/', ''),
-		instruction: undefined
+		instruction: undefined,
+		search: '',
+		sorting: 'type',
+		ordering: 1
 	},
 	getters: {
 		dirs(state, key, value = false) {
