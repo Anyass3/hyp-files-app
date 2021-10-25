@@ -76,7 +76,8 @@
 	(async () => {
 		const resp = await api.get(url);
 		body = resp.body;
-		if (ctype.includes('json')) body = JSON.stringify(resp.body);
+		if (ctype.includes('json'))
+			if (typeof body !== 'string') body = JSON.stringify(body, undefined, 2);
 		loading = false;
 	})();
 

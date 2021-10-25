@@ -13,6 +13,7 @@
 			emit('search');
 		}
 	};
+	$: if ($search) hidden = false;
 </script>
 
 <div class="flex text-gray-700 dark:text-white">
