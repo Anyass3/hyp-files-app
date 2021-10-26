@@ -172,6 +172,7 @@ export default async function (app) {
 			decodeURIComponent(req.query.path)
 		);
 		const dkey = req.query.dkey;
+		const chucksize = req.query.chucksize || mediaSize;
 		const range = req.headers.range;
 
 		const drive = api.drives.get(dkey);
@@ -196,7 +197,7 @@ export default async function (app) {
 		}
 		let ranges = range.replace(/bytes=/, '').split('-');
 
-		const CHUNK_SIZE = 512000; //500kb
+		const CHUNK_SIZE = chucksize;
 		const start = Number(ranges[0]);
 		const end = Math.min(Number(ranges[1]) || start + CHUNK_SIZE, mediaSize - 1);
 

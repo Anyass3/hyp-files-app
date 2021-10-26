@@ -85,13 +85,13 @@ const manageChildProcess = () => {
 async function start() {
 	const getBootstrap = ({ address, port }) => ({ host: address, port });
 	const bootstrapper1 = new DHT({ ephemeral: true });
-	await bootstrapper1.bind(49736);
+	await bootstrapper1.ready();
 
 	const bootstrapper2 = new DHT({
 		bootstrap: [getBootstrap(bootstrapper1.address())],
 		ephemeral: false
 	});
-	await bootstrapper2.bind(49737);
+	await bootstrapper2.ready();
 	api.bootstrap_nodes = [
 		...bootstrapper1.bootstrapNodes,
 		getBootstrap(bootstrapper1.address()),
