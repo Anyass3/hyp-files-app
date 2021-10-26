@@ -4,8 +4,8 @@
 	"scripts": {
 		"dev": "svelte-kit dev",
 		"build": "npm run ts-build && svelte-kit build",
-		"ts-build": "tsc -p backend/tsconfig.json --outDir backend/build",
-		"serve": "node backend/build/server.js",
+		"ts-build": "tsc -p backend/tsconfig.json --outDir build/backend",
+		"serve": "node build/backend/server.js",
 		"serve:dev:host": "nodemon -e ts -w backend --exec 'npm run ts-build && npm run serve -- --host'",
 		"serve:dev": "nodemon -e ts -w backend --exec 'npm run ts-build && npm run serve'",
 		"preview": "svelte-kit preview",
@@ -20,6 +20,7 @@
 		"@rollup/plugin-json": "^4.1.0",
 		"@rollup/plugin-multi-entry": "^4.1.0",
 		"@rollup/plugin-node-resolve": "^13.0.4",
+		"@sveltejs/adapter-static": "^1.0.0-next.21",
 		"@sveltejs/kit": "next",
 		"@types/node": "^16.9.0",
 		"@typescript-eslint/eslint-plugin": "^4.19.0",

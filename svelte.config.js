@@ -1,5 +1,6 @@
 import preprocess from 'svelte-preprocess';
 import { resolve } from 'path';
+import adapter from '@sveltejs/adapter-static';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
@@ -12,6 +13,11 @@ const config = {
 	],
 
 	kit: {
+		adapter: adapter({
+			pages: 'build/frontend',
+			assets: 'build/frontend',
+			fallback: null
+		}),
 		// hydrate the <div id="svelte"> element in src/app.html
 		target: '#svelte',
 		vite: {
@@ -21,15 +27,6 @@ const config = {
 					$components: resolve('src/components'),
 					icons: resolve('node_modules/svelte-feather-icons/src/icons'),
 					$icons: resolve('src/icons')
-				}
-			},
-			server: {
-				proxy: {
-					'/_api': {
-						target: 'http://127.0.0.1:3788',
-						changeOrigin: true,
-						rewrite: (path) => path.replace(/^\/_api/, '')
-					}
 				}
 			}
 		}
