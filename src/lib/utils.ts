@@ -187,7 +187,7 @@ export const accordion = (node) => {
 };
 
 export const axiosFetch = async (instance, path: string, ...args) => {
-	console.log('axiosFetch', path);
+	// console.log('axiosFetch', path);
 	try {
 		const res = await instance(path, ...args);
 		return { status: res.status, ok: true, headers: res.headers, body: res.data };

@@ -1,7 +1,7 @@
 import { goto } from '$app/navigation';
 import { browser } from '$app/env';
 import { API, api } from '$lib/getAPi';
-import { toQueryString } from '$lib/utils';
+import { copyToClipboard, toQueryString } from '$lib/utils';
 import { extractLang } from '$lib/md-hljs';
 import _ from 'lodash-es';
 import randomWords from 'random-words';
@@ -25,6 +25,19 @@ export default {
 				sorting: state.sorting.get(),
 				ordering: state.ordering.get()
 			};
+		},
+		async fileType(state, { ctype, path, dkey, storage }) {
+			if (!ctype || ctype === 'application/octet-stream') {
+				const res = await api.post('/get-file-type', {
+					path: encodeURIComponent(path),
+					dkey,
+					storage
+				});
+				if (res.ok) {
+					ctype = res.body.ctype;
+				}
+			}
+			return ctype;
 		}
 	},
 	actions: {
@@ -39,19 +52,11 @@ export default {
 					dispatch('openFolder', { dir, path, dkey, silent, storage, offline, size });
 				}
 		},
-		async openFile({ state }, { path, size, storage, dkey, ctype, inBrowser = false }: any = {}) {
-			console.log({ ctype });
-			if (!ctype || ctype === 'application/octet-stream') {
-				const res = await api.post('/get-file-type', {
-					path: encodeURIComponent(path),
-					dkey,
-					storage
-				});
-				if (res.ok) {
-					ctype = res.body.ctype;
-					// console.log({ ctype });
-				}
-			}
+		async openFile(
+			{ state, g },
+			{ path, size, storage, dkey, ctype, inBrowser = false }: any = {}
+		) {
+			ctype = await g('fileType', { ctype, path, dkey, storage });
 			const view_args =
 				storage + toQueryString({ path: encodeURIComponent(path), dkey, ctype, size });
 			if (isMedia(ctype, true)) {
@@ -232,6 +237,20 @@ export default {
 						dispatch('context_menu', []);
 					},
 					disabled: !isWritable
+				},
+				{
+					name: 'copy link',
+					action: async () => {
+						ctype = await g('fileType', { ctype, path, dkey, storage });
+						const args = { ctype, path: encodeURIComponent(path), dkey, storage, size };
+						const url = API + `/${isMedia(ctype, false) ? 'media' : 'file'}` + toQueryString(args);
+						copyToClipboard(url)
+							.then(() => state.snackBar.show('Link Copied'))
+							.catch(() => {});
+						dispatch('context_menu', []);
+					},
+					disabled: !isFile,
+					hidden: !isFile
 				},
 				{
 					name: 'offline access',
