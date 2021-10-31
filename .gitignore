@@ -10,3 +10,4 @@ backend/settings.json
 build
 rollup.config.js
 settings.json
+dmt

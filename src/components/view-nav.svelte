@@ -10,6 +10,8 @@
 	const path = decodeURIComponent(_.last($page.query.getAll('path')));
 	const canRender = path.endsWith('.html') || path.endsWith('.xml') || path.endsWith('.md');
 	const render = store.g('render');
+	const base_url = store.g('base_url');
+
 	let showNav = false;
 	const handleIt = (ev) => {
 		if (ev.target === ev.currentTarget) showNav = !showNav;
@@ -25,8 +27,8 @@
 	{#if showNav}
 		<div class="">
 			<a
-				href="/files"
-				class:active={$page.path === '/files'}
+				href="{base_url}files"
+				class:active={$page.path === base_url + 'files'}
 				class="nav-link font-bold bg-gray-200 dark:bg-gray-800 anchor rounded-md"
 				><div class="flex">
 					<span class="ml-0 md:ml-2 pb-[.4rem]">Files</span>

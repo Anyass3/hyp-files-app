@@ -3,6 +3,8 @@
 	import SideBarSwipe, { opened, applied, toggle } from 'sidebar-swipe';
 	import MenuIcon from 'icons/MenuIcon.svelte';
 	import NavItems from '$components/navItems.svelte';
+	import store from '$store';
+	const base_url = store.g('base_url');
 	// $: console.log('applied', $applied);
 	// $: console.log('opened', $opened);
 </script>
@@ -10,16 +12,19 @@
 <div id="nav-sm" class="mobile mb-1 p-2 sticky-top bg">
 	<div class="flex justify-between">
 		<div class="nav-item">
-			<a href="/" sveltekit:prefetch class:active={$page.path === '/'} class="btn lead3 anchor"
-				>Hyp</a
+			<a
+				href={base_url}
+				sveltekit:prefetch
+				class:active={$page.path === base_url}
+				class="btn lead3 anchor">Hyp</a
 			>
 		</div>
 		<div class="nav-item">
 			<a
 				sveltekit:prefetch
 				class="anchor btn capitalize lead3"
-				class:active={$page.path === '/files'}
-				href={`/files`}>files</a
+				class:active={$page.path === base_url + 'files'}
+				href={base_url + 'files'}>files</a
 			>
 		</div>
 		<button class="nav-item" on:click={toggle}>

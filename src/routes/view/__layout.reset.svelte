@@ -21,6 +21,7 @@
 	import { getStores, navigating, page, session } from '$app/stores';
 	import type { Writable } from 'svelte/store';
 	const colorScheme = store.state.colorScheme;
+	const base_url = store.g('base_url');
 	// console.log($page.path.includes('media'));
 	// store.dispatch('initColorScheme');
 
@@ -34,7 +35,7 @@
 		}
 	})($colorScheme);
 	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
-	$: if ($navigating?.to.path === '/files') {
+	$: if ($navigating?.to.path === base_url + 'files') {
 		$instruction = 'abort';
 	}
 	$: filename = _.last(decodeURIComponent($page.query.get('path')).split('/'));

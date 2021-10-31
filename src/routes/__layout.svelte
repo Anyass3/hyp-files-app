@@ -25,6 +25,7 @@
 	const colorScheme = store.g('colorScheme');
 	import { InterObserver, NavInterObserver } from '$lib/utils';
 	import type { Writable } from 'svelte/store';
+	const base_url = store.g('base_url');
 
 	$: ((theme) => {
 		if (browser) {
@@ -37,7 +38,7 @@
 	})($colorScheme);
 	// $: console.log('page', $page);
 	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
-	$: if ($navigating?.to.path === '/files') {
+	$: if ($navigating?.to.path === base_url + 'files') {
 		$instruction = 'abort';
 	}
 </script>
@@ -63,6 +64,6 @@
 </div>
 <Snackbar />
 <NotificationDisplay />
-{#if $page.path === '/files'}
+{#if $page.path === base_url + 'files'}
 	<ContextMenu />
 {/if}

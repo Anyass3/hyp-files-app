@@ -75,16 +75,16 @@ export default {
 						url
 					});
 				} else {
-					const url = `/view/media-${view_args}`;
+					const url = `${state.base_url}view/media-${view_args}`;
 					goto(url);
 				}
 			} else if (ctype.includes('pdf')) {
-				const url = `/view/embed-${view_args}`;
+				const url = `${state.base_url}view/embed-${view_args}`;
 				goto(url);
 			} else {
 				const language = extractLang(ctype, path);
 				if (ctype.includes('text') || language) {
-					const url = `/view/text-${view_args}&language=${language}`;
+					const url = `${state.base_url}view/text-${view_args}&language=${language}`;
 					goto(url);
 				} else if (ctype === 'application/x-empty')
 					state.notify.info('It seems this file is empty');

@@ -4,15 +4,16 @@
 	import light_mode from '$lib/light_mode.svg';
 	import dark_mode from '$lib/dark_mode.svg';
 	const colorScheme = store.state.colorScheme;
+	const base_url = store.g('base_url');
 	export let cls = '';
 </script>
 
 <div class="md:flex md:justify-between {cls}">
 	<div class="hidden md:block h-[fit-content]">
 		<a
-			href="/"
+			href={base_url}
 			sveltekit:prefetch
-			class:active={$page.path === '/'}
+			class:active={$page.path === base_url + '/'}
 			class="anchor text-3xl nav-item py-1 pr-2">Hyp</a
 		>
 	</div>
@@ -22,8 +23,8 @@
 				<a
 					sveltekit:prefetch
 					class="anchor text-3xl capitalize nav-item"
-					class:active={$page.path === '/' + navLink}
-					href={`/${navLink}`}>{navLink}</a
+					class:active={$page.path === base_url + navLink}
+					href={base_url + `${navLink}`}>{navLink}</a
 				>
 			</div>
 		{/each}

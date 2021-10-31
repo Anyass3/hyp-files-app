@@ -55,6 +55,7 @@
 			<source src={url} type={ctype.includes('x-matroska') ? 'video/webm' : ctype} />
 			This media file is not supported by this browser
 		</video>
+		<!-- <VideoPlayer class="media" source={url} width="" height="" /> -->
 	{:else}
 		<img id="media" src={url} alt={filename} />
 	{/if}
@@ -62,6 +63,16 @@
 
 <style>
 	#media {
+		position: absolute;
+		top: 0px;
+		right: 0px;
+		bottom: 0px;
+		left: 0px;
+		max-height: 100%;
+		max-width: 100%;
+		margin: auto;
+	}
+	.media {
 		position: absolute;
 		top: 0px;
 		right: 0px;
