@@ -111,14 +111,13 @@ async function start() {
 	const keypair = newKeypair();
 	const acceptor = new ConnectionsAcceptor({ port, server, keypair });
 
-	acceptor.on('protocol_added', ({ protocol, lane }) => {
-		emitter.log(`💡 Connectome protocol ${colors.cyan(protocol)}/${colors.cyan(lane)} ready.`);
+	acceptor.on('protocol_added', ({ protocol }) => {
+		emitter.log(`💡 Connectome protocol ${colors.cyan(protocol)} ready.`);
 		// emitter.log('acceptor', acceptor);
 	});
 	const onConnect = await hyperspace();
 	const channelList = acceptor.registerProtocol({
-		protocol: 'dmtapp',
-		lane: 'hyp',
+		protocol: 'dmtapp/hyp',
 		onConnect: async ({ channel }) => onConnect({ channel: enhanceChannel(channel) })
 	});
 	api.mirroringStore.mirror(channelList);
