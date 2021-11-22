@@ -1,20 +1,18 @@
 import { browser } from '$app/env'; // @ts-ignore
-import { ConnectedStore } from 'connectome/stores';
+import { connect } from 'connectome';
 import { port } from './getAPi';
 
 export default () => {
 	if (!browser) return;
 	const address = window.location.hostname;
 
-	const protocol = 'dmtapp';
+	const protocol = 'dmtapp/hyp';
 
-	const lane = 'hyp';
-
-	const store = new ConnectedStore({ address, protocol, port, lane });
+	const connector = connect({ address, protocol, port });
 	// console.log('store', store);
 	return {
-		socket: store.connector,
-		api: store.remoteObject?.bind?.(store)?.('dmtapp:hyp'),
-		serverStore: store
+		socket: connector,
+		api: connector.remoteObject?.bind?.('dmtapp:hyp'),
+		serverStore: connector.state
 	};
 };
