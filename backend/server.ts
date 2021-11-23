@@ -1,5 +1,5 @@
 //@ts-ignore
-import { ConnectionsAcceptor, newServerKeypair as newKeypair } from 'connectome/server';
+import { Connectome, newServerKeypair as newKeypair } from 'connectome/server';
 import DHT from '@hyperswarm/dht';
 import colors from 'colors';
 //@ts-ignore
@@ -109,18 +109,18 @@ async function start() {
 	//@ts-ignore
 	const server = new http.Server(app);
 	const keypair = newKeypair();
-	const acceptor = new ConnectionsAcceptor({ port, server, keypair });
+	const connectome = new Connectome({ port, server, keypair });
 
-	acceptor.on('protocol_added', ({ protocol }) => {
+	connectome.on('protocol_added', ({ protocol }) => {
 		emitter.log(`💡 Connectome protocol ${colors.cyan(protocol)} ready.`);
-		// emitter.log('acceptor', acceptor);
+		// emitter.log('connectome', connectome);
 	});
 	const onConnect = await hyperspace();
-	const channelList = acceptor.registerProtocol({
+	const channelList = connectome.registerProtocol({
 		protocol: 'dmtapp/hyp',
 		onConnect: async ({ channel }) => onConnect({ channel: enhanceChannel(channel) })
 	});
-	api.mirroringStore.mirror(channelList);
+	api.protocolStore.syncOver(channelList);
 
 	channelList.on('new_channel', async (channel) => {
 		channel.attachObject('dmtapp:hyp', api);
@@ -136,10 +136,10 @@ async function start() {
 	});
 
 	// start websocket server
-	acceptor.start();
+	connectome.start();
 
 	emitter.log(
-		colors.green(`Connectome → Running websocket connections acceptor on port ${port} ...`)
+		colors.green(`Connectome → Running websocket connections connectome on port ${port} ...`)
 	);
 	//@ts-ignore
 	server.listen(port, HOST);
