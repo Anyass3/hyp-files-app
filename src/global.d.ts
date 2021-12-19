@@ -33,6 +33,11 @@ interface ImportMetaEnv {
 	VITE_API_URL: string;
 	VITE_API_PORT: number;
 	API_URL: number;
+	BASE_URL: string;
+}
+
+interface ImportMeta {
+	env: ImportMetaEnv;
 }
 
 declare type loading = 'load-next-page' | 'load-page';

@@ -12,6 +12,14 @@ import { Settings } from './settings.js';
 const config = Settings();
 const emitter = getEmitter();
 
+interface PathObj {
+	isdrive?: boolean;
+	path?: string;
+	new_path?: string;
+	drive?: Hyperdrive;
+}
+let a: PathObj;
+
 export async function setDriveEvents(drive, driveName = '') {
 	const debouncedUpdateNotify = debounce(
 		() => emitter.broadcast('notify-info', `${driveName} drive updated`),
@@ -57,7 +65,11 @@ export async function setDriveEvents(drive, driveName = '') {
 	drive.watch('/');
 }
 //@ts-ignore
-export default class extends hyperdrive {
+class Hyperdrive extends hyperdrive {
+	constructor(store, dkey = null) {
+		super(store, dkey);
+		emitter.log(colors.cyan('setting up drive'));
+	}
 	promises: HyperdrivePromises;
 	key: Buffer;
 	discoveryKey: Buffer;
@@ -71,10 +83,6 @@ export default class extends hyperdrive {
 	createReadStream: typeof fs.createReadStream;
 	on: (event: string, fn: () => void) => void;
 	close?: () => Promise<any>;
-	constructor(store, dkey = null) {
-		super(store, dkey);
-		emitter.log(colors.cyan('setting up drive'));
-	}
 	async check(fn) {
 		return await handleError(fn, emitter)();
 	}
@@ -127,7 +135,7 @@ export default class extends hyperdrive {
 		//@ts-ignore
 		const result: Promise<Array<any>> = this.check(async () => {
 			let files = [];
-			let dirList;
+			let dirList: PathObj[];
 			if (typeof drive_src === 'string') dirList = await this.$readDir(drive_src, { dest });
 			else dirList = drive_src;
 			for (let item of dirList) {
@@ -145,13 +153,13 @@ export default class extends hyperdrive {
 
 		return result;
 	}
-	async $fsMakeDir(dest) {
+	async $fsMakeDir(dest: string) {
 		return await this.check(async () => {
 			if (!fs.existsSync(resolve(join(config.fs, dest))))
 				fs.mkdirSync(resolve(join(config.fs, dest)));
 		});
 	}
-	async $driveMakeDir(dir) {
+	async $driveMakeDir(dir: string) {
 		return await this.check(async () => {
 			const exists = await this.promises.exists(dir);
 			if (!exists) {
@@ -161,7 +169,7 @@ export default class extends hyperdrive {
 		});
 	}
 
-	async $fsWriteDir(dirList, fs_dest, { drive }) {
+	async $fsWriteDir(dirList: PathObj[], fs_dest: string, { drive }) {
 		await this.check(async () => {
 			for (let item of dirList) {
 				const isdir = drive
@@ -196,7 +204,7 @@ export default class extends hyperdrive {
 			}
 		});
 	}
-	async $driveWriteDir(dirList, dest, { drive, isdrive }) {
+	async $driveWriteDir(dirList: PathObj[], dest: string, { drive, isdrive }) {
 		await this.check(async () => {
 			for (let item of dirList) {
 				const isdir = isdrive
@@ -448,7 +456,7 @@ export default class extends hyperdrive {
 			}
 		});
 	}
-	async $copy(source, dest) {
+	async $copy(source: string, dest: string) {
 		return await this.check(async () => {
 			this.createReadStream(source).pipe(this.createWriteStream(dest));
 			emitter.log(colors.green('\t copied: ' + source + ' ' + dest));
@@ -496,7 +504,7 @@ export default class extends hyperdrive {
 		);
 	}
 
-	async $__copy__(src, dest) {
+	async $__copy__(src: PathObj, dest: PathObj) {
 		//{path, isdrive}
 		//src=>drive
 		//dest=>fs
@@ -552,7 +560,7 @@ export default class extends hyperdrive {
 				});
 				// emitter.log('ITEMS', items);
 				await destDrive[makeDir](dest.path);
-				await destDrive[writeDir](items, dest.path, src);
+				await destDrive[writeDir](items, dest.path, { drive: src.drive, isdrive: src.isdrive });
 			}
 			if (!dest.isdrive) emitter.broadcast('storage-updated', 'fs');
 			// emitter.log(colors.green('\t✓ exported drive:' + src.path + ' to fs:' + dest.path));
@@ -560,3 +568,5 @@ export default class extends hyperdrive {
 		});
 	}
 }
+
+export default Hyperdrive;

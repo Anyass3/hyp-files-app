@@ -1,5 +1,5 @@
-//@ts-ignore
 import { Connectome, newServerKeypair as newKeypair } from 'connectome/server';
+import type { Channel } from 'connectome/typings';
 import DHT from '@hyperswarm/dht';
 import colors from 'colors';
 //@ts-ignore
@@ -19,31 +19,31 @@ if (process.argv.includes('--host')) HOST = '0.0.0.0';
 const emitter = getEmitter();
 const api = getApi();
 
-const enhanceChannel = (channel) => {
+const enhanceChannel = (channel: Channel) => {
 	return {
-		emit: (...args) => {
+		emit: (event, data) => {
 			// emitter.log('in emit', args[0]);
 			try {
-				channel.emit(...args);
+				channel.emit(event, data);
 			} catch (error) {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
 				emitter.log(colors.red('error: ' + error.message));
 			}
 		},
-		on: (...args) => {
+		on: (event, listener) => {
 			// emitter.log('in on', args[0]);
-			const listener = handleError(args[1], emitter);
+			listener = handleError(listener, emitter);
 			try {
-				channel.on(args[0], listener);
+				channel.on(event, listener);
 			} catch (error) {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
 				emitter.log(colors.red('error: ' + error.message));
 			}
 		},
-		signal: (...args) => {
+		signal: (event, data) => {
 			// emitter.log('in signal', args[0]);
 			try {
-				channel.signal(...args);
+				channel.signal(event, data);
 			} catch (error) {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
 				emitter.log(colors.red('error: ' + error.message));
@@ -102,7 +102,8 @@ async function start() {
 	console.log('starting');
 
 	manageChildProcess();
-	const port = process.env.PORT || 3788;
+	//@ts-ignore
+	const port: number = process.env.PORT || 3788;
 	const app = express();
 
 	endpoints(app);
@@ -122,7 +123,7 @@ async function start() {
 	});
 	api.protocolStore.syncOver(channelList);
 
-	channelList.on('new_channel', async (channel) => {
+	channelList.on('new_channel', async (channel: Channel) => {
 		channel.attachObject('dmtapp:hyp', api);
 		emitter.log(colors.cyan(`channel.attachObject => dmtapp:hyp`));
 		// make sure mpv is installed after every new connectome connection

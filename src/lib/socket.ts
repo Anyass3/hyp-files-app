@@ -4,15 +4,14 @@ import { port } from './getAPi';
 
 export default () => {
 	if (!browser) return;
-	const address = window.location.hostname;
 
 	const protocol = 'dmtapp/hyp';
 
-	const connector = connect({ address, protocol, port });
+	const connector = connect({ protocol, port });
 	// console.log('store', store);
 	return {
 		socket: connector,
-		api: connector.remoteObject?.bind?.('dmtapp:hyp'),
+		api: connector.remoteObject?.('dmtapp:hyp'),
 		serverStore: connector.state
 	};
 };
