@@ -2,6 +2,8 @@
 	import store from '$store';
 	import Files from '$components/files.svelte';
 	import Search from '$components/search.svelte';
+	import { fade } from 'svelte/transition';
+
 	import StorageSelect from '$components/storage-select.svelte';
 	import FilesMenu from '$components/files-menu.svelte';
 	import SortView from '$components/sort-view.svelte';
@@ -14,6 +16,7 @@
 	const loading: Writable<loading> = store.g('loading');
 	const selected: Writable<ToolTip> = store.g('selected');
 	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
+	const socket = store.state.socket;
 	let pagination = store.state.pagination;
 	let canFetchNext = true;
 	const isIntersecting = () => {
@@ -86,6 +89,7 @@
 
 	let lastScroll = scrollY;
 	$: hideFilemenu = scrollY > 0 && scrollY >= lastScroll;
+	socket?.on('ready', () => open());
 </script>
 
 <svelte:window
@@ -105,7 +109,7 @@
 		class:hidden={hideFilemenu}
 		class="flex justify-between flex-wrap flex-col-reverse md:flex-row sticky z-30 top-[3.5rem] bg shadow border-b-2"
 	>
-		<div class="flex text-base md:text-lg overflow-x-auto gap-[2px]">
+		<div class="flex text-base md:text-lg flex-wrap gap-[2px]">
 			{#if dir === '/'}
 				<button class="anchor-tooltip">
 					<div class="flex">
@@ -140,7 +144,7 @@
 				{/each}
 			{/if}
 		</div>
-		<div class="flex gap-1 justify-between">
+		<div class="flex gap-1 justify-between flex-wrap">
 			<Search
 				on:search={() => {
 					$instruction = 'reset';

@@ -8,7 +8,7 @@
 	export let cls = '';
 </script>
 
-<div class="md:flex md:justify-between {cls}">
+<div class="flex flex-col md:flex-row md:justify-between {cls} gap-6">
 	<div class="hidden md:block h-[fit-content]">
 		<a
 			href={base_url}
@@ -17,7 +17,7 @@
 			class="anchor text-3xl nav-item py-1 pr-2">Hyp</a
 		>
 	</div>
-	<div class="flex justify-between flex-md-row flex-col gap-6">
+	<div class="flex justify-between flex-md-row flex-col gap-6 p-4 md:p-0">
 		{#each ['files', 'tasks'] as navLink}
 			<div>
 				<a

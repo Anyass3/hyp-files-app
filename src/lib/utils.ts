@@ -235,7 +235,25 @@ export const getPosition = (e) => {
 
 	return pos;
 };
+export const clickOutside = <F extends () => void>(node, fn: F) => {
+	const isOutside = (ev) => {
+		const el = ev.path.find((el) => el === node);
+		if (!el) {
+			fn();
+		}
+	};
 
+	document.body.addEventListener('click', isOutside);
+	window.addEventListener('scroll', isOutside);
+	// window.addEventListener('resize', isOutside);
+	return {
+		destroy() {
+			// window.removeEventListener('resize', isOutside);
+			document.body.removeEventListener('click', isOutside);
+			window.removeEventListener('scroll', isOutside);
+		}
+	};
+};
 type PaganationFetcher = (opts: { limit: number; offset: number }, ...args) => void;
 export class Pagination {
 	limit: number;

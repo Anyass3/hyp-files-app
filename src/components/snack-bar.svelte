@@ -7,8 +7,8 @@
 
 {#key $snackBar}
 	<div
-		in:fly={{ y: 20, duration: 1000 }}
-		out:fly={{ delay: 10, y: 40, duration: 1000 }}
+		in:fly={{ delay: 10, y: 48, duration: 500 }}
+		out:fly={{ delay: 10, y: 48, duration: 500 }}
 		id="snackbar"
 		class:show={$snackBar}
 		class="snackbar"

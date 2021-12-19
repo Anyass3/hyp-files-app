@@ -1,31 +1,35 @@
-<script>
+<script lang="ts">
 	import { browser } from '$app/env';
 
 	import store from '$store';
+	import Select from './Select.svelte';
 	export let label = true;
 	const serverStore = store.g('serverStore');
 	const dkey = store.g('dkey');
+
+	let drives: { name: string; key: string }[];
+
 	$: drives = [
-		...($serverStore?.drives || []).filter((d) => d.connected),
-		{ name: 'file system', key: 'fs' }
+		{ name: 'file system', key: 'fs' },
+		...($serverStore?.drives || [])
+			.filter((d) => d.connected)
+			.map(({ name, key }) => ({
+				name,
+				key
+			}))
 	];
 	$: if (browser && ($serverStore?.drives || [])?.length) {
 		if (!drives.some((drive) => drive.key === $dkey)) {
 			$dkey = 'fs';
 		}
 	}
+	$: selected = drives.find((d) => d.key === $dkey);
+	$: console.log(selected);
 </script>
 
 <div class="p-1">
 	{#if label}
 		<label class=" text-blue-700 dark:text-blue-300" for="select">storage</label>
 	{/if}
-	<select
-		bind:value={$dkey}
-		class="w-full border bg-gray-100 focus:bg-gray-50 rounded p-1 outline-none"
-	>
-		{#each drives as { key, name }}
-			<option class="py-1" value={key}>{name}</option>
-		{/each}
-	</select>
+	<Select {selected} items={drives} on:change={(ev) => ($dkey = ev.detail)} />
 </div>

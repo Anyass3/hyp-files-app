@@ -1,15 +1,14 @@
-import { browser } from '$app/env';
 import { notifier } from '@beyonk/svelte-notifications';
 import { writable } from 'svelte/store';
 function createSnackBar() {
-	const { subscribe, update } = writable(null);
+	const { subscribe, update, set } = writable(null);
 
 	return {
 		subscribe,
-		show: (value: string) =>
-			update((va) => {
-				setTimeout(() => update((val) => (val = null)), 5000);
-				return (va = value);
+		show: (value: string, timeout = 3000) =>
+			update(() => {
+				setTimeout(() => set(null), timeout);
+				return value;
 			})
 	};
 }
