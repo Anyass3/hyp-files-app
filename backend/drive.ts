@@ -1,6 +1,7 @@
 import colors from 'colors';
 import last from 'lodash-es/last.js';
 import debounce from 'lodash-es/debounce.js';
+import throttle from 'lodash-es/throttle.js';
 import hyperdrive from 'hyperdrive';
 
 import fs, { ReadStream, WriteStream } from 'fs';
@@ -25,6 +26,7 @@ export async function setDriveEvents(drive, driveName = '') {
 		() => emitter.broadcast('notify-info', `${driveName} drive updated`),
 		1000
 	);
+	const throttledDriveOpenNotify = throttle((msg) => emitter.broadcast('notify-info', msg), 10000);
 	drive.on('metadata-download', (index, data, feed) => {
 		emitter.dataUsage({ driveName, byteLength: data.byteLength, sub: 'download' });
 		// emitter.log('metadata-download', { index, data, feed });
@@ -54,7 +56,7 @@ export async function setDriveEvents(drive, driveName = '') {
 		emitter.log(colors.cyan('updated: ' + driveName));
 	});
 	drive.on('peer-open', (peer) => {
-		emitter.broadcast('notify-info', `${driveName} drive connection opened`);
+		throttledDriveOpenNotify(`${driveName} drive connection opened`);
 		emitter.log(colors.cyan('peer-open: ' + driveName), {
 			connType: peer.type,
 			remotePublicKey: peer.remotePublicKey?.toString?.('hex'),

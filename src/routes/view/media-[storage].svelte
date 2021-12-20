@@ -9,6 +9,7 @@
 			ctype: page.query.get('ctype') || 'video',
 			dkey: page.query.get('dkey'),
 			size: page.query.get('size')
+			// chucksize: 10000
 		};
 		let url = API + `/${args.ctype.includes('image') ? 'file' : 'media'}` + toQueryString(args);
 		const filename = decodeURIComponent(args.path).split('/').reverse()[0];
