@@ -57,7 +57,7 @@
 					placeholder="[a-z0-9]{'{64}'}"
 				/>
 			</div>
-			<!-- <div class="">
+			<div class="">
 				<label for="connect-drive-storage">storage(optional)</label><br />
 				<input
 					id="connect-drive-storage"
@@ -65,7 +65,7 @@
 					class="dark:ring-gray-400"
 					placeholder="storage"
 				/>
-			</div> -->
+			</div> 
 		{/if}
 	</div>
 	<div class="flex pt-3">

@@ -21,7 +21,7 @@
 	const size = '2x';
 </script>
 
-<div class="relative" use:clickOutside={() => (hidden = true)}>
+<div class="relative" use:clickOutside={[() => (hidden = true)]}>
 	<div class=" flexy flex-col h-full">
 		<button
 			on:click={toggle}

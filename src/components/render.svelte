@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { API } from '$lib/getAPi';
-	export let content;
+	export let content: string;
 	export let codeStyle = '';
-	export let storage;
-	export let dkey;
-	export let dir;
+	export let storage: string;
+	export let dkey: string;
+	export let dir: string;
 	import _ from 'lodash-es';
 	let shadowroot;
 	$: style = codeStyle
@@ -26,6 +26,7 @@
 		content = content.replace(/'/g, '"');
 		const ancorsRe = /<a[\w\s"'-=]+href="(?!(http)|(\/view\/text-)|#|")/g;
 		await new Promise((resolve) => {
+			//@ts-ignore
 			const ancors: Array<string> = _.toArray(new Set(content.match(ancorsRe)));
 			if (ancors.length)
 				ancors.forEach((ancor, idx) => {

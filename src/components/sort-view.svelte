@@ -32,7 +32,7 @@
 	$: change($sorting, $ordering);
 </script>
 
-<div class="relative" use:clickOutside={() => (hidden = true)}>
+<div class="relative" use:clickOutside={[() => (hidden = true)]}>
 	<div class="flexy h-full">
 		<button
 			on:click={toggleView}

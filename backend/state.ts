@@ -24,6 +24,7 @@ export class Emitter {
 		const fns = this.events[event] || [];
 		this.events[event] = fns.concat(fn);
 	}
+
 	off(event, fn) {
 		let fns = this.events[event] || [];
 		this.events[event] = fns.filter((f) => f != fn);

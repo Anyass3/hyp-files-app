@@ -19,7 +19,6 @@ interface PathObj {
 	new_path?: string;
 	drive?: Hyperdrive;
 }
-let a: PathObj;
 
 export async function setDriveEvents(drive, driveName = '') {
 	const debouncedUpdateNotify = debounce(

@@ -48,11 +48,11 @@ export const truncate = (text = '', max = 20) => {
 	const r = /(.+)\.([\w]+)$/.exec(text);
 
 	if (r) {
-		const dots = len > max ? '.. .' : '.';
+		const dots = len > max ? '...' : '.';
 		return r[1].slice(0, max) + dots + r[2];
 	}
 	text = text.slice(0, max);
-	return len > max ? text + '..' : text;
+	return len > max ? text + '...' : text;
 };
 export const doubleTap = (func, timeout = 400) => {
 	//using this for double click and tap
@@ -235,7 +235,13 @@ export const getPosition = (e) => {
 
 	return pos;
 };
-export const clickOutside = <F extends () => void>(node, fn: F) => {
+export const clickOutside = <F extends () => void>(
+	node,
+	[fn, { resize = false, scroll = true } = {}]: [
+		fn: F,
+		options?: { resize?: boolean; scroll?: boolean }
+	]
+) => {
 	const isOutside = (ev) => {
 		const el = ev.path.find((el) => el === node);
 		if (!el) {
@@ -244,13 +250,13 @@ export const clickOutside = <F extends () => void>(node, fn: F) => {
 	};
 
 	document.body.addEventListener('click', isOutside);
-	window.addEventListener('scroll', isOutside);
-	// window.addEventListener('resize', isOutside);
+	if (scroll) window.addEventListener('scroll', isOutside);
+	if (resize) window.addEventListener('resize', isOutside);
 	return {
 		destroy() {
-			// window.removeEventListener('resize', isOutside);
+			if (resize) window.removeEventListener('resize', isOutside);
 			document.body.removeEventListener('click', isOutside);
-			window.removeEventListener('scroll', isOutside);
+			if (scroll) window.removeEventListener('scroll', isOutside);
 		}
 	};
 };

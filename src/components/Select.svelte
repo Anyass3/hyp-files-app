@@ -22,10 +22,12 @@
 <div
 	class="relative border-2 transition rounded"
 	class:focused
-	use:clickOutside={() => {
-		focused = false;
-		selected = selected;
-	}}
+	use:clickOutside={[
+		() => {
+			focused = false;
+			selected = selected;
+		}
+	]}
 >
 	<div class="flex-grow flex items-center py-1 px-3">
 		{#key changedKey}
