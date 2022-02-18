@@ -4,6 +4,8 @@
 
 [PDF Docs](https://abu.zetaseek.com/file/hyp-files-app.pdf?place=localhost-2f686f6d652f6162752f46696c65732f6879702d66696c65732d617070)
 
+[Demos Videos](https://abu.zetaseek.com/?q=files%2Fhyp-files)
+
 ## Install Dependencies
 ```shell
 npm install
