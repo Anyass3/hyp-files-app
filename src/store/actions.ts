@@ -239,13 +239,13 @@ export default {
 					disabled: !isWritable
 				},
 				{
-					name: 'copy link',
+					name: 'copy url',
 					action: async () => {
 						ctype = await g('fileType', { ctype, path, dkey, storage });
 						const args = { ctype, path: encodeURIComponent(path), dkey, storage, size };
 						const url = API + `/${isMedia(ctype, false) ? 'media' : 'file'}` + toQueryString(args);
 						copyToClipboard(url)
-							.then(() => state.snackBar.show('Link Copied'))
+							.then(() => state.snackBar.show('URL Copied'))
 							.catch(() => {});
 						dispatch('context_menu', []);
 					},
@@ -355,6 +355,28 @@ export default {
 						state.socket.on(event, onpaste);
 					},
 					disabled: !g('clipboard').get() || !isWritable
+				},
+				{
+					name: 'download url',
+					action() {
+						dispatch('showPrompt', {
+							onaccept: (url) => {
+								state.socket.signal('download-from-url', { dkey, url, path: dir });
+								console.log('download url', { dkey, url, path: dir });
+							},
+							message: `Download in "${_.last(dir.split('/')) || dir}"`,
+							input: {
+								value:
+									'http://127.0.0.1:3788/file?ctype=application/pdf&path=%2FResume.pdf&dkey=cd0ac39f4471ee1261ff5ef0d582f561941a998dd57561ef1a05e3cd64df5541&storage=drive&size=55814',
+								label: 'Enter url to download from',
+								required: 'cannot receive a file without a phrase'
+							},
+							acceptText: 'download'
+						});
+						dispatch('context_menu', []);
+					},
+					options: {},
+					disabled: !isWritable
 				}
 			];
 			dispatch('context_menu', items);

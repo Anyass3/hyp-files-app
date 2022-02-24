@@ -9,7 +9,7 @@ import {
 	spawnChildProcess,
 	mime
 } from './utils.js';
-import { extname, join } from 'path';
+import { extname, join, basename } from 'path';
 import { getEmitter, getApi } from './state.js';
 import fs from 'fs';
 import cors from 'cors';
@@ -115,7 +115,7 @@ export default async function (app) {
 		let filePath;
 		if (_.isArray(_path)) filePath = join(..._path.map((pth) => decodeURIComponent(pth)));
 		else filePath = decodeURIComponent(_path);
-		const ctype: string = req.query.ctype || mime.lookup(filePath);
+		const ctype: string = req.query.ctype || mime.getType(filePath);
 		const storage: string = req.query.storage || 'fs'; //drive || fs
 		const dkey: string = req.query.dkey;
 
@@ -126,6 +126,7 @@ export default async function (app) {
 		});
 
 		res.setHeader('Content-Type', ctype);
+		res.setHeader('x-filename', basename(filePath));
 		if (storage === 'fs') {
 			if (!fs.existsSync(join(config.fs, filePath))) {
 				showError(storage, filePath);

@@ -1,7 +1,7 @@
 export const is_array = (arr) => {
 	if (!arr) return false;
 	//@ts-ignore
-	return [].__proto__ === arr.__proto__ || NodeList === arr.__proto__.constructor;
+	return Array.isArray(arr) || NodeList === arr.__proto__.constructor;
 };
 export const is_html = (el, arr = true) => {
 	if (!el) return false;

@@ -1,36 +1,19 @@
 import colors from 'colors';
 //@ts-ignore
 import { ProtocolStore } from 'connectome/stores';
+import EventEmitter from 'events';
+import { Downloader } from './utils.js';
 
-export class Emitter {
-	events;
+export class Emitter extends EventEmitter {
 	constructor() {
-		this.events = {};
+		super();
 	}
 
-	emit(event, ...data) {
-		this.events[event]?.forEach?.(async (fn) => {
-			try {
-				// if (event === 'broadcast') console.log('broadcast', data[0]);
-				return await fn(...data);
-			} catch (error) {
-				console.log(colors.red('error: emit:: ' + error.message), error.stack, data, event);
-				this.broadcast('notify-danger', error.message);
-			}
-		});
+	emit(event: string, ...data) {
+		return super.emit(event, ...data);
 	}
 
-	on(event, fn) {
-		const fns = this.events[event] || [];
-		this.events[event] = fns.concat(fn);
-	}
-
-	off(event, fn) {
-		let fns = this.events[event] || [];
-		this.events[event] = fns.filter((f) => f != fn);
-	}
-
-	broadcast(event, data?) {
+	broadcast(event: string, data?) {
 		this.emit('broadcast', event, data);
 	}
 	log(...data) {
@@ -89,9 +72,11 @@ export const makeApi = <A extends Store>(
 	const bees = new Map();
 	const channels = new Map();
 	const clients = new Map();
+	let downloader: Downloader;
 	const cleanups = [];
 	let bootstrap_nodes: { host: string; port: number }[] = [];
 	return {
+		downloader,
 		protocolStore,
 		bees,
 		bootstrap_nodes,
@@ -272,6 +257,7 @@ export const getApi = () => {
 	if (!api) {
 		const store = new ProtocolStore();
 		api = makeApi(store);
+		api.downloader = new Downloader(getEmitter(), api);
 	}
 	return api;
 };

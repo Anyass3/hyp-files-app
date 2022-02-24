@@ -454,10 +454,13 @@ export default async function () {
 			emitter.log('child-process:kill', pid);
 			emitter.emit('child-process:kill', pid);
 		});
-		channel.on('share send', ({ phrase = 'yeay share test', dkey, path, ...stat }) => {
+		channel.on('download-from-url', ({ url, dkey, filename, path }) => {
+			api.downloader.download({ url, path, dkey, filename });
+		});
+		channel.on('share send', ({ phrase, dkey, path, ...stat }) => {
 			initiate({ phrase, dkey, path, stat });
 		});
-		channel.on('share receive', ({ phrase = 'yeay share test', dkey, path, ...stat }) => {
+		channel.on('share receive', ({ phrase, dkey, path, ...stat }) => {
 			connect({ phrase, dkey, path, stat });
 		});
 		channel.on('disconnect', async () => {
