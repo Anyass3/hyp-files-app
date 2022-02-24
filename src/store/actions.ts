@@ -366,10 +366,9 @@ export default {
 							},
 							message: `Download in "${_.last(dir.split('/')) || dir}"`,
 							input: {
-								value:
-									'http://127.0.0.1:3788/file?ctype=application/pdf&path=%2FResume.pdf&dkey=cd0ac39f4471ee1261ff5ef0d582f561941a998dd57561ef1a05e3cd64df5541&storage=drive&size=55814',
+								value: '',
 								label: 'Enter url to download from',
-								required: 'cannot receive a file without a phrase'
+								required: 'cannot download from an empty url'
 							},
 							acceptText: 'download'
 						});

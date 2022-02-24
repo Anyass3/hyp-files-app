@@ -73,6 +73,14 @@ export default {
 				});
 				// console.log('loadedBytes / size', loadedBytes, size, (loadedBytes / size) * 100);
 			});
+			socket.on('url-download-progress', ({ url, loaded, total }) => {
+				// if (pathname() !== '/tasks') return;
+				state.downloadingProgress.update((downloadingProgress) => {
+					downloadingProgress[url] = `${((loaded / total) * 100).toFixed(1)}%`;
+					return downloadingProgress;
+				});
+				console.log('loadedBytes / size', loaded, total);
+			});
 			// socket.on('offline-access-in-progress', ({ dkey, path }) => {
 			// 	if (state.dkey.get() === dkey)
 			// 		state.folderItems.update((folderItems) =>

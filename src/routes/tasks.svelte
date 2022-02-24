@@ -3,6 +3,7 @@
 	import Sharing from '$components/sharing.svelte';
 	import Drives from '$components/drives.svelte';
 	import ChildProcess from '$components/child-process.svelte';
+	import Downloading from '$components/downloading.svelte';
 </script>
 
 <div
@@ -10,4 +11,5 @@
 >
 	<ChildProcess />
 	<Sharing />
+	<Downloading />
 </div>

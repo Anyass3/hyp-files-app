@@ -20,6 +20,7 @@ export default {
 		folder: {},
 		folderItems: [],
 		sharingProgress: {},
+		downloadingProgress: {},
 		pagination: {},
 		loading: 'load-page',
 		context_menu: [],

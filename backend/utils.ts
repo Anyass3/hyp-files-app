@@ -176,7 +176,7 @@ export class Downloader {
 		this.api = api;
 		this.max = max;
 	}
-	pending: Array<{ url: string; filename: string; dkey?: string; path: string }> = [];
+	pending: Array<{ url: string; filename: string; dkey: string; path: string }> = [];
 	downloading: Array<{ url: string; canceler: Canceler }> = [];
 
 	private next() {
@@ -194,8 +194,18 @@ export class Downloader {
 		return { item, total: this.iterationCount };
 	}
 
-	async download(item: { url: string; dkey?: string; filename: string; path: string }) {
-		if (item) this.pending.push(item);
+	async download(item: { url: string; dkey: string; filename: string; path: string }) {
+		if (item) {
+			if (
+				this.pending.find((file) => file.url == item.url) ||
+				this.downloading.find((file) => file.url == item.url)
+			) {
+				this.emitter.broadcast('notify-info', 'already downloading the url');
+				return;
+			}
+			this.pending.push(item);
+			this.api.addDownloading(item);
+		}
 		if (this.downloading.length <= this.max) {
 			this.next();
 		}
@@ -203,6 +213,7 @@ export class Downloader {
 	async downloadEnd(url) {
 		this.downloading = this.downloading.filter((item) => item.url != url);
 		this.download(undefined);
+		this.api.removeDownloading(url);
 	}
 
 	private async _download({
@@ -212,7 +223,7 @@ export class Downloader {
 		filename = ''
 	}: {
 		url: string;
-		dkey?: string;
+		dkey: string;
 		filename: string;
 		path: string;
 	}) {
@@ -226,12 +237,13 @@ export class Downloader {
 			url,
 			method: 'GET',
 			onDownloadProgress: ({ loaded, total }) => {
-				this.emitter.broadcast('url-download-progress', { url, progress: (loaded / total) * 100 });
+				this.emitter.broadcast('url-download-progress', { url, loaded, total });
+				console.log({ loaded, total });
 			},
 			responseType: 'stream',
 			cancelToken: cancelToken.token
 		});
-		console.log('response success', response);
+		console.log('response success', response.headers);
 		let writer;
 		let addExt;
 		if (!filename) {
@@ -250,6 +262,8 @@ export class Downloader {
 		if (!Path.extname(filename) || addExt) {
 			filename = filename + '.' + mime.getExtension(response.headers['content-type']);
 		}
+		this.api.updateDownloading({ url, filename });
+
 		if (dkey != 'fs') {
 			const drive = this.api.drives.get(dkey);
 			if (drive) {
@@ -269,7 +283,7 @@ export class Downloader {
 		response.data.pipe(writer);
 		console.log('starting', { url, cancel: cancelToken.cancel });
 
-		new Promise((resolve, reject) => {
+		await new Promise((resolve, reject) => {
 			writer.on('finish', () => {
 				this.emitter.broadcast('url-download-ended', { url });
 				resolve(url);

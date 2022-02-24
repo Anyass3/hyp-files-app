@@ -42,6 +42,7 @@ interface Store {
 		peers?: { corekey: string; drivekey: string; username: string }[];
 		child_processes?: { pid: number; cm: string }[];
 		sharing?: { send: boolean; name: string; phrase: string; drive: string }[];
+		downloading?: Record<'url' | 'path' | 'filename' | 'dkey', string>[];
 		dataUsage?: {};
 		offlinePending?: Record<string, string[]>;
 	};
@@ -55,6 +56,7 @@ export const makeApi = <A extends Store>(
 	const { state } = protocolStore;
 
 	state.sharing = [];
+	state.downloading = [];
 	state.drives = [];
 	state.peers = [];
 	state.child_processes = [];
@@ -228,6 +230,29 @@ export const makeApi = <A extends Store>(
 		},
 		async removeSharing(phrase, send) {
 			state.sharing = state.sharing.filter((s) => !(s.phrase === phrase && s.send === send));
+			//@ts-ignore
+			protocolStore.announceStateChange();
+		},
+		/// state.downloading
+		async addDownloading({ url, path, filename, dkey }) {
+			state.downloading.push({ url, path, filename, dkey });
+			//@ts-ignore
+			protocolStore.announceStateChange();
+			console.log(state.downloading);
+		},
+		getDownloading(url) {
+			return url ? state.downloading.find((file) => file.url == url) : state.downloading;
+		},
+		async updateDownloading({ url, ...rest }) {
+			state.downloading.map((file) => {
+				if (file.url == url) file = { ...file, ...rest };
+				return file;
+			});
+			//@ts-ignore
+			protocolStore.announceStateChange();
+		},
+		async removeDownloading(url) {
+			state.downloading = state.downloading.filter((file) => file.url != url);
 			//@ts-ignore
 			protocolStore.announceStateChange();
 		}
