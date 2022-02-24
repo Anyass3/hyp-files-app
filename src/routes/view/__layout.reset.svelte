@@ -12,7 +12,6 @@
 
 <script lang="ts">
 	import { NotificationDisplay } from '@beyonk/svelte-notifications';
-	import 'tailwindcss/tailwind.css';
 	import '$lib/app.css';
 	import Header from '$components/view-nav.svelte';
 	import store from '$store';

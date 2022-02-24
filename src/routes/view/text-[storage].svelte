@@ -12,7 +12,7 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export const load: Load = async ({ page, fetch, session, context }) => {
+	export const load: Load = async ({ page, fetch, session }) => {
 		let pathList = page.query.getAll('path').map((v) => decodeURIComponent(v));
 		pathList = filterPath(pathList);
 		let [lastPath, ...dirs] = [...pathList].reverse();

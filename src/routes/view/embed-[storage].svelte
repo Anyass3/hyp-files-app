@@ -2,7 +2,7 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export async function load({ page, fetch, session, context }) {
+	export async function load({ page, fetch, session }) {
 		const args = {
 			storage: page.params.storage,
 			path: encodeURIComponent(decodeURIComponent(page.query.get('path'))),

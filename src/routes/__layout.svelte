@@ -14,7 +14,6 @@
 	import { NotificationDisplay } from '@beyonk/svelte-notifications';
 	import ContextMenu from '$components/context-menu.svelte';
 	import Snackbar from '$components/snack-bar.svelte';
-	import 'tailwindcss/tailwind.css';
 	import '$lib/app.css';
 	import Header from '$components/nav.svelte';
 	import store from '$store';

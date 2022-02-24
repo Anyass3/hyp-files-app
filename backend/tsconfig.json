@@ -11,10 +11,13 @@
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"baseUrl": ".",
+		"baseUrl": "."
 		// "allowJs": true,
-		// "checkJs": true,
-		"paths": {}
+		// // "checkJs": true,
+		// "paths": {
+		// 	"./dmt.js": ["./.dev/dmt.js"]
+		// }
 	},
-	"include": ["*.ts"]
+	"include": ["*.ts", "**/*.ts"]
+	// "exclude": ["dmt.ts", "start.ts"]
 }

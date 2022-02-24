@@ -1,16 +1,12 @@
-module.exports = {
+const config = {
 	mode: 'jit',
-	purge: ['./src/**/*.{html,js,svelte,ts}', './src/**/**/*.{js,ts,svelte}'],
 	darkMode: 'class',
+	content: ['./src/**/*.{html,js,svelte,ts}', './src/**/**/*.{js,ts,svelte}'],
 	theme: {
-		extend: {
-			colors: {
-				glight: '#f5f5f5',
-				primary: '#1976d2',
-				danger: '#d32f2f',
-				success: '#388e3c'
-			}
-		}
+		extend: {}
 	},
+
 	plugins: []
 };
+
+module.exports = config;
