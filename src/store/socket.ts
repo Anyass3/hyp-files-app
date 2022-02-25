@@ -79,7 +79,6 @@ export default {
 					downloadingProgress[url] = `${((loaded / total) * 100).toFixed(1)}%`;
 					return downloadingProgress;
 				});
-				console.log('loadedBytes / size', loaded, total);
 			});
 			// socket.on('offline-access-in-progress', ({ dkey, path }) => {
 			// 	if (state.dkey.get() === dkey)

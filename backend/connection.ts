@@ -457,6 +457,9 @@ export default async function () {
 		channel.on('download-from-url', ({ url, dkey, filename, path }) => {
 			api.downloader.download({ url, path, dkey, filename });
 		});
+		channel.on('cancel-download-from-url', ({ url }) => {
+			api.downloader.downloading.find((file) => file.url == url)?.canceler('download cancelled');
+		});
 		channel.on('share send', ({ phrase, dkey, path, ...stat }) => {
 			initiate({ phrase, dkey, path, stat });
 		});

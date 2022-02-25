@@ -9,7 +9,8 @@ import type { ReadStream } from 'fs';
 import axios from 'axios';
 import type { Canceler } from 'axios';
 import type { Emitter, API } from './state';
-import { Settings, setSettings } from './settings.js';
+import { Settings } from './settings.js';
+import { Transform } from 'stream';
 
 mime.define({ 'text/python': ['py'] });
 export { mime };
@@ -236,19 +237,17 @@ export class Downloader {
 		const response = await axios({
 			url,
 			method: 'GET',
-			onDownloadProgress: ({ loaded, total }) => {
-				this.emitter.broadcast('url-download-progress', { url, loaded, total });
-				console.log({ loaded, total });
-			},
 			responseType: 'stream',
 			cancelToken: cancelToken.token
 		});
 		console.log('response success', response.headers);
+
 		let writer;
 		let addExt;
 		if (!filename) {
 			filename =
 				response.headers['x-filename'] ||
+				response.headers['content-disposition']?.split('=')[1] ||
 				decodeURIComponent(Path.basename(url.replace(/(\?.*)|(https?:\/\/)/g, ''))) ||
 				getRandomStr();
 			if (Path.extname(filename) != '.' + mime.getExtension(response.headers['content-type']))
@@ -280,7 +279,23 @@ export class Downloader {
 			this.downloadEnd(url);
 			return;
 		}
-		response.data.pipe(writer);
+
+		//write stream
+		let loaded = 0;
+		const self = this;
+		const filesize = response.headers['content-length'];
+		const reportProgress = _.throttle(async () => {
+			console.log('reporting progress', { loaded });
+			self.emitter.broadcast('url-download-progress', { url, loaded, total: filesize });
+		});
+		const streamTransform = new Transform({
+			transform(chunk, encoding, callback) {
+				loaded += chunk.length;
+				reportProgress();
+				callback(null, chunk);
+			}
+		});
+		response.data.pipe(streamTransform).pipe(writer);
 		console.log('starting', { url, cancel: cancelToken.cancel });
 
 		await new Promise((resolve, reject) => {
