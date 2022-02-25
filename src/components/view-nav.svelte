@@ -7,7 +7,7 @@
 	import dark_mode from '$lib/dark_mode.svg';
 	const colorScheme = store.state.colorScheme;
 	export let cls = '';
-	const path = decodeURIComponent(_.last($page.query.getAll('path')));
+	const path = decodeURIComponent(_.last($page.url.searchParams.getAll('path')));
 	const canRender = path.endsWith('.html') || path.endsWith('.xml') || path.endsWith('.md');
 	const render = store.g('render');
 	const base_url = store.g('base_url');

@@ -15,11 +15,15 @@
 
 <div>
 	<div class="flex gap-2">
-		<button class="btn uppercase" class:active={!new_drive} on:click={() => (new_drive = false)}
-			>connect</button
+		<button
+			class="btn uppercase dark:border-slate-100"
+			class:active={!new_drive}
+			on:click={() => (new_drive = false)}>connect</button
 		>
-		<button class="btn uppercase" class:active={new_drive} on:click={() => (new_drive = true)}
-			>new</button
+		<button
+			class="btn uppercase dark:border-slate-100"
+			class:active={new_drive}
+			on:click={() => (new_drive = true)}>new</button
 		>
 	</div>
 	<div class="flex gap-2 flex-wrap">
@@ -28,15 +32,9 @@
 				<label class="" for="input#name">Drive Name</label><br />
 				<input id="name" bind:value={name} class="dark:ring-gray-400" placeholder="awesome" />
 			</div>
-			<div class="">
-				<label class="" for="connect-drive-key">Private</label><br />
-				<input
-					id="connect-drive-key"
-					type="checkbox"
-					bind:checked={_private}
-					class="dark:ring-gray-400 w-8 h-8"
-					placeholder="[a-z0-9]{'{64}'}"
-				/>
+			<div>
+				<label class="pb-2" for="connect-drive-key">Private</label><br />
+				<input type="checkbox" bind:checked={_private} class="dark:ring-gray-400 w-10 h-10" />
 			</div>
 		{:else}
 			<div class="">
@@ -65,7 +63,7 @@
 					class="dark:ring-gray-400"
 					placeholder="storage"
 				/>
-			</div> 
+			</div>
 		{/if}
 	</div>
 	<div class="flex pt-3">

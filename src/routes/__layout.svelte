@@ -2,7 +2,7 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export async function load({}) {
+	export async function load() {
 		if (browser) {
 			store.dispatch('startConnection');
 		}
@@ -15,14 +15,12 @@
 	import ContextMenu from '$components/context-menu.svelte';
 	import Snackbar from '$components/snack-bar.svelte';
 	import '$lib/app.css';
-	import Header from '$components/nav.svelte';
+	import Nav from '$components/nav.svelte';
 	import store from '$store';
 	import Prompt from '$components/prompt.svelte';
 	import { dev, browser } from '$app/env';
-	import { page } from '$app/stores';
-	import { navigating } from '$app/stores';
+	import { page, navigating } from '$app/stores';
 	const colorScheme = store.g('colorScheme');
-	import { InterObserver, NavInterObserver } from '$lib/utils';
 	import type { Writable } from 'svelte/store';
 	const base_url = store.g('base_url');
 
@@ -56,8 +54,7 @@
 	class="w-full min-h-screen mx-auto flex flex-col justify-between bg shadow-md select-none"
 >
 	<div class="h-full flex flex-col flex-grow">
-		<Header />
-		<!-- <div class="w-screen h-2" use:NavInterObserver /> -->
+		<Nav />
 		<slot />
 	</div>
 </div>

@@ -129,7 +129,7 @@
 					<button class="anchor-tooltip">
 						<div class="flex">
 							<span
-								class="text-blue-600 dark:text-blue-100 dark:active:text-blue-300 active:text-blue-400 cursor-pointer border border-gray-400 dark:border-gray-200 rounded"
+								class="text-blue-600 px-1 dark:text-blue-100 dark:active:text-blue-300 active:text-blue-400 cursor-pointer border border-gray-400 dark:border-gray-200 rounded"
 								on:click={() => open({ path: item.path })}
 							>
 								{#if item.name === 'root'}
