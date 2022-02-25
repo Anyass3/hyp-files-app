@@ -2,19 +2,20 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export async function load({ page, fetch, session }) {
+	export async function load({ url, fetch, params, session }) {
 		const args = {
-			storage: page.params.storage,
-			path: encodeURIComponent(decodeURIComponent(page.query.get('path'))),
-			ctype: page.query.get('ctype') || 'video',
-			dkey: page.query.get('dkey'),
-			size: page.query.get('size')
+			storage: params.storage,
+			path: encodeURIComponent(decodeURIComponent(url.searchParams.get('path'))),
+			ctype: url.searchParams.get('ctype') || 'video',
+			dkey: url.searchParams.get('dkey'),
+			size: url.searchParams.get('size')
 			// chucksize: 10000
 		};
-		let url = API + `/${args.ctype.includes('image') ? 'file' : 'media'}` + toQueryString(args);
+		let mediaUrl =
+			API + `/${args.ctype.includes('image') ? 'file' : 'media'}` + toQueryString(args);
 		const filename = decodeURIComponent(args.path).split('/').reverse()[0];
 		return {
-			props: { ctype: args.ctype, url, filename }
+			props: { ctype: args.ctype, url: mediaUrl, filename }
 		};
 	}
 </script>
@@ -64,16 +65,6 @@
 
 <style>
 	#media {
-		position: absolute;
-		top: 0px;
-		right: 0px;
-		bottom: 0px;
-		left: 0px;
-		max-height: 100%;
-		max-width: 100%;
-		margin: auto;
-	}
-	.media {
 		position: absolute;
 		top: 0px;
 		right: 0px;

@@ -2,17 +2,17 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export async function load({ page, fetch, session }) {
+	export async function load({ url, fetch, params, session }) {
 		const args = {
-			storage: page.params.storage,
-			path: encodeURIComponent(decodeURIComponent(page.query.get('path'))),
-			ctype: page.query.get('ctype'),
-			dkey: page.query.get('dkey'),
-			size: page.query.get('size')
+			storage: params.storage,
+			path: encodeURIComponent(decodeURIComponent(url.searchParams.get('path'))),
+			ctype: url.searchParams.get('ctype'),
+			dkey: url.searchParams.get('dkey'),
+			size: url.searchParams.get('size')
 		};
-		const url = API + '/file' + toQueryString(args);
+		const embedUrl = API + '/file' + toQueryString(args);
 		return {
-			props: { ctype: args.ctype, url }
+			props: { ctype: args.ctype, url: embedUrl }
 		};
 	}
 </script>

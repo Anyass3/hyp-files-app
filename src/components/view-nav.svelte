@@ -28,7 +28,7 @@
 		<div class="">
 			<a
 				href="{base_url}files"
-				class:active={$page.path === base_url + 'files'}
+				class:active={$page.url.pathname === base_url + 'files'}
 				class="nav-link font-bold bg-gray-200 dark:bg-gray-800 anchor rounded-md"
 				><div class="flex">
 					<span class="ml-0 md:ml-2 pb-[.4rem]">Files</span>

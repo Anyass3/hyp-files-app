@@ -6,7 +6,7 @@
 	const serverStore = store.g('serverStore');
 	const socket = store.g('socket');
 	import Spinner from '$components/spinner.svelte';
-	import _ from 'lodash';
+	import _ from 'lodash-es';
 
 	$: downloading = $serverStore?.downloading || [];
 	const downloadingProgress = store.g('downloadingProgress');

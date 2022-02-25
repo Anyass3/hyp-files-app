@@ -15,7 +15,7 @@
 			<a
 				href={base_url}
 				sveltekit:prefetch
-				class:active={$page.path === base_url}
+				class:active={$page.url.pathname === base_url}
 				class="btn lead3 anchor">Hyp</a
 			>
 		</div>
@@ -23,7 +23,7 @@
 			<a
 				sveltekit:prefetch
 				class="anchor btn capitalize lead3"
-				class:active={$page.path === base_url + 'files'}
+				class:active={$page.url.pathname === base_url + 'files'}
 				href={base_url + 'files'}>files</a
 			>
 		</div>

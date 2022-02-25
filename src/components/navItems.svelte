@@ -13,7 +13,7 @@
 		<a
 			href={base_url}
 			sveltekit:prefetch
-			class:active={$page.path === base_url + '/'}
+			class:active={$page.url.pathname === base_url + '/'}
 			class="anchor text-3xl nav-item py-1 pr-2">Hyp</a
 		>
 	</div>
@@ -23,7 +23,7 @@
 				<a
 					sveltekit:prefetch
 					class="anchor text-3xl capitalize nav-item"
-					class:active={$page.path === base_url + navLink}
+					class:active={$page.url.pathname === base_url + navLink}
 					href={base_url + `${navLink}`}>{navLink}</a
 				>
 			</div>
