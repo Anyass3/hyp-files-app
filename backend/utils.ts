@@ -11,9 +11,11 @@ import type { Canceler } from 'axios';
 import type { Emitter, API } from './state';
 import { Settings } from './settings.js';
 import { Transform } from 'stream';
+import { SocksProxyAgent } from 'socks-proxy-agent';
 
 mime.define({ 'text/python': ['py'] });
 export { mime };
+export let torAgent = new SocksProxyAgent('socks5://127.0.0.1:9050');
 export const debounce = (fn, delay = 500) => {
 	let timeout;
 	return (...args) => {
@@ -172,10 +174,12 @@ export class Downloader {
 	api: API;
 	iterationCount = 0;
 	max: number;
-	constructor(emitter: Emitter, api, max = 0) {
+	tor: boolean;
+	constructor(emitter: Emitter, api, { max = 0, tor = true } = {}) {
 		this.emitter = emitter;
 		this.api = api;
 		this.max = max;
+		this.tor = tor;
 	}
 	pending: Array<{ url: string; filename: string; dkey: string; path: string }> = [];
 	downloading: Array<{ url: string; canceler: Canceler }> = [];
@@ -233,12 +237,13 @@ export class Downloader {
 		//start download
 		this.downloading.push({ url, canceler: cancelToken.cancel });
 		console.log({ url, canceler: cancelToken.cancel });
-
+		const httpsAgent = this.tor ? torAgent : undefined;
 		const response = await axios({
 			url,
 			method: 'GET',
 			responseType: 'stream',
-			cancelToken: cancelToken.token
+			cancelToken: cancelToken.token,
+			httpsAgent
 		});
 		console.log('response success', response.headers);
 
