@@ -31,14 +31,19 @@ export const setupCorestore = async (
 		setSettings('publicStorage', storage);
 	}
 	// let server;
-	storage = resolve(join(parentStorage, storage));
+	let storagePath = resolve(join(parentStorage, storage));
 	if (oldStorage) {
-		const oldstorage = resolve(join(parentStorage, oldStorage));
-		if (fs.existsSync(oldstorage)) {
-			fs.renameSync(oldstorage, storage);
+		const oldStoragePath = resolve(join(parentStorage, oldStorage));
+		if (fs.existsSync(oldStoragePath)) {
+			try {
+				fs.renameSync(oldStoragePath, storagePath);
+			} catch (error) {
+				setSettings('privateStorage', oldStorage);
+				storagePath = oldStoragePath;
+			}
 		}
 	}
-	const corestore = new Corestore(storage);
+	const corestore = new Corestore(storagePath);
 	await corestore.ready();
 	if (network) {
 		const networker = new Networker(corestore, {
