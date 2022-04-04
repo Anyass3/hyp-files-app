@@ -19,7 +19,6 @@ interface PathObj {
 	new_path?: string;
 	drive?: Hyperdrive;
 }
-let a: PathObj;
 
 export async function setDriveEvents(drive, driveName = '') {
 	const debouncedUpdateNotify = debounce(
@@ -300,7 +299,7 @@ class Hyperdrive extends hyperdrive {
 				list.map(async (item) => {
 					const stats = await this.promises.stats(item.path);
 					const isFile = item.stat.isFile();
-					const path = join(dir, item.name);
+					const path = join(dir, item.name).replace(/\\/g,'/');
 					return {
 						name: item.name,
 						path,
@@ -365,15 +364,15 @@ class Hyperdrive extends hyperdrive {
 				list.map(async (item) => {
 					let path = join(dir, item);
 					const stat = fs.statSync(path);
-					path = path.replace(config.fs, '');
-					if (!path.startsWith('/')) path = '/' + path;
+					path = path.replace(join(config.fs), '').replace(/\\/g,'/');
+					if (!path.match(/^[A-Z]:/) && !path.startsWith('/')) path = '/' + path;
 					const isFile = stat.isFile();
 					return {
 						name: item,
 						path,
 						stat: {
 							isFile,
-							...(isFile ? { size: stat.size } : { items: getItems(path) }),
+							...(isFile ? { size: stat.size } : { items: getItems(join(config.fs,path)) }),
 							ctype: isFile ? await getFileType({ path, drive: fs }) : false,
 							mtime: stat.mtime
 						}
