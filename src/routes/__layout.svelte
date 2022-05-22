@@ -2,7 +2,7 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export async function load({ page, fetch, session, context }) {
+	export async function load({ url, fetch, session, params }) {
 		if (browser) {
 			store.dispatch('startConnection');
 		}
@@ -38,15 +38,15 @@
 	})($colorScheme);
 	// $: console.log('page', $page);
 	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
-	$: if ($navigating?.to.path === base_url + 'files') {
+	$: if ($navigating?.to.pathname === base_url + 'files') {
 		$instruction = 'abort';
 	}
 </script>
 
 <svelte:head>
-	{#key $page.path}
-		{#if !$page.path.includes('view')}
-			<title>HYP {$page.path.slice(1)}</title>
+	{#key $page.url.pathname}
+		{#if !$page.url.pathname.includes('view')}
+			<title>HYP {$page.url.pathname.slice(1)}</title>
 		{/if}
 	{/key}
 </svelte:head>
@@ -64,6 +64,6 @@
 </div>
 <Snackbar />
 <NotificationDisplay />
-{#if $page.path === base_url + 'files'}
+{#if $page.url.pathname === base_url + 'files'}
 	<ContextMenu />
 {/if}

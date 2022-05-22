@@ -2,19 +2,19 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export async function load({ page, fetch, session, context }) {
+	export async function load({ url, fetch, session, params }) {
 		const args = {
-			storage: page.params.storage,
-			path: encodeURIComponent(decodeURIComponent(page.query.get('path'))),
-			ctype: page.query.get('ctype') || 'video',
-			dkey: page.query.get('dkey'),
-			size: page.query.get('size')
+			storage: params.storage,
+			path: encodeURIComponent(decodeURIComponent(url.searchParams.get('path'))),
+			ctype: url.searchParams.get('ctype') || 'video',
+			dkey: url.searchParams.get('dkey'),
+			size: url.searchParams.get('size')
 			// chucksize: 10000
 		};
-		let url = API + `/${args.ctype.includes('image') ? 'file' : 'media'}` + toQueryString(args);
+		let _url = API + `/${args.ctype.includes('image') ? 'file' : 'media'}` + toQueryString(args);
 		const filename = decodeURIComponent(args.path).split('/').reverse()[0];
 		return {
-			props: { ctype: args.ctype, url, filename }
+			props: { ctype: args.ctype, url: _url, filename }
 		};
 	}
 </script>

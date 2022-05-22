@@ -237,7 +237,7 @@ export const getPosition = (e) => {
 };
 export const clickOutside = <F extends () => void>(node, fn: F) => {
 	const isOutside = (ev) => {
-		const el = ev.path.find((el) => el === node);
+		const el = ev.path?.find((el) => el === node);
 		if (!el) {
 			fn();
 		}

@@ -12,8 +12,8 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export const load: Load = async ({ page, fetch, session, context }) => {
-		let pathList = page.query.getAll('path').map((v) => decodeURIComponent(v));
+	export const load: Load = async ({ url, fetch, session, params }) => {
+		let pathList = url.searchParams.getAll('path').map((v) => decodeURIComponent(v));
 		pathList = filterPath(pathList);
 		let [lastPath, ...dirs] = [...pathList].reverse();
 		dirs.reverse();
@@ -22,27 +22,27 @@
 
 		dirs = filterPath(dirs);
 		const args = {
-			storage: page.params.storage,
-			dkey: page.query.get('dkey'),
+			storage: params.storage,
+			dkey: url.searchParams.get('dkey'),
 			path: pathList
 				.reduce((paths, path) => `${paths}path=${encodeURIComponent(path)}&`, '')
 				.replace(/^(path=)/, ''),
-			ctype: page.query.get('ctype') || '',
-			size: page.query.get('size')
+			ctype: url.searchParams.get('ctype') || '',
+			size: url.searchParams.get('size')
 		};
 
 		const dir = dirs
 			.reduce((paths, path) => `${paths}path=${encodeURIComponent(path)}&`, '')
 			.replace(/(^(path=)|(&$))/g, '');
 
-		let url = `/file` + toQueryString(args);
+		let _url = `/file` + toQueryString(args);
 		return {
 			props: {
 				...args,
 				filename,
-				url,
+				url: _url,
 				dir,
-				language: page.query.get('language')
+				language: url.searchParams.get('language')
 			}
 		};
 	};
