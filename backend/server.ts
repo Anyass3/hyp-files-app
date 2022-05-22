@@ -129,9 +129,21 @@ async function start() {
 		// make sure mpv is installed after every new connectome connection
 		// it might be uninstalled anytime
 		//@ts-ignore
-		const isMpvInstalled = (await execChildProcess('apt list --installed mpv')).includes(
-			'installed'
-		);
+		let isMpvInstalled = false;
+
+		try {
+			isMpvInstalled = (await execChildProcess('apt list --installed mpv'))
+				.toLowerCase()
+				.includes('installed');
+		} catch (error) {
+			try {
+				isMpvInstalled = (await execChildProcess('dnf list --installed mpv'))
+					.toLowerCase()
+					.includes('installed');
+			} catch (error) {
+				//
+			}
+		}
 		emitter.log('isMpvInstalled', isMpvInstalled);
 		api.setIsMpvInstalled(isMpvInstalled);
 	});
