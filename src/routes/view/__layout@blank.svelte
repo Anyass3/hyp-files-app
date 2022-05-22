@@ -2,7 +2,7 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export async function load({}) {
+	export async function load({ url, fetch, session, params }) {
 		if (browser) {
 			store.dispatch('startConnection');
 		}

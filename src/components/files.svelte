@@ -27,7 +27,8 @@
 
 	const mainEvent = (ev, open = true) => {
 		onDoubletap(ev);
-		const element = ev.path.find((el) => el?.dataset?.data);
+		// console.log(ev);
+		const element = ev.path?.find((el) => el?.dataset?.data);
 		if (element) {
 			ev.preventDefault();
 			const data = JSON.parse(element.dataset.data);

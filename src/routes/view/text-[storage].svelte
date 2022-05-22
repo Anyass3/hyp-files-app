@@ -12,7 +12,7 @@
 	/**
 	 * @type {import('@sveltejs/kit').Load}
 	 */
-	export const load: Load = async ({ url, params, fetch, session }) => {
+	export const load: Load = async ({ url, fetch, session, params }) => {
 		let pathList = url.searchParams.getAll('path').map((v) => decodeURIComponent(v));
 		pathList = filterPath(pathList);
 		let [lastPath, ...dirs] = [...pathList].reverse();
