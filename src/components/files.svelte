@@ -18,9 +18,10 @@
 	import FilmIcon from 'icons/FilmIcon.svelte';
 	import type { Writable } from 'svelte/store';
 	import { extractLang } from '$lib/md-hljs';
+
 	const files = store.g('folderItems');
 
-	const loading: Writable<loading | false> = store.g('loading');
+	const loading: Writable<Loading | false> = store.g('loading');
 
 	const dispatch = createEventDispatcher();
 	const selected: Writable<ToolTip> = store.g('selected');
@@ -38,11 +39,11 @@
 				});
 			else $selected = data;
 		} else {
-			$selected = null;
+			($selected as any) = null;
 		}
 	};
 	const onDoubletap = doubleTap(mainEvent);
-	const [send, receive] = crossfade({
+	const [_send, receive] = crossfade({
 		duration: (d) => Math.sqrt(d * 50),
 		fallback(node, params) {
 			const style = getComputedStyle(node);

@@ -1,5 +1,5 @@
 declare class HyperBee {
-	constructor(feed: any, opts?: {});
+	constructor(feed: any, opts?: Record<string, string>);
 	_feed: Feed;
 	keyEncoding: any;
 	valueEncoding: any;
@@ -22,7 +22,7 @@ declare class HyperBee {
 	getKey(seq: any): Promise<any>;
 	getBlock(seq: any, opts?: any, batch?: HyperBee): Promise<BlockEntry>;
 	peek(opts?: any): Promise<any>;
-	createRangeIterator(opts?: {}, active?: any): any;
+	createRangeIterator(opts?: Record<string, string>, active?: any): any;
 	createReadStream(opts?: any): any;
 	createHistoryStream(opts?: any): any;
 	createDiffStream(right: any, opts?: any): any;
@@ -32,7 +32,7 @@ declare class HyperBee {
 	del(key: any, opts?: any): Promise<void>;
 	checkout(version: any): HyperBee;
 	snapshot(): HyperBee;
-	sub(prefix: any, opts?: {}): HyperBee;
+	sub(prefix: any, opts?: Record<string, string>): HyperBee;
 }
 declare class TreeNode {
 	static create(block: any): TreeNode;
@@ -77,7 +77,7 @@ declare class BlockEntry {
 	getTreeNode(offset: any): TreeNode;
 }
 declare class Batch {
-	constructor(tree: any, autoFlush: any, cache: any, options?: {});
+	constructor(tree: any, autoFlush: any, cache: any, options?: Record<string, string>);
 	tree: any;
 	keyEncoding: any;
 	valueEncoding: any;
@@ -86,7 +86,7 @@ declare class Batch {
 	rootSeq: number;
 	root: any;
 	length: number;
-	options: {};
+	options: Record<string, string>;
 	overwrite: boolean;
 	locked: any;
 	onseq: any;
@@ -309,13 +309,4 @@ declare class Feed {
 	_roots(index: any): Promise<any>;
 	audit(): Promise<any>;
 	extension(name: any, message: any): void;
-}
-
-interface Extension {
-	constructor(name, opts);
-	_registerExtension(peer);
-	_unregisterExtension(peer);
-	broadcast(message);
-	send(message, peer);
-	destroy();
 }

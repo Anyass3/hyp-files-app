@@ -278,11 +278,10 @@ export class Downloader {
 
 		//write stream
 		let loaded = 0;
-		const self = this;
 		const filesize = response.headers['content-length'];
 		const reportProgress = _.throttle(async () => {
 			console.log('reporting progress', { loaded });
-			self.emitter.broadcast('url-download-progress', { url, loaded, total: filesize });
+			this.emitter.broadcast('url-download-progress', { url, loaded, total: filesize });
 		});
 		const streamTransform = new Transform({
 			transform(chunk, encoding, callback) {

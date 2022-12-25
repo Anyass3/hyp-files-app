@@ -22,6 +22,7 @@ module.exports = {
 		'@typescript-eslint/no-empty-function': 'warn',
 		'prefer-const': 'warn',
 		'no-undef': 'warn',
-		'no-empty': 'warn'
+		'no-empty': 'warn',
+		'@typescript-eslint/no-this-alias': 'warn'
 	}
 };

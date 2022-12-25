@@ -65,13 +65,11 @@ export async function setDriveEvents(drive, driveName = '') {
 
 	drive.watch('/');
 }
-//@ts-ignore
 class Hyperdrive extends hyperdrive {
 	constructor(store, dkey = null) {
 		super(store, dkey);
 		emitter.log(colors.cyan('setting up drive'));
 	}
-	promises: HyperdrivePromises;
 	key: Buffer;
 	discoveryKey: Buffer;
 	writable: boolean;
@@ -82,14 +80,13 @@ class Hyperdrive extends hyperdrive {
 	peers: Array<any>;
 	createWriteStream: typeof fs.createWriteStream;
 	createReadStream: typeof fs.createReadStream;
-	on: (event: string, fn: () => void) => void;
 	close?: () => Promise<any>;
 	async check(fn) {
 		return await handleError(fn, emitter)();
 	}
 	async $ready(name) {
 		await this.check(async () => {
-			await this.promises.ready();
+			await this.ready();
 
 			emitter.emit('drive key', this.$key);
 
@@ -294,12 +291,12 @@ class Hyperdrive extends hyperdrive {
 				if (!show_hidden) list = list.filter((item) => !/^\./.exec(item.name));
 				if (search) list = list.filter((item) => item.name.includes(search));
 			}
-			const self = this;
 			list = await Promise.all(
 				list.map(async (item) => {
 					const stats = await this.promises.stats(item.path);
 					const isFile = item.stat.isFile();
 					const path = join(dir, item.name).replace(/\\/g, '/');
+					const self = this;
 					return {
 						name: item.name,
 						path,
@@ -341,7 +338,6 @@ class Hyperdrive extends hyperdrive {
 	) {
 		dir = join(config.fs, dir);
 		let total = 0;
-		const self = this;
 		return await this.check(async () => {
 			let list = fs.readdirSync(dir);
 			// console.log({ page, paginate, show_hidden, limit, offset });

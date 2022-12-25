@@ -41,7 +41,7 @@ interface Store {
 		child_processes?: { pid: number; cm: string }[];
 		sharing?: { send: boolean; name: string; phrase: string; drive: string }[];
 		downloading?: Record<'url' | 'path' | 'filename' | 'dkey', string>[];
-		dataUsage?: {};
+		dataUsage?: Record<string, any>;
 		offlinePending?: Record<string, string[]>;
 	};
 }
