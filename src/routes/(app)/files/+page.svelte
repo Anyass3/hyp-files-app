@@ -6,17 +6,20 @@
 	import FilesMenu from '$components/files-menu.svelte';
 	import SortView from '$components/sort-view.svelte';
 	import HomeIcon from 'icons/HomeIcon.svelte';
-	import { throttle, getPosition, truncate, InterObserver } from '$lib/utils';
+	import { getPosition, truncate, InterObserver } from '$lib/utils';
 	import Spinner from '$components/spinner.svelte';
 	import type { Writable } from 'svelte/store';
 	const dkey = store.g('dkey');
 	import _ from 'lodash-es';
-	const loading: Writable<loading> = store.g('loading');
+
+	const loading: Writable<Loading> = store.g('loading');
 	const selected: Writable<ToolTip> = store.g('selected');
 	const instruction: Writable<'reset' | 'abort' | undefined> = store.g('instruction');
+
 	const socket = store.state.socket;
-	let pagination = store.state.pagination;
+	const pagination = store.state.pagination;
 	let canFetchNext = true;
+
 	const isIntersecting = () => {
 		if ($pagination.has_next && canFetchNext) {
 			$pagination.next();
@@ -40,7 +43,7 @@
 	const pos = store.g('pos');
 
 	const open = _.debounce(async (detail?: Record<string, any>) => {
-		let _instruction = $instruction;
+		const _instruction = $instruction;
 		$instruction = undefined;
 		if (_instruction === 'reset') {
 			$pagination.page = 0;
@@ -93,7 +96,7 @@
 
 <svelte:window
 	bind:scrollY
-	on:scroll|passive={throttle(() => {
+	on:scroll|passive={_.throttle(() => {
 		// $hideFilemenu = scrollY > 0 && lastScroll <= scrollY;
 		lastScroll = scrollY;
 	}, 10000)}

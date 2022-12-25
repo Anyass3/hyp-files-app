@@ -40,4 +40,4 @@ interface ToolTip {
 // 	env: ImportMetaEnv;
 // }
 
-declare type loading = 'load-next-page' | 'load-page';
+declare type Loading = 'load-next-page' | 'load-page';

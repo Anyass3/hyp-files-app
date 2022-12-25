@@ -2,7 +2,7 @@ import colors from 'kleur';
 import fs from 'fs';
 import { setupBee, setupCorestore } from './setup.js';
 import { Settings, setSettings } from './settings.js';
-import { getRandomStr, debounce } from './utils.js';
+import { getRandomStr } from './utils.js';
 import Drive, { setDriveEvents } from './drive.js';
 import startCore from './core.js';
 import { getEmitter, getBeeState, API, getApi } from './state.js';

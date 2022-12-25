@@ -16,5 +16,12 @@ module.exports = {
 		browser: true,
 		es2017: true,
 		node: true
+	},
+	rules: {
+		'@typescript-eslint/ban-ts-comment': 'warn',
+		'@typescript-eslint/no-empty-function': 'warn',
+		'prefer-const': 'warn',
+		'no-undef': 'warn',
+		'no-empty': 'warn'
 	}
 };

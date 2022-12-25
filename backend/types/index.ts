@@ -1,5 +1,5 @@
 export declare class Hyperswarm extends EventEmitter {
-	constructor(opts?: {});
+	constructor(opts?: Record<string, string>);
 	keyPair: any;
 	dht: any;
 	server: any;
@@ -31,7 +31,7 @@ export declare class Hyperswarm extends EventEmitter {
 	_handlePeer(peer: any, topic: any): void;
 	status(key: any): any;
 	listen(): any;
-	join(topic: any, opts?: {}): any;
+	join(topic: any, opts?: Record<string, string>): any;
 	leave(topic: any): any;
 	flush(): Promise<any>;
 	clear(): Promise<any>;
@@ -40,9 +40,9 @@ export declare class Hyperswarm extends EventEmitter {
 import { EventEmitter } from 'events';
 
 export declare class CorestoreNetworker {
-	constructor(corestore: any, opts?: {});
+	constructor(corestore: any, opts?: Record<string, string>);
 	corestore: any;
-	opts?: {};
+	opts?: Record<string, string>;
 	keyPair: any;
 	_replicationOpts: {
 		encrypt: boolean;
@@ -61,7 +61,7 @@ export declare class CorestoreNetworker {
 	swarm: Hyperswarm;
 	_replicate(protocolStream: any): void;
 	_flush(keyString: any, keyBuf: any, client: any): Promise<void>;
-	_join(discoveryKey: any, opts?: {}): Promise<void>;
+	_join(discoveryKey: any, opts?: Record<string, string>): Promise<void>;
 	_leave(discoveryKey: any): any;
 	_registerAllExtensions(peer: any): void;
 	_unregisterAllExtensions(peer: any): void;
@@ -73,7 +73,7 @@ export declare class CorestoreNetworker {
 	listen(): any;
 	status(discoveryKey: any): any;
 	allStatuses(): any[];
-	configure(discoveryKey: any, opts?: {}): Promise<any>;
+	configure(discoveryKey: any, opts?: Record<string, string>): Promise<any>;
 	_configure(discoveryKey: any, opts?: any): Promise<any>;
 	joined(discoveryKey: any): any;
 	flushed(discoveryKey: any): any;

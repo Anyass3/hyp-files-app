@@ -21,7 +21,7 @@ export const debounced = (store, timeout = 100) => {
 
 export const debouncedStore = (initial_value, delay = 1000) => {
 	const store = writable(initial_value);
-	let timeout;
+	let timeout: NodeJS.Timeout;
 	let initialised = false;
 	const { set: setValue, ...methods } = store;
 

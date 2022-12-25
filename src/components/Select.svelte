@@ -2,20 +2,20 @@
 	import SearchIcon from 'icons/SearchIcon.svelte';
 	import ChevronDownIcon from 'icons/ChevronDownIcon.svelte';
 	import { createEventDispatcher } from 'svelte';
-	import { truncate, debounce, getPosition, doubleTap, clickOutside } from '$lib/utils';
+	import { truncate, clickOutside } from '$lib/utils';
 	export let items: { name: string; key: string; src?: string }[] = [],
 		focused = false,
-		selected = undefined;
+		selected: typeof items[0] | undefined = undefined;
 	$: options = items;
 	const dispatch = createEventDispatcher();
 
-	const filter = (ev) => {
+	const filter = (ev: any) => {
 		const searchKey = ev.target?.value?.toLowerCase() || '';
 		if (searchKey) options = items.filter(({ name }) => name.toLowerCase().includes(searchKey));
 		else options = items;
 	};
-	let search = false;
-	let changedKey;
+	const search = false;
+	let changedKey: number;
 	let input;
 </script>
 
@@ -59,6 +59,7 @@
 	{#if focused}
 		<div class=" absolute w-full mt-1 focused p-2 z-20 rounded">
 			{#each options as option}
+				<!-- svelte-ignore a11y-click-events-have-key-events -->
 				<div
 					class="p-2 flex justify-between w-full  rounded-sm shadow"
 					tabindex="-1"
@@ -83,7 +84,7 @@
 	{/if}
 </div>
 
-<style>
+<style lang="postcss">
 	.focused {
 		@apply bg-gray-100 focus:bg-gray-50;
 	}

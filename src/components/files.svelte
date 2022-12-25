@@ -1,7 +1,7 @@
 <script lang="ts">
 	import store from '$store';
 	import { createEventDispatcher } from 'svelte';
-	import { truncate, debounce, getPosition, doubleTap } from '$lib/utils';
+	import { truncate, doubleTap } from '$lib/utils';
 	import { crossfade } from 'svelte/transition';
 	import _ from 'lodash-es';
 	import { quintOut } from 'svelte/easing';

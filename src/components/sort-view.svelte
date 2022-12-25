@@ -24,7 +24,7 @@
 	const toggleView = () => {
 		layout = layout === 'grid' ? 'list' : 'grid';
 	};
-	let selecteds = false;
+	const selecteds = false;
 	const size = '2x';
 	const change = (..._) => {
 		if (canEmit) emit('change');
