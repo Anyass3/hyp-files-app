@@ -2,10 +2,10 @@
 
 interface ContextMenuItem {
 	name: string;
-	action?: Function;
+	action?: ()=>void;
 	disabled?: bool;
 	hidden?: bool;
-	options?: { emit?: Function };
+	options?: { emit?: ()=>void };
 	items?: ContextMenuItems;
 	pending?: boolean;
 }
@@ -29,15 +29,15 @@ interface ToolTip {
 	items: number;
 }
 
-interface ImportMetaEnv {
-	VITE_API_URL: string;
-	VITE_API_PORT: number;
-	API_URL: number;
-	BASE_URL: string;
-}
+// interface ImportMetaEnv {
+// 	VITE_API_URL: string;
+// 	VITE_API_PORT: number;
+// 	API_URL: number;
+// 	BASE_URL: string;
+// }
 
-interface ImportMeta {
-	env: ImportMetaEnv;
-}
+// interface ImportMeta {
+// 	env: ImportMetaEnv;
+// }
 
 declare type loading = 'load-next-page' | 'load-page';

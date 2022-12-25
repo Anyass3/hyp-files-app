@@ -1,28 +1,21 @@
-import preprocess from 'svelte-preprocess';
-import { resolve } from 'path';
 import adapter from '@sveltejs/adapter-node';
+import { resolve } from 'path';
+import { vitePreprocess } from '@sveltejs/kit/vite';
 
 /** @type {import('@sveltejs/kit').Config} */
 const config = {
-	// Consult https://github.com/sveltejs/svelte-preprocess
+	// Consult https://kit.svelte.dev/docs/integrations#preprocessors
 	// for more information about preprocessors
-	preprocess: [
-		preprocess({
-			postcss: true
-		})
-	],
+	preprocess: vitePreprocess(),
 
 	kit: {
 		adapter: adapter({ out: 'build/gui' }),
-		vite: {
-			resolve: {
-				alias: {
-					$store: resolve('src/store'),
-					$components: resolve('src/components'),
-					icons: resolve('node_modules/svelte-feather-icons/src/icons'),
-					$icons: resolve('src/icons')
-				}
-			}
+
+		alias: {
+			$store: resolve('src/store'),
+			$components: resolve('src/components'),
+			icons: resolve('node_modules/svelte-feather-icons/src/icons'),
+			$icons: resolve('src/icons')
 		}
 	}
 };

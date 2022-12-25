@@ -1,28 +1,15 @@
-<script context="module">
-	/**
-	 * @type {import('@sveltejs/kit').Load}
-	 */
-	export async function load({ url, fetch, session, params }) {
-		if (browser) {
-			store.dispatch('startConnection');
-		}
-		return {};
-	}
-</script>
-
 <script lang="ts">
+	// @ts-ignore
 	import { NotificationDisplay } from '@beyonk/svelte-notifications';
 	import '$lib/app.css';
 	import Header from '$components/view-nav.svelte';
 	import store from '$store';
-	import { browser } from '$app/env';
+	import { browser } from '$app/environment';
 	import _ from 'lodash-es';
-	import { getStores, navigating, page, session } from '$app/stores';
+	import { navigating, page } from '$app/stores';
 	import type { Writable } from 'svelte/store';
 	const colorScheme = store.state.colorScheme;
 	const base_url = store.g('base_url');
-	// console.log($page.url.pathname.includes('media'));
-	// store.dispatch('initColorScheme');
 
 	$: ((theme) => {
 		if (browser) {
@@ -33,11 +20,14 @@
 			}
 		}
 	})($colorScheme);
+
 	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
-	$: if ($navigating?.to.pathname === base_url + 'files') {
+
+	$: if ($navigating?.to?.url.pathname === base_url + 'files') {
 		$instruction = 'abort';
 	}
-	$: filename = _.last(decodeURIComponent($page.url.searchParams.get('path')).split('/'));
+
+	$: filename = _.last(decodeURIComponent($page.url.searchParams.get('path')||'').split('/'));
 </script>
 
 <svelte:head>

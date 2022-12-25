@@ -2,8 +2,6 @@
 	import store from '$store';
 	import Files from '$components/files.svelte';
 	import Search from '$components/search.svelte';
-	import { fade } from 'svelte/transition';
-
 	import StorageSelect from '$components/storage-select.svelte';
 	import FilesMenu from '$components/files-menu.svelte';
 	import SortView from '$components/sort-view.svelte';
@@ -15,7 +13,7 @@
 	import _ from 'lodash-es';
 	const loading: Writable<loading> = store.g('loading');
 	const selected: Writable<ToolTip> = store.g('selected');
-	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
+	const instruction: Writable<'reset' | 'abort'|undefined> = store.g('instruction');
 	const socket = store.state.socket;
 	let pagination = store.state.pagination;
 	let canFetchNext = true;
@@ -31,6 +29,7 @@
 			$loading = 'load-next-page';
 		}
 	};
+
 	$: dirs = store.g('dirs', $dkey);
 
 	$: dir = $dirs[$dkey];
@@ -40,7 +39,7 @@
 
 	const pos = store.g('pos');
 
-	const open: (detail?: Record<string, any>) => Promise<void> = _.debounce(async (detail) => {
+	const open= _.debounce(async (detail?: Record<string, any>) => {
 		let _instruction = $instruction;
 		$instruction = undefined;
 		if (_instruction === 'reset') {
@@ -51,8 +50,8 @@
 	});
 	let filesMenuhidden = true;
 
-	const setMainContextMenu = async (ev) => {
-		if (ev.target.dataset?.files) {
+	const setMainContextMenu = async (ev: Event) => {
+		if ((ev.target as any)?.dataset?.files) {
 			ev.preventDefault();
 			$pos = getPosition(ev);
 			const name = options.dir.endsWith('/')
@@ -60,7 +59,7 @@
 				: options.dir.split('/').reverse()[0];
 			store.dispatch('setupMainMenuItems', { ...options, name });
 		} else {
-			const element = ev.path.find((el) => el?.dataset?.data);
+			const element = ev.path.find((el: HTMLElement) => el?.dataset?.data);
 			if (element) {
 				ev.preventDefault();
 				$pos = getPosition(ev);
@@ -71,9 +70,9 @@
 		}
 	};
 
-	let dirlist: Array<{ name; path }>;
+	let dirlist: { name: string; path: string }[];
 
-	$: dirlist = dir.split('/').reduce((arr, name) => {
+	$: dirlist = dir.split('/').reduce((arr: typeof dirlist, name: string) => {
 		let path;
 		if (arr.length === 0) path = name || '';
 		else if (arr[arr.length - 1].path === '/') path = '/' + name;

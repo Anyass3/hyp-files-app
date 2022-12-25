@@ -1,16 +1,5 @@
-<script context="module">
-	/**
-	 * @type {import('@sveltejs/kit').Load}
-	 */
-	export async function load() {
-		if (browser) {
-			store.dispatch('startConnection');
-		}
-		return {};
-	}
-</script>
-
 <script lang="ts">
+	// @ts-ignore
 	import { NotificationDisplay } from '@beyonk/svelte-notifications';
 	import ContextMenu from '$components/context-menu.svelte';
 	import Snackbar from '$components/snack-bar.svelte';
@@ -18,7 +7,7 @@
 	import Nav from '$components/nav.svelte';
 	import store from '$store';
 	import Prompt from '$components/prompt.svelte';
-	import { dev, browser } from '$app/env';
+	import { dev, browser } from '$app/environment';
 	import { page, navigating } from '$app/stores';
 	const colorScheme = store.g('colorScheme');
 	import type { Writable } from 'svelte/store';
@@ -35,7 +24,7 @@
 	})($colorScheme);
 	// $: console.log('page', $page);
 	const instruction: Writable<'reset' | 'abort'> = store.g('instruction');
-	$: if ($navigating?.to.pathname === base_url + 'files') {
+	$: if ($navigating?.to?.url.pathname === base_url + 'files') {
 		$instruction = 'abort';
 	}
 </script>

@@ -1,8 +1,6 @@
 <script>
-	import StorageSelect from '$components/storage-select.svelte';
 	import ConnectDrive from '$components/connect-drive.svelte';
 	import Drives from '$components/drives.svelte';
-	import ChildProcess from '$components/child-process.svelte';
 </script>
 
 <div
