@@ -1,4 +1,4 @@
-import { browser } from '$app/env'; // @ts-ignore
+import { browser } from '$app/environment';
 import { connect } from 'connectome';
 import { port } from './getAPi';
 

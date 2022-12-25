@@ -1,12 +1,12 @@
 import store from '$store';
 
-const getLimits = (m) => {
+const getLimits = (m: number) => {
 	const l1 = (innerWidth - m) / 2;
 	const l2 = (innerWidth + m) / 2;
 	return { l1, l2 };
 };
 
-export default (menu, hide: (ev?) => void = (ev?) => {}) => {
+export default (menu: HTMLDivElement, hide= (ev: Event) => {}) => {
 	/**
 	 * Positions the menu properly.
 	 *
@@ -41,19 +41,19 @@ export default (menu, hide: (ev?) => void = (ev?) => {}) => {
 
 	menu.style.left = menuPos.x + 'px';
 	menu.style.top = menuPos.y + 'px';
-	const hideMenu = (ev) => {
-		if (ev.keyCode === 27 || ev.type !== 'keyup') {
+	const hideMenu = (ev: Event) => {
+		if ((ev as any).keyCode === 27 || ev.type !== 'keyup') {
 			hide(ev);
 		}
 	};
-	main.addEventListener('click', hideMenu);
+	main?.addEventListener('click', hideMenu);
 	window.addEventListener('keyup', hideMenu);
 	window.addEventListener('resize', hideMenu);
 	return {
 		destroy() {
 			window.removeEventListener('keyup', hideMenu);
 			window.removeEventListener('resize', hideMenu);
-			main.removeEventListener('click', hideMenu);
+			main?.removeEventListener('click', hideMenu);
 		}
 	};
 };

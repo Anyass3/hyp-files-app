@@ -12,9 +12,9 @@ const langs = [
 for (let lang of langs) {
 	setLang(lang);
 }
-//@ts-ignore
-const extractLang: (ctype: string, path: string) => string = (ctype, path) => {
-	const ext = _.last(_.last(path.split('/')).split('.'));
+
+const extractLang = (ctype: string, path: string) => {
+	const ext = _.last(_.last(path.split('/'))?.split('.')) || '';
 	return getLang(
 		[
 			ext,
@@ -22,14 +22,14 @@ const extractLang: (ctype: string, path: string) => string = (ctype, path) => {
 			ext.endsWith('ignore')
 				? 'plaintext'
 				: ext.includes('bash')
-				? 'bash'
-				: ext.replace('_history', '').replace('_', '-')
+					? 'bash'
+					: ext.replace('_history', '').replace('_', '-')
 		],
 		{
 			getMatch: true,
 			error: false
 		}
-	);
+	) as unknown as string;
 };
-//@ts-ignore
+
 export { highlightCode, getLang, Markdown, extractLang };

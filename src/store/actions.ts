@@ -1,5 +1,5 @@
 import { goto } from '$app/navigation';
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 import { API, api } from '$lib/getAPi';
 import { copyToClipboard, toQueryString } from '$lib/utils';
 import { extractLang } from '$lib/md-hljs';

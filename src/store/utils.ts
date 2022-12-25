@@ -1,5 +1,5 @@
 import { derived,writable } from 'svelte/store';
-import { browser } from '$app/env';
+import { browser } from '$app/environment';
 
 export const debounced = (store, timeout = 100) => {
 	let initialised = false;
