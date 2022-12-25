@@ -6,7 +6,7 @@ const getLimits = (m: number) => {
 	return { l1, l2 };
 };
 
-export default (menu: HTMLDivElement, hide= (ev: Event) => {}) => {
+export default (menu: HTMLDivElement, hide = (ev: Event) => {}) => {
 	/**
 	 * Positions the menu properly.
 	 *

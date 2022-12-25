@@ -44,9 +44,7 @@ declare class TreeNode {
 	changed: boolean;
 	insertKey(key: any, child?: any, overwrite?: boolean): Promise<boolean>;
 	removeKey(index: any): void;
-	siblings(
-		parent: any
-	): Promise<{
+	siblings(parent: any): Promise<{
 		left: any;
 		index: number;
 		right: any;

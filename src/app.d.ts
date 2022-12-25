@@ -2,10 +2,10 @@
 
 interface ContextMenuItem {
 	name: string;
-	action?: ()=>void;
+	action?: () => void;
 	disabled?: bool;
 	hidden?: bool;
-	options?: { emit?: ()=>void };
+	options?: { emit?: () => void };
 	items?: ContextMenuItems;
 	pending?: boolean;
 }

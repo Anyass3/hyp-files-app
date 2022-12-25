@@ -1,5 +1,5 @@
 import colors from 'kleur';
-import {fileTypeFromStream} from 'file-type';
+import { fileTypeFromStream } from 'file-type';
 import child_process from 'child_process';
 import _ from 'lodash-es';
 import mime from 'mime';

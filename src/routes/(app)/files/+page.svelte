@@ -13,7 +13,7 @@
 	import _ from 'lodash-es';
 	const loading: Writable<loading> = store.g('loading');
 	const selected: Writable<ToolTip> = store.g('selected');
-	const instruction: Writable<'reset' | 'abort'|undefined> = store.g('instruction');
+	const instruction: Writable<'reset' | 'abort' | undefined> = store.g('instruction');
 	const socket = store.state.socket;
 	let pagination = store.state.pagination;
 	let canFetchNext = true;
@@ -39,7 +39,7 @@
 
 	const pos = store.g('pos');
 
-	const open= _.debounce(async (detail?: Record<string, any>) => {
+	const open = _.debounce(async (detail?: Record<string, any>) => {
 		let _instruction = $instruction;
 		$instruction = undefined;
 		if (_instruction === 'reset') {

@@ -60,7 +60,13 @@
 			<div class="mt-1 dark:text-blue-200 flex-grow flex flex-col">
 				{#if $canRender && $render}
 					{#if data.filename.endsWith('.md')}
-						<Render content={Markdown(body)} {codeStyle} storage={data.storage} dkey={data.dkey} dir={data.dir} />
+						<Render
+							content={Markdown(body)}
+							{codeStyle}
+							storage={data.storage}
+							dkey={data.dkey}
+							dir={data.dir}
+						/>
 					{:else}
 						<Render content={body} storage={data.storage} dkey={data.dkey} dir={data.dir} />
 					{/if}

@@ -8,7 +8,7 @@
 
 	export let data: PageData;
 
-	$: if(!data.ctype) data.ctype='video';
+	$: if (!data.ctype) data.ctype = 'video';
 
 	let mediaUrl = API + `/${data.ctype?.includes('image') ? 'file' : 'media'}` + toQueryString(data);
 	const filename = decodeURIComponent(data.path).split('/').reverse()[0];

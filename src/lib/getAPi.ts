@@ -3,7 +3,6 @@ import { PUBLIC_API_PORT } from '$env/static/public';
 import axios from 'axios';
 import { axiosFetch } from './utils';
 
-
 let API = import.meta.env.VITE_API_URL;
 export const port = import.meta.env.API_PORT || PUBLIC_API_PORT || 3788;
 if (browser) {

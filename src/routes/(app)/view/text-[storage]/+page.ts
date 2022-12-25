@@ -1,17 +1,14 @@
-
 import { toQueryString } from '$lib/utils';
 import type { PageLoad } from './$types';
 import _ from 'lodash-es';
 
 const filterPath = (_path: string[]) =>
 	_path.filter((path, idx) =>
-		((idx !== 0 || _path[idx + 1]?.startsWith('/')) && path === '/') || path === './'
-			? false
-			: path
+		((idx !== 0 || _path[idx + 1]?.startsWith('/')) && path === '/') || path === './' ? false : path
 	);
 
 export const load: PageLoad = async ({ url, parent }) => {
-	const args = await parent()
+	const args = await parent();
 
 	let pathList = url.searchParams.getAll('path').map((v) => decodeURIComponent(v));
 
@@ -28,7 +25,7 @@ export const load: PageLoad = async ({ url, parent }) => {
 
 	args.path = pathList
 		.reduce((paths, path) => `${paths}path=${encodeURIComponent(path)}&`, '')
-		.replace(/^(path=)/, '')
+		.replace(/^(path=)/, '');
 
 	const dir = dirs
 		.reduce((paths, path) => `${paths}path=${encodeURIComponent(path)}&`, '')

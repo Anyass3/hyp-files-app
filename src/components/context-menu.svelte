@@ -38,7 +38,7 @@
 			out:scale={{ start: 0.9, easing: quadIn, duration: 200 }}
 			class="flex p-2 bg-white dark:bg-gray-700 bg-opacity-95 dark:bg-opacity-95  flex-col min-w-[200px] min-h-[200px] rounded-md shadow-2xl gap-3 md:gap-4 text-gray-800 dark:text-blue-200"
 		>
-			{#each $menuItems as { name, action, options, disabled=false, hidden=false,pending } (name)}
+			{#each $menuItems as { name, action, options, disabled = false, hidden = false, pending } (name)}
 				<div
 					class="hover:bg-gray-200 dark:hover:bg-gray-500 px-1 rounded"
 					class:disabled={disabled || pending}
@@ -46,7 +46,7 @@
 				>
 					<button
 						{disabled}
-						on:click={action||(()=>{})}
+						on:click={action || (() => {})}
 						class=" text-left w-full text-xl text-gray-900 dark:text-blue-300 capitalize flex items-center gap-1"
 						>{name}
 						{#if pending}

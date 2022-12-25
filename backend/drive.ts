@@ -299,7 +299,7 @@ class Hyperdrive extends hyperdrive {
 				list.map(async (item) => {
 					const stats = await this.promises.stats(item.path);
 					const isFile = item.stat.isFile();
-					const path = join(dir, item.name).replace(/\\/g,'/');
+					const path = join(dir, item.name).replace(/\\/g, '/');
 					return {
 						name: item.name,
 						path,
@@ -364,7 +364,7 @@ class Hyperdrive extends hyperdrive {
 				list.map(async (item) => {
 					let path = join(dir, item);
 					const stat = fs.statSync(path);
-					path = path.replace(join(config.fs), '').replace(/\\/g,'/');
+					path = path.replace(join(config.fs), '').replace(/\\/g, '/');
 					if (!path.match(/^[A-Z]:/) && !path.startsWith('/')) path = '/' + path;
 					const isFile = stat.isFile();
 					return {
@@ -372,7 +372,7 @@ class Hyperdrive extends hyperdrive {
 						path,
 						stat: {
 							isFile,
-							...(isFile ? { size: stat.size } : { items: getItems(join(config.fs,path)) }),
+							...(isFile ? { size: stat.size } : { items: getItems(join(config.fs, path)) }),
 							ctype: isFile ? await getFileType({ path, drive: fs }) : false,
 							mtime: stat.mtime
 						}
@@ -517,9 +517,10 @@ class Hyperdrive extends hyperdrive {
 			}
 			// emitter.log('dest.isdrive', dest.isdrive);
 			// emitter.log('src.isdrive', src.isdrive, !!src.drive);
-			const isFile = (src.isdrive
-				? await srcDrive.promises.stat(src.path)
-				: fs.statSync(join(config.fs, src.path))
+			const isFile = (
+				src.isdrive
+					? await srcDrive.promises.stat(src.path)
+					: fs.statSync(join(config.fs, src.path))
 			).isFile();
 			emitter.log('isFile', isFile);
 			const destStorage = dest.isdrive ? destDrive : fs;
