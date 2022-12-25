@@ -15,7 +15,7 @@ export const is_html = (el, arr = true) => {
 export const debounce = (fn: CallableFunction, delay = 5000) => {
 	let timeout;
 	return (...args) => {
-		if (!!timeout) clearTimeout(timeout);
+		if (timeout) clearTimeout(timeout);
 		timeout = setTimeout(() => {
 			fn(...args);
 		}, delay);
@@ -39,7 +39,7 @@ export const getHash = () => {
 export const destroyFns = (...args) => {
 	return () =>
 		args.forEach((fn) => {
-			if (!!fn) fn();
+			if (fn) fn();
 		});
 };
 export const truncate = (text = '', max = 20) => {
@@ -202,7 +202,7 @@ export const axiosFetch = async (instance, path: string, ...args) => {
 };
 
 export const toQueryString = (obj = {}) => {
-	let queryString = '';
+	const queryString = '';
 	try {
 		return Object.entries(obj)
 			.reduce((q, arr) => `${q}&${arr.join('=')}`, queryString)
@@ -219,7 +219,7 @@ export const toQueryString = (obj = {}) => {
  * @return {Object} Returns the x and y position
  */
 export const getPosition = (e) => {
-	let pos = { x: 0, y: 0 };
+	const pos = { x: 0, y: 0 };
 
 	if (!e) e = window.event;
 
@@ -355,7 +355,7 @@ export const Q = ($q: string | Node, __query__: HTMLBaseElement | Document = doc
 		},
 		addClass(cls: Array<string> | string) {
 			return this.$run((e, c) => {
-				if (!!c.trim()) e.classList.add(c);
+				if (c.trim()) e.classList.add(c);
 			}, cls);
 		},
 		hasClass(cls, { someClass = false, someEl = false } = {}) {
@@ -364,7 +364,7 @@ export const Q = ($q: string | Node, __query__: HTMLBaseElement | Document = doc
 		},
 		rmClass(cls: Array<string> | string) {
 			return this.$run((e: HTMLElement, c: string) => {
-				if (!!c.trim()) e.classList.remove(c);
+				if (c.trim()) e.classList.remove(c);
 			}, cls);
 		},
 		run(func: Function) {

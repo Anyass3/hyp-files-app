@@ -37,7 +37,7 @@ export default {
 	getters: {
 		dirs(state, key, value = false) {
 			if (key) {
-				let dir = state.dirs.get()?.[key];
+				const dir = state.dirs.get()?.[key];
 				if (dir && value === true) return dir;
 				else if (!dir || (value && typeof value !== 'boolean')) {
 					state.dirs.update((dirs) => {

@@ -74,7 +74,7 @@ export const makeApi = <A extends Store>(
 	const clients = new Map();
 	let downloader: Downloader;
 	const cleanups = [];
-	let bootstrap_nodes: { host: string; port: number }[] = [];
+	const bootstrap_nodes: { host: string; port: number }[] = [];
 	return {
 		downloader,
 		protocolStore,
@@ -269,7 +269,7 @@ export const getEmitter = () => {
 };
 
 export const getBeeState = async (bee) => {
-	let state = [];
+	const state = [];
 	for await (const { key, value } of bee.createReadStream()) {
 		state.push({ name: key, ...value, saved: true });
 	}

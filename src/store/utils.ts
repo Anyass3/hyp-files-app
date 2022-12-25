@@ -47,7 +47,7 @@ export const hash = () => Math.floor(2147483648 * Math.random()).toString(36);
 export const func = (...args) => null;
 
 export const arrayRemove = (array: Array<any>, item) => {
-	let temp = new Set(array);
+	const temp = new Set(array);
 	temp.delete(item);
 	array = Array.from(temp);
 	temp.clear();
@@ -56,22 +56,22 @@ export const arrayRemove = (array: Array<any>, item) => {
 export function timedelta(date_string) {
 	const round = (t, dsc) => `${Math.floor(t)} ${dsc} ago`;
 	let text = 'just now';
-	let now = new Date();
-	let datetime = new Date(date_string);
-	let seconds = (now.getTime() - datetime.getTime()) / 1000; //in seconds
+	const now = new Date();
+	const datetime = new Date(date_string);
+	const seconds = (now.getTime() - datetime.getTime()) / 1000; //in seconds
 
 	if (seconds <= -1) {
 		return;
 	}
 
-	let mins = seconds / 60;
-	let hrs = mins / 60;
-	let days = hrs / 24;
-	let weeks = days / 7;
+	const mins = seconds / 60;
+	const hrs = mins / 60;
+	const days = hrs / 24;
+	const weeks = days / 7;
 	if (weeks >= 4) {
 		text = `${datetime.getDate()}`;
-		let months = weeks / 4;
-		let years = months / 12;
+		const months = weeks / 4;
+		const years = months / 12;
 		if (months > 1 && months < 13) {
 			text = round(months, 'months');
 		} else {

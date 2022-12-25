@@ -43,7 +43,7 @@ export async function Extention(core: Feed, peer = '') {
 		_ext.send({ event, data }, peer);
 	};
 	ext.info = ({ corekey, drivekey, username = config.username }, peer) => {
-		let info = {
+		const info = {
 			event: 'info',
 			data: {
 				corekey,

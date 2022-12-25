@@ -51,7 +51,7 @@ export default {
 	mutations: {
 		updatePromptValues(state, options = {}) {
 			state.prompt.update((value) => {
-				for (let option in options) {
+				for (const option in options) {
 					value[option] = options[option];
 					return value;
 				}

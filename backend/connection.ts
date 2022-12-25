@@ -26,7 +26,7 @@ export default async function () {
 	let publicDriveKey = (await drivesBee.get('public'))?.value?.key;
 
 	// let pcore = (await cores.get('private'))?.value?.key;// private core
-	let privateDrivekey = (await drivesBee.get('private'))?.value?.key;
+	const privateDrivekey = (await drivesBee.get('private'))?.value?.key;
 
 	//functions
 	async function startDrive(

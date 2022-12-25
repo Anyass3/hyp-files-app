@@ -196,7 +196,7 @@ export default async function (app) {
 				return res.end();
 			}
 		}
-		let ranges = range.replace(/bytes=/, '').split('-');
+		const ranges = range.replace(/bytes=/, '').split('-');
 
 		const CHUNK_SIZE = chucksize;
 		const start = Number(ranges[0]);

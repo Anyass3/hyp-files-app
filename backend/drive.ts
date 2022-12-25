@@ -139,7 +139,7 @@ class Hyperdrive extends hyperdrive {
 			let dirList: PathObj[];
 			if (typeof drive_src === 'string') dirList = await this.$readDir(drive_src, { dest });
 			else dirList = drive_src;
-			for (let item of dirList) {
+			for (const item of dirList) {
 				const isdir = (await this.promises.stat(item.path)).isDirectory();
 				const _dest = join(dest, item.new_path);
 				if (isdir) {
@@ -172,7 +172,7 @@ class Hyperdrive extends hyperdrive {
 
 	async $fsWriteDir(dirList: PathObj[], fs_dest: string, { drive }) {
 		await this.check(async () => {
-			for (let item of dirList) {
+			for (const item of dirList) {
 				const isdir = drive
 					? (await drive.promises.stat(item.path)).isDirectory()
 					: fs.statSync(join(config.fs, item.path)).isDirectory();
@@ -207,7 +207,7 @@ class Hyperdrive extends hyperdrive {
 	}
 	async $driveWriteDir(dirList: PathObj[], dest: string, { drive, isdrive }) {
 		await this.check(async () => {
-			for (let item of dirList) {
+			for (const item of dirList) {
 				const isdir = isdrive
 					? (await drive.promises.stat(item.path)).isDirectory()
 					: fs.statSync(join(config.fs, item.path)).isDirectory();
@@ -438,7 +438,7 @@ class Hyperdrive extends hyperdrive {
 				emitter.log(colors.green('\t downloaded all '));
 				emitter.broadcast('notify-success', 'Downloaded all files in ' + name + ' drive');
 			} else
-				for (let path of paths) {
+				for (const path of paths) {
 					await this.promises.download(path, opts);
 					emitter.emit('rm-offline-pending', this.key, path);
 					emitter.log(colors.green('\t downloaded: ' + path));
@@ -451,7 +451,7 @@ class Hyperdrive extends hyperdrive {
 	}
 	async $makedir(...dirs) {
 		return await this.check(async () => {
-			for (let dir of dirs) {
+			for (const dir of dirs) {
 				await this.promises.mkdir(dir);
 				emitter.log(colors.green('\t✓ makedir ' + dir));
 			}
@@ -467,13 +467,13 @@ class Hyperdrive extends hyperdrive {
 	async $removedir(...dirs) {
 		return await this.check(async () => {
 			//neeeds_work
-			for (let dir of dirs) {
+			for (const dir of dirs) {
 				const files = await this.$listAllFiles(dir);
 				emitter.log('files', files);
 				await this.$remove(...files);
 				const dirs = await this.$listAllDirs(dir);
 				emitter.log('dirs', dirs);
-				for (let dir of dirs.reverse()) {
+				for (const dir of dirs.reverse()) {
 					//deleting the now empty directories
 					await this.promises.rmdir(dir);
 				}
@@ -485,7 +485,7 @@ class Hyperdrive extends hyperdrive {
 	}
 	async $remove(...files) {
 		return await this.check(async () => {
-			for (let file of files) {
+			for (const file of files) {
 				await this.promises.unlink(file); // delete the copy
 				emitter.log(colors.green('\t✓ rm ' + file));
 			}

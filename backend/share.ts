@@ -42,7 +42,7 @@ const handleConnection = async (
 	path = join(dkey === 'fs' ? config.fs : '', path);
 	let localStream;
 
-	let open = { local: true, remote: true };
+	const open = { local: true, remote: true };
 	const localEnd = async () => {
 		if (open.local)
 			try {
@@ -156,7 +156,7 @@ const handleConnection = async (
 			}
 		});
 		remoteStream.pipe(zlib.createGunzip()).pipe(stream);
-		let streamOpened = true;
+		const streamOpened = true;
 		handleEvents(stream, () => {
 			//@ts-ignore
 			if (open.local) localStream?.end?.();

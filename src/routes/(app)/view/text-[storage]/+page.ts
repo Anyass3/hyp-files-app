@@ -31,7 +31,7 @@ export const load: PageLoad = async ({ url, parent }) => {
 		.reduce((paths, path) => `${paths}path=${encodeURIComponent(path)}&`, '')
 		.replace(/(^(path=)|(&$))/g, '');
 
-	let urlPath = `/file` + toQueryString(args);
+	const urlPath = `/file` + toQueryString(args);
 
 	return {
 		...args,

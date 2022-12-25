@@ -17,8 +17,8 @@ export default (menu: HTMLDivElement, hide = (ev: Event) => {}) => {
 	const main = document.querySelector('div#main');
 
 	const parent = document.getElementById('files');
-	let dimention = { x: 0, y: 0 };
-	let menuPos = { x: 0, y: 0 };
+	const dimention = { x: 0, y: 0 };
+	const menuPos = { x: 0, y: 0 };
 	dimention.x = menu?.offsetWidth || 0;
 	dimention.y = menu?.offsetHeight || 0;
 

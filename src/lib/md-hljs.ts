@@ -9,7 +9,7 @@ const langs = [
 	{ language: 'python', aliases: ['mako'] },
 	{ language: 'yaml', aliases: ['Procfile', 'def'] }
 ];
-for (let lang of langs) {
+for (const lang of langs) {
 	setLang(lang);
 }
 

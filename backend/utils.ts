@@ -15,7 +15,7 @@ import { SocksProxyAgent } from 'socks-proxy-agent';
 
 mime.define({ 'text/python': ['py'] });
 export { mime };
-export let torAgent = new SocksProxyAgent('socks5://127.0.0.1:9050');
+export const torAgent = new SocksProxyAgent('socks5://127.0.0.1:9050');
 export const debounce = (fn, delay = 500) => {
 	let timeout;
 	return (...args) => {
@@ -140,12 +140,12 @@ export const getFileType = async ({ path, drive }, emitter?) => {
 };
 
 export const getDriveFileType = async (stream) => {
-	let _type = (await fileTypeFromStream(stream))?.mime;
+	const _type = (await fileTypeFromStream(stream))?.mime;
 	return _type;
 };
 
 export const toQueryString = async (obj = {}) => {
-	let queryString = '';
+	const queryString = '';
 	try {
 		return Object.entries(obj)
 			.reduce((q, arr) => `${q}&${arr.join('=')}`, queryString)

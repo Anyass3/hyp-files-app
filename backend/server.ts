@@ -196,7 +196,7 @@ process.on('uncaughtException', async (err, origin) => {
 			uncaughtExceptions + ' uncaughtException in 30 secs. closing server ...'
 		);
 		emitter.log(colors.cyan('cleaning up ...'));
-		for (let cleanup of api.cleanups) await cleanup();
+		for (const cleanup of api.cleanups) await cleanup();
 		process.exit();
 	} else {
 		uncaughtExceptions += 1;
