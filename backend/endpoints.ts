@@ -13,7 +13,7 @@ import { extname, join, basename } from 'path';
 import { getEmitter, getApi } from './state.js';
 import fs from 'fs';
 import cors from 'cors';
-import colors from 'colors';
+import colors from 'kleur';
 import compression from 'compression';
 import { Settings } from './settings.js';
 import _ from 'lodash-es';

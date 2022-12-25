@@ -1,6 +1,5 @@
 import DHT from '@hyperswarm/dht';
 import hypercrypto from 'hypercore-crypto';
-import crypto from 'crypto';
 import archiver from 'archiver';
 import randomWords from 'random-words';
 import fs, { ReadStream, WriteStream } from 'fs';
@@ -9,7 +8,7 @@ import _ from 'lodash-es';
 import { join } from 'path';
 import { Writable, Transform } from 'stream';
 import { getEmitter, getApi } from './state.js';
-import colors from 'colors';
+import colors from 'kleur';
 import { Settings } from './settings.js';
 
 const config = Settings();

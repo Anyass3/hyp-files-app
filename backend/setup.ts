@@ -1,4 +1,4 @@
-import colors from 'colors';
+import colors from 'kleur';
 import type { CorestoreNetworker } from './types';
 import Corestore from 'corestore';
 import Networker from '@corestore/networker';

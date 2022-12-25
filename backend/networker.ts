@@ -1,7 +1,4 @@
 import Networker from '@corestore/networker';
-import Hyperswarm from 'hyperswarm';
-import HypercoreProtocol from 'hypercore-protocol';
-import pump from 'pump';
 
 export default class extends Networker {
 	// _open() {

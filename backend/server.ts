@@ -1,12 +1,12 @@
 import { Connectome, newServerKeypair as newKeypair } from 'connectome/server';
 import type { Channel } from 'connectome/typings';
 import DHT from '@hyperswarm/dht';
-import colors from 'colors';
-//@ts-ignore
+import colors from 'kleur';
+
 import hyperspace from './connection.js';
 import { execChildProcess, handleError, spawnChildProcess } from './utils.js';
 import { getEmitter, getApi } from './state.js';
-import express from 'express';
+import express from 'fastify';
 import http from 'http';
 import endpoints from './endpoints.js';
 

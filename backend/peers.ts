@@ -1,5 +1,5 @@
 // import _ from 'lodash-es';
-import colors from 'colors';
+import colors from 'kleur';
 import Drive from './drive.js';
 import { Settings } from './settings.js';
 import { getEmitter } from './state.js';

@@ -1,5 +1,5 @@
-import colors from 'colors';
-import fileType from 'file-type';
+import colors from 'kleur';
+import {fileTypeFromStream} from 'file-type';
 import child_process from 'child_process';
 import _ from 'lodash-es';
 import mime from 'mime';
@@ -140,7 +140,7 @@ export const getFileType = async ({ path, drive }, emitter?) => {
 };
 
 export const getDriveFileType = async (stream) => {
-	let _type = (await fileType.fromStream(stream))?.mime;
+	let _type = (await fileTypeFromStream(stream))?.mime;
 	return _type;
 };
 

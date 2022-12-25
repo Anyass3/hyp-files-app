@@ -1,4 +1,4 @@
-import colors from 'colors';
+import colors from 'kleur';
 import last from 'lodash-es/last.js';
 import debounce from 'lodash-es/debounce.js';
 import throttle from 'lodash-es/throttle.js';

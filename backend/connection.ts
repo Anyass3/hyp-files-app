@@ -1,4 +1,4 @@
-import colors from 'colors';
+import colors from 'kleur';
 import fs from 'fs';
 import { setupBee, setupCorestore } from './setup.js';
 import { Settings, setSettings } from './settings.js';

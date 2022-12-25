@@ -1,6 +1,4 @@
-import colors from 'colors';
-//@ts-ignore
-import { ProtocolStore } from 'connectome/stores';
+import { SyncStore } from 'connectome/stores';
 import EventEmitter from 'events';
 import { Downloader } from './utils.js';
 
@@ -280,8 +278,8 @@ export const getBeeState = async (bee) => {
 let api: API;
 export const getApi = () => {
 	if (!api) {
-		const store = new ProtocolStore();
-		api = makeApi(store);
+		const store = new SyncStore();
+		api = makeApi(store as any);
 		api.downloader = new Downloader(getEmitter(), api);
 	}
 	return api;

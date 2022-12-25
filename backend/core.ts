@@ -1,5 +1,5 @@
 // import _ from 'lodash-es';
-import colors from 'colors';
+import colors from 'kleur';
 import { Settings } from './settings.js';
 
 export default async function ({ corestore, networker, key, valueEncoding = 'utf-8', writable }) {
