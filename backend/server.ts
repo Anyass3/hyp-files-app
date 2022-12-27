@@ -75,7 +75,7 @@ const manageChildProcess = () => {
 	});
 	emitter.on('child-process:kill', async (pid) => {
 		spawnChildProcess('kill -9 ' + pid, { log: true })
-			.then((_) => {})
+			.then((_) => { })
 			.catch((err) => {
 				emitter.log(err);
 				//  emitter.broadcast(err);
@@ -83,7 +83,7 @@ const manageChildProcess = () => {
 	});
 };
 async function start() {
-	const getBootstrap = ({ address, port }) => ({ host: address, port });
+	const getBootstrap = ({ address, port, ...rest }) => ({ host: address, port, ...rest });
 	const bootstrapper1 = new DHT({ ephemeral: true });
 	await bootstrapper1.ready();
 
@@ -102,28 +102,33 @@ async function start() {
 	console.log('starting');
 
 	manageChildProcess();
+	console.log('manageChildProcess');
 	//@ts-ignore
 	const port: number = process.env.PORT || 3788;
 	const app = express();
 
 	endpoints(app);
+	console.log('endpoints');
 	//@ts-ignore
 	const server = new http.Server(app);
 	const keypair = newKeypair();
 	const connectome = new Connectome({ port, server, keypair });
+	console.log('Connectome');
 
 	connectome.on('protocol_added', ({ protocol }) => {
 		emitter.log(`💡 Connectome protocol ${colors.cyan(protocol)} ready.`);
 		// emitter.log('connectome', connectome);
 	});
+	console.log('before onConnect');
 	const onConnect = await hyperspace();
-	const channelList = connectome.registerProtocol({
-		protocol: 'dmtapp/hyp',
-		onConnect: async ({ channel }) => onConnect({ channel: enhanceChannel(channel) })
-	});
-	api.protocolStore.syncOver(channelList);
+	console.log('onConnect');
+	const channelList = (connectome as any).dev('dmtapp').registerProtocol('hyp',
+		async ({ channel }) => onConnect({ channel: enhanceChannel(channel) })
+	);
+	api.protocolStore.sync(channelList);
 
 	channelList.on('new_channel', async (channel: Channel) => {
+		api.syncState(channel)
 		channel.attachObject('dmtapp:hyp', api);
 		emitter.log(colors.cyan(`channel.attachObject => dmtapp:hyp`));
 		// make sure mpv is installed after every new connectome connection

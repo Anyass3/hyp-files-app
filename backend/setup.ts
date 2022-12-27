@@ -1,5 +1,4 @@
 import colors from 'kleur';
-import type { CorestoreNetworker } from './types';
 import Corestore from 'corestore';
 import Networker from '@corestore/networker';
 import { Settings, setSettings } from './settings.js';
@@ -48,7 +47,7 @@ export const setupCorestore = async (
 	if (network) {
 		const networker = new Networker(corestore, {
 			bootstrap: api.bootstrap_nodes
-		}) as CorestoreNetworker;
+		})
 		return {
 			corestore,
 			networker,
@@ -76,21 +75,25 @@ export async function setupBee(newbee = false) {
 	// for security even our pc cannot access our drive without knowing the storage path
 	setSettings('privateStorage', storage);
 
+	console.log('setup before setupCorestore')
 	const { corestore, cleanup } = await setupCorestore({ storage, oldStorage, network: false });
+	console.log('setup setupCorestore')
 
 	if (!newbee) beekey = Settings().beekey || undefined;
 	const mainStore = corestore.namespace('main-feeds-store');
+	console.log('setup mainStore')
+	const feed= mainStore.get({ name: 'awesome-bee-db' })
+	console.log('setup feed',feed)
 	// Create a Hyperbee
-	let bee = new Hyperbee(mainStore.get({ key: beekey, name: 'awesome-bee-db' }), {
+	let bee = new Hyperbee(feed, {
 		keyEncoding: 'utf8',
 		valueEncoding: 'json'
 	});
 
 	await bee.ready();
-	// console.log(' ready');
 	if (!bee.feed.writable) {
 		bee.feed.close();
-		bee = new Hyperbee(mainStore.get({ name: 'awesome-bee-db' }), {
+		bee = new Hyperbee(mainStore.get(beekey,{ name: 'awesome-bee-db' }), {
 			keyEncoding: 'utf8',
 			valueEncoding: 'json'
 		});

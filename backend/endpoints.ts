@@ -72,7 +72,7 @@ export default async function (app) {
 				return;
 			}
 		} else {
-			if (!drive || !(drive && (await drive.promises.exists(path)))) {
+			if (!drive || !(drive && (await drive.exists(path)))) {
 				showError(storage, path);
 				res.status(404).end();
 				return;
@@ -141,14 +141,14 @@ export default async function (app) {
 		} else {
 			const drive = api.drives.get(dkey);
 
-			if (!drive || !(drive && (await drive.promises.exists(filePath)))) {
+			if (!drive || !(drive && (await drive.exists(filePath)))) {
 				showError(storage, filePath);
 				res.status(404).end();
 				return;
 			}
 
 			if (!fileSize) {
-				const stats = await drive.promises.stat(filePath);
+				const stats = await drive.stat(filePath);
 				fileSize = stats.size;
 			}
 
@@ -190,7 +190,7 @@ export default async function (app) {
 		if (!mediaSize) {
 			try {
 				if (storage === 'fs') mediaSize = fs.statSync(join(config.fs, mediaPath)).size;
-				else mediaSize = await drive.promises.stat(mediaPath).size;
+				else mediaSize = await drive.stat(mediaPath).size;
 			} catch (err) {
 				showError(storage, mediaPath, err.message);
 				return res.end();

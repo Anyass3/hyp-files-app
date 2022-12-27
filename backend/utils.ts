@@ -262,7 +262,7 @@ export class Downloader {
 		if (dkey != 'fs') {
 			const drive = this.api.drives.get(dkey);
 			if (drive) {
-				filename = checkFilename(await drive.promises.readdir(path), filename);
+				filename = checkFilename(await drive.readdir(path), filename);
 				writer = drive?.createWriteStream(Path.join(path, filename));
 			}
 		} else {

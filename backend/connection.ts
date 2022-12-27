@@ -17,16 +17,20 @@ const emitter = getEmitter();
 
 export default async function () {
 	const { bee, cleanup: pcleanup, getNamespace, setNamespace, ...privateHyp } = await setupBee();
+	console.log('setupBee')
 	// const cores = bee.sub('cores');
 	const drivesBee = bee.sub('drives');
 
 	const { cleanup, ...publicHyp } = await setupCorestore();
+	console.log('setupCorestore')
 
 	// let publicCoreKey = (await cores.get('public'))?.value;
 	let publicDriveKey = (await drivesBee.get('public'))?.value?.key;
 
 	// let pcore = (await cores.get('private'))?.value?.key;// private core
 	const privateDrivekey = (await drivesBee.get('private'))?.value?.key;
+
+	console.log({publicDriveKey,privateDrivekey})
 
 	//functions
 	async function startDrive(
@@ -93,7 +97,7 @@ export default async function () {
 				name: 'public'
 			});
 			publicDriveKey = publicDrive?.$key;
-			await drivesBee.put('public', { key: publicDrive?.$key, _private: false });
+			await drivesBee.put('public', { key: publicDriveKey, _private: false });
 		}
 	}
 	// if (!publicCoreKey && core.writable) {
@@ -105,6 +109,7 @@ export default async function () {
 	// 	);
 	// 	await cores.put('public', core?.key?.toString?.('hex'));
 	// }
+	console.log({publicDriveKey,privateDrivekey})
 	if (!publicDriveKey && publicDrive.writable) {
 		emitter.log(
 			colors.red('!publicDriveKey && publicDrive.writable'),
@@ -315,7 +320,7 @@ export default async function () {
 				if (drive) {
 					if (!drive.saved) {
 						api.removeDrive(key);
-						// await drive.promises.destroyStorage();
+						// await drive.destroyStorage();
 						// emitter.broadcast('notify-info', name + ' drive storage destroyed');
 					}
 					api.updateDrive({ ...drive, connected: false });
@@ -343,9 +348,9 @@ export default async function () {
 				// 	namespace
 				// );
 				// const drive = new Drive(driveStore, key);
-				// await drive.promises.ready();
+				// await drive.ready();
 				// //@ts-ignore
-				// await drive.promises.destroyStorage();
+				// await drive.destroyStorage();
 				// emitter.broadcast('notify-info', name + ' drive storage destroyed');
 			} else {
 				api.updateDrive({ ...drive, saved: false });
@@ -426,7 +431,7 @@ export default async function () {
 		channel.on('delete-path-item', async ({ path, dkey, name }) => {
 			if (dkey?.match(/[a-z0-9]{64}/)) {
 				const drive = await api.drives.get(dkey);
-				if ((await drive.promises.stat(path)).isDirectory()) drive.$removedir(path);
+				if ((await drive.stat(path)).isDirectory()) drive.$removedir(path);
 				else drive.$remove(path);
 				emitter.broadcast('notify-success', `${name} deleted`);
 			} else {
@@ -440,7 +445,7 @@ export default async function () {
 		channel.on('rename-item', async ({ oldPath, dkey, name }) => {
 			if (dkey?.match(/[a-z0-9]{64}/)) {
 				// const drive = await api.drives.get(dkey);
-				// if ((await drive.promises.stat(path)).isDirectory()) drive.$removedir(path);
+				// if ((await drive.stat(path)).isDirectory()) drive.$removedir(path);
 				// else drive.$remove(path);
 				// emitter.broadcast('notify-success', `${name} deleted`);
 			} else {

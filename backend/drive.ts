@@ -63,26 +63,54 @@ export async function setDriveEvents(drive, driveName = '') {
 		});
 	});
 
-	drive.watch('/');
+	// drive.watch('/');
 }
 class Hyperdrive extends hyperdrive {
-	constructor(store, dkey = null) {
+	constructor(store, dkey = undefined) {
+		if (dkey && !Buffer.isBuffer(dkey)) dkey = Buffer.from(dkey,'hex')
 		super(store, dkey);
-		emitter.log(colors.cyan('setting up drive'));
+		emitter.log(colors.cyan('setting up drive'),dkey);
 	}
-	key: Buffer;
-	discoveryKey: Buffer;
-	writable: boolean;
-	opened: boolean;
-	closed: boolean;
-	closing: boolean;
-	metadata: any;
-	peers: Array<any>;
-	createWriteStream: typeof fs.createWriteStream;
-	createReadStream: typeof fs.createReadStream;
-	close?: () => Promise<any>;
+	get peers(): any[] {
+		return this.core.peers
+	}
+	get metadata(): any {
+		return this.core.metadata
+	}
+	get closed(): any {
+		return this.core.closed
+	}
+	get closing(): boolean {
+		return this.core.closing
+	}
+	get readable(): boolean {
+		return this.core.readable
+	}
+	get writable(): boolean {
+		return this.core.writable
+	}
+	createReadStream: (path: fs.PathLike, options?: BufferEncoding) => fs.ReadStream;
 	async check(fn) {
 		return await handleError(fn, emitter)();
+	}
+	async exists(path: fs.PathLike) {
+		return !!this.entry(path)
+	}
+	async stat(path: fs.PathLike) {
+		const entry = this.entry(path)
+		if (!entry) return {};
+		return { ...entry.blob, ...(entry?.metadata ?? {}) }
+		// #revist required
+	}
+	async mkdir(path: fs.PathLike) {
+		path = join(path as string, 'null')
+		await this.put(path, Buffer.from(''))
+		await this.del(path)
+		// #revist required
+	}
+	async rmdir(path: fs.PathLike) {
+		await this.del(join(path as string, '/'))
+		// #revist required
 	}
 	async $ready(name) {
 		await this.check(async () => {
@@ -90,13 +118,11 @@ class Hyperdrive extends hyperdrive {
 
 			emitter.emit('drive key', this.$key);
 
+			const info = await this.core.info({ storage: true })
 			emitter.log(colors.gray(`${name || ''} drive metadata: `), {
+				...info,
 				key: this.$key,
 				discoveryKey: this.discoveryKey.toString('hex'),
-				writable: this.writable,
-				opened: this.opened,
-				byteLength: this.metadata.byteLength,
-				peers: this.peers.length
 			});
 
 			// emitter.broadcast('notify-info', 'drive is ready');
@@ -112,7 +138,7 @@ class Hyperdrive extends hyperdrive {
 			let items;
 			if (drive || isdrive) {
 				// emitter.log('readdir is drive');
-				items = await (drive || this).promises.readdir(dir);
+				items = await (drive || this).readdir(dir);
 
 				// emitter.log('readdir is drive and items', items);
 			} else {
@@ -137,7 +163,7 @@ class Hyperdrive extends hyperdrive {
 			if (typeof drive_src === 'string') dirList = await this.$readDir(drive_src, { dest });
 			else dirList = drive_src;
 			for (const item of dirList) {
-				const isdir = (await this.promises.stat(item.path)).isDirectory();
+				const isdir = (await this.stat(item.path)).isDirectory();
 				const _dest = join(dest, item.new_path);
 				if (isdir) {
 					const items = await this.$readDir(item.path);
@@ -159,9 +185,9 @@ class Hyperdrive extends hyperdrive {
 	}
 	async $driveMakeDir(dir: string) {
 		return await this.check(async () => {
-			const exists = await this.promises.exists(dir);
+			const exists = await this.exists(dir);
 			if (!exists) {
-				await this.promises.mkdir(dir);
+				await this.mkdir(dir);
 				// emitter.log('in drivemakedir', dir);
 			}
 		});
@@ -171,7 +197,7 @@ class Hyperdrive extends hyperdrive {
 		await this.check(async () => {
 			for (const item of dirList) {
 				const isdir = drive
-					? (await drive.promises.stat(item.path)).isDirectory()
+					? (await drive.stat(item.path)).isDirectory()
 					: fs.statSync(join(config.fs, item.path)).isDirectory();
 				if (isdir) {
 					await this.$fsMakeDir(item.new_path);
@@ -206,7 +232,7 @@ class Hyperdrive extends hyperdrive {
 		await this.check(async () => {
 			for (const item of dirList) {
 				const isdir = isdrive
-					? (await drive.promises.stat(item.path)).isDirectory()
+					? (await drive.stat(item.path)).isDirectory()
 					: fs.statSync(join(config.fs, item.path)).isDirectory();
 				if (isdir) {
 					await this.$driveMakeDir(item.new_path);
@@ -280,20 +306,28 @@ class Hyperdrive extends hyperdrive {
 		let total = 0;
 		//@ts-ignore
 		const result: Promise<Array<any>> = await this.check(async () => {
-			// emitter.log('in list', dir);
+			emitter.log('in list', dir);
 			// console.log({ page, paginate, show_hidden, limit, offset });
 			let list: {
 				name: string;
 				stat: Record<string, any>;
 				path: string;
-			}[] = await this.promises.readdir(dir, { recursive, includeStats: true });
+			}[]=[];
+			const _list = await (true ? this.list(dir, { recursive, /*includeStats: true*/ }) : this.readdir(dir));
+
+			for await (const path of _list){
+				list.push(path)
+			}
+			console.log('list',recursive,list)
+			// #revist required
+			if(!list.map)return (filter? { items: [], total:0, page:1 }:[]);
 			if (filter) {
 				if (!show_hidden) list = list.filter((item) => !/^\./.exec(item.name));
 				if (search) list = list.filter((item) => item.name.includes(search));
 			}
 			list = await Promise.all(
 				list.map(async (item) => {
-					const stats = await this.promises.stats(item.path);
+					const stats = await this.stat(item.path);
 					const isFile = item.stat.isFile();
 					const path = join(dir, item.name).replace(/\\/g, '/');
 					const self = this;
@@ -307,8 +341,8 @@ class Hyperdrive extends hyperdrive {
 							...(isFile
 								? { size: item.stat.size }
 								: {
-										items: (await this.promises.readdir(path)).length
-								  }),
+									items: this.readdir(path).length
+								}),
 							offline: stats.blocks === stats.downloadedBlocks
 						}
 					};
@@ -409,7 +443,7 @@ class Hyperdrive extends hyperdrive {
 	// GRUD
 	async $write(file, ...content) {
 		return await this.check(async () => {
-			await this.promises.writeFile(file, content.join(' '));
+			await this.put(file, Buffer.from(content.join(' ')));
 			const message = '✓ written ' + file;
 			emitter.log(colors.green('\t' + message));
 		});
@@ -422,20 +456,20 @@ class Hyperdrive extends hyperdrive {
 	}
 	async $read(file, encoding) {
 		return await this.check(async () => {
-			const content = await this.promises.readFile(file, encoding);
-			return content;
+			const content = await this.get(file);
+			return content.toString(encoding)
 		});
 	}
 	async $download(paths = [], { name = '', ...opts } = {}) {
 		if (typeof paths === 'string') paths = [paths];
 		return await this.check(async () => {
 			if (paths.length === 0) {
-				await this.promises.download('/', opts);
+				await this.download('/', opts);
 				emitter.log(colors.green('\t downloaded all '));
 				emitter.broadcast('notify-success', 'Downloaded all files in ' + name + ' drive');
 			} else
 				for (const path of paths) {
-					await this.promises.download(path, opts);
+					await this.download(path, opts);
 					emitter.emit('rm-offline-pending', this.key, path);
 					emitter.log(colors.green('\t downloaded: ' + path));
 				}
@@ -448,7 +482,7 @@ class Hyperdrive extends hyperdrive {
 	async $makedir(...dirs) {
 		return await this.check(async () => {
 			for (const dir of dirs) {
-				await this.promises.mkdir(dir);
+				await this.mkdir(dir);
 				emitter.log(colors.green('\t✓ makedir ' + dir));
 			}
 		});
@@ -471,9 +505,9 @@ class Hyperdrive extends hyperdrive {
 				emitter.log('dirs', dirs);
 				for (const dir of dirs.reverse()) {
 					//deleting the now empty directories
-					await this.promises.rmdir(dir);
+					await this.rmdir(dir);
 				}
-				if (await this.promises.exists(dir)) await this.promises.rmdir(dir);
+				if (await this.exists(dir)) await this.rmdir(dir);
 				emitter.log(colors.green('\t✓ removed dir ' + dir));
 			}
 			return '✓ removed dir ' + dirs.join(', ');
@@ -482,7 +516,7 @@ class Hyperdrive extends hyperdrive {
 	async $remove(...files) {
 		return await this.check(async () => {
 			for (const file of files) {
-				await this.promises.unlink(file); // delete the copy
+				await this.del(file); // delete the copy
 				emitter.log(colors.green('\t✓ rm ' + file));
 			}
 			return '✓ removed ' + files.join(', ');
@@ -515,7 +549,7 @@ class Hyperdrive extends hyperdrive {
 			// emitter.log('src.isdrive', src.isdrive, !!src.drive);
 			const isFile = (
 				src.isdrive
-					? await srcDrive.promises.stat(src.path)
+					? await srcDrive.stat(src.path)
 					: fs.statSync(join(config.fs, src.path))
 			).isFile();
 			emitter.log('isFile', isFile);
