@@ -1,3 +1,4 @@
+import type * as fs from 'fs'
 export=hyperrive;
 
 declare class hyperrive extends EventEmitter {
@@ -14,9 +15,9 @@ declare class hyperrive extends EventEmitter {
 	_checkout: any;
 	_batching: boolean;
 	_closing: Promise<any>;
-	get key(): any;
-	get discoveryKey(): any;
-	get contentKey(): any;
+	get key(): Buffer;
+	get discoveryKey(): Buffer;
+	get contentKey(): Buffer;
 	get core(): any;
 	get version(): any;
 	findingPeers(): any;
@@ -50,10 +51,10 @@ declare class hyperrive extends EventEmitter {
 	}): any;
 	readdir(folder?: string): any;
 	mirror(out: any, opts: any): any;
-	createReadStream(name: any, opts: any): any;
-	createWriteStream(name: any, { executable, metadata }?: {
+	createReadStream: (path: fs.PathLike, options?: BufferEncoding)=> fs.ReadStream;
+	createWriteStream(name: fs.PathLike, { executable, metadata }?: {
 		executable?: boolean;
 		metadata?: any;
-	}): any;
+	}): fs.WriteStream;
 	[Symbol.asyncIterator](): any;
 }

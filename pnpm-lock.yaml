@@ -2,7 +2,7 @@ lockfileVersion: 5.4
 
 specifiers:
   '@beyonk/svelte-notifications': ^3.1.0
-  '@corestore/networker': link:Anyass3/corestore-networker/tree/hypercore10
+  '@corestore/networker': github:Anyass3/corestore-networker
   '@fontsource/fira-mono': ^4.5.10
   '@hyperswarm/dht': ^6.4.0
   '@playwright/test': ^1.28.1
@@ -11,6 +11,7 @@ specifiers:
   '@sveltejs/adapter-static': ^1.0.0
   '@sveltejs/kit': ^1.0.1
   '@types/cookie': ^0.5.1
+  '@types/corestore__networker': ../@types/corestore__networker
   '@types/hyperbee': ../@types/hyperbee
   '@types/hypercore': ../@types/hypercore
   '@types/hyperdrive': ../@types/hyperdrive
@@ -69,7 +70,7 @@ specifiers:
 
 dependencies:
   '@beyonk/svelte-notifications': 3.1.0
-  '@corestore/networker': link:Anyass3/corestore-networker/tree/hypercore10
+  '@corestore/networker': github.com/Anyass3/corestore-networker/6ca97e173f126a763f5d19c529c678b9b081ef9a
   '@hyperswarm/dht': 6.4.0
   archiver: 5.3.1
   axios: 1.2.1
@@ -107,6 +108,7 @@ devDependencies:
   '@sveltejs/adapter-static': 1.0.0_@sveltejs+kit@1.0.1
   '@sveltejs/kit': 1.0.1_svelte@3.55.0+vite@4.0.3
   '@types/cookie': 0.5.1
+  '@types/corestore__networker': link:../@types/corestore__networker
   '@types/hyperbee': link:../@types/hyperbee
   '@types/hypercore': link:../@types/hypercore
   '@types/hyperdrive': link:../@types/hyperdrive
@@ -1577,6 +1579,11 @@ packages:
     resolution: {integrity: sha512-M8WEXFuKXMYMVr45fo8mq0wUrrJHheiKZf6BArTKk9ZBYCKJEOU5H8cdWgDT+qCVZf7Na4lVUaZsA+h6uA9+PA==}
     dev: true
 
+  /emittery/1.0.1:
+    resolution: {integrity: sha512-2ID6FdrMD9KDLldGesP6317G78K7km/kMcwItRtVFva7I/cSEOIaLpewaUb+YLXVwdAp3Ctfxh/V5zIl1sj7dQ==}
+    engines: {node: '>=14.16'}
+    dev: false
+
   /end-of-stream/1.4.4:
     resolution: {integrity: sha512-+uw1inIHVPQoaVuHzRyXd21icM+cnt4CzD5rW+NC1wjOUSTOs+Te7FOv7AhN7vS9x/oIyhLP5PR1H+phQAHu5Q==}
     dependencies:
@@ -1779,6 +1786,10 @@ packages:
   /event-target-shim/5.0.1:
     resolution: {integrity: sha512-i/2XbnSz/uxRCU6+NdVJgKWDTM427+MqYbkQzD321DuCQJUqOuJKIA0IM2+W2xtYHdKOmZ4dR6fExsd4SXL+WQ==}
     engines: {node: '>=6'}
+    dev: false
+
+  /eventemitter2/6.4.9:
+    resolution: {integrity: sha512-JEPTiaOt9f04oa6NOkc4aH+nVp5I3wEjpHbIPqfgCdD5v5bUzy7xQqwcVO2aDQgOWhI28da57HksMrzK9HlRxg==}
     dev: false
 
   /events/3.3.0:
@@ -2564,6 +2575,14 @@ packages:
     hasBin: true
     dev: true
 
+  /nanoresource-promise/3.2.0:
+    resolution: {integrity: sha512-F9eM/eNo8fIdKrrQC6qA3grQ8ni07e8MnlJs0Jf9y5ixHDnpie9sNbIkjcmiyRbFG4UiupsDYhM0D+w8SiVT1g==}
+    dependencies:
+      emittery: 1.0.1
+      eventemitter2: 6.4.9
+      proc-nexttick: 1.0.0
+    dev: false
+
   /napi-macros/2.0.0:
     resolution: {integrity: sha512-A0xLykHtARfueITVDernsAWdtIMbOJgKgcluwENp3AlsKN/PloyO10HtmoqnFAQAcxPkgZN7wdfPfEd0zNGxbg==}
     dev: false
@@ -2903,6 +2922,10 @@ packages:
     engines: {node: '>=10.13.0'}
     hasBin: true
     dev: true
+
+  /proc-nexttick/1.0.0:
+    resolution: {integrity: sha512-AcWhyAKPAhhZTQiLowzJmRpVbxJYIFDuV2eVdEyXLdJJcYchf4QnZwmHEU5cFEgeN0/vPS4ELiORa3H8XEmaDA==}
+    dev: false
 
   /process-nextick-args/2.0.1:
     resolution: {integrity: sha512-3ouUOpQhtgrbOa17J7+uxOTpITYWaGP7/AhoR3+A+/1e9skrzelGi/dXzEYyvbxubEF6Wn2ypscTKiKJFFn1ag==}
@@ -4123,4 +4146,18 @@ packages:
       archiver-utils: 2.1.0
       compress-commons: 4.1.1
       readable-stream: 3.6.0
+    dev: false
+
+  github.com/Anyass3/corestore-networker/6ca97e173f126a763f5d19c529c678b9b081ef9a:
+    resolution: {tarball: https://codeload.github.com/Anyass3/corestore-networker/tar.gz/6ca97e173f126a763f5d19c529c678b9b081ef9a}
+    name: '@corestore/networker'
+    version: 2.0.0
+    dependencies:
+      '@hyperswarm/secret-stream': 6.1.1
+      codecs: 3.0.0
+      dht-rpc: 6.5.1
+      hypercore: 10.5.3
+      hyperswarm: 4.3.5
+      nanoresource-promise: 3.2.0
+      pump: 3.0.0
     dev: false
