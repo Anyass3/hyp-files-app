@@ -10,7 +10,7 @@ const notifyConnected = _.debounce((notify, settings) => {
 const pathname = () => window.location.pathname;
 
 export default {
-	noStore: true,
+	noStore: ['api','socket'],
 	state: {
 		api: null,
 		socket: null,
@@ -32,7 +32,10 @@ export default {
 			const { socket, api, serverStore } = connection();
 			dispatch('socket', socket);
 			dispatch('api', api);
-			dispatch('serverStore', serverStore);
+			
+			socket.on('sync-state',(state)=>{
+				dispatch('serverStore', state);
+			})
 			// window['sk'] = socket;
 			if (socket.connected) socket.signal('signal-connect');
 			socket.on('ready', () => {

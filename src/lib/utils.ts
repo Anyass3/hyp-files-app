@@ -150,16 +150,17 @@ export const NavInterObserver = (node: HTMLElement, cls = 'nav-intersecting') =>
 };
 
 export const axiosFetch = async (instance: AxiosInstance, path: string, ...args: any[]) => {
-	// console.log('axiosFetch', path);
+	console.log('axiosFetch', path);
 	try {
 		const res = await instance(path, ...args);
+		console.log('res',res)
 		return { status: res.status, ok: true, headers: res.headers, body: res.data };
 	} catch (error: any) {
 		return {
-			status: error.response.status,
+			status: error.response?.status??404,
 			ok: false,
-			headers: error.response.headers,
-			body: error.response.data
+			headers: error.response?.headers,
+			body: error.response?.data
 		};
 	}
 };
