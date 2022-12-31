@@ -14,7 +14,7 @@
 > 
 > Using stable svelte-kit
 > 
-> ui updates pending
+> UI updates pending
 
 [Docs in google docs](https://docs.google.com/document/d/1fQzMs1ykgv3G-BIaiCB6dKrJvlZtI-ckZUtxjJ_YwjQ/edit?usp=sharing)
 
