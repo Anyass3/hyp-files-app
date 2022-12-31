@@ -1,12 +1,20 @@
 # hyp-files-app
 
-> #NEW UPDATES: [dev branch](https://github.com/Anyass3/hyp-files-app/tree/dev)
-
+> # NEW UPDATES: [dev branch](https://github.com/Anyass3/hyp-files-app/tree/dev)
+> 
+> Backend:
+>
 > Updating to the latest hypercore, hyperdive-next, hyperswarm, @hyperswarm/dht etc
-
+>
 > Also working on my own custom hyperdrive(to be the similar nodejs fs api) https://github.com/Anyass3/hyperdrive-fs-api
-
+>
 > Using a custom [corestore/networker](https://github.com/Anyass3/corestore-networker) so I can use the lastest holepunch modules.
+> 
+> Frontend: 
+> 
+> Using stable svelte-kit
+> 
+> ui updates pending
 
 [Docs in google docs](https://docs.google.com/document/d/1fQzMs1ykgv3G-BIaiCB6dKrJvlZtI-ckZUtxjJ_YwjQ/edit?usp=sharing)
 
