@@ -2,7 +2,7 @@
 
 > # NEW UPDATES: [dev branch](https://github.com/Anyass3/hyp-files-app/tree/dev)
 > 
-> Backend:
+> **Backend:**
 >
 > Updating to the latest hypercore, hyperdive-next, hyperswarm, @hyperswarm/dht etc
 >
@@ -10,7 +10,7 @@
 >
 > Using a custom [corestore/networker](https://github.com/Anyass3/corestore-networker) so I can use the lastest holepunch modules.
 > 
-> Frontend: 
+> **Frontend:**
 > 
 > Using stable svelte-kit
 > 
