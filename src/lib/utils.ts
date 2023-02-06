@@ -35,21 +35,21 @@ export const truncate = (text = '', max = 20) => {
 	text = text.slice(0, max);
 	return len > max ? text + '...' : text;
 };
-export const doubleTap = <Args extends []>(func: (...args: Args) => void, timeout = 400) => {
+export const doubleTap = <F extends any>(func: F, timeout = 400): F => {
 	//using this for double click and tap
 	//because there's none for double tap
 	//only for double click which is not fired in touch screens
 	// so should work for both
 	let doubleTaped = 0 as any;
-	return (...args: Args) => {
+	return ((...args: any[]) => {
 		if (doubleTaped === 0) {
 			doubleTaped = 1;
 			doubleTaped = setTimeout(() => (doubleTaped = 0), timeout);
 		} else {
 			doubleTaped = 0;
-			func(...args);
+			(func as Function)(...args);
 		}
-	};
+	}) as F;
 };
 export const copyToClipboard = async (text: string) => {
 	if (!text) return false;
@@ -89,7 +89,7 @@ export const getSize = (size: number) => {
 	else return size + ' Bytes';
 };
 
-const intersectingFunc = (() => {}) as (
+const intersectingFunc = (() => { }) as (
 	node?: HTMLElement,
 	entry?: IntersectionObserverEntry,
 	observer?: IntersectionObserver
@@ -149,15 +149,21 @@ export const NavInterObserver = (node: HTMLElement, cls = 'nav-intersecting') =>
 	});
 };
 
+export const getDataElement = (el: HTMLElement | null): HTMLElement | null => {
+	if (!el) return el;
+	if (el?.dataset?.data) return el;
+	return getDataElement(el?.parentElement);
+}
+
 export const axiosFetch = async (instance: AxiosInstance, path: string, ...args: any[]) => {
 	console.log('axiosFetch', path);
 	try {
 		const res = await instance(path, ...args);
-		console.log('res',res)
+		console.log('res', res)
 		return { status: res.status, ok: true, headers: res.headers, body: res.data };
 	} catch (error: any) {
 		return {
-			status: error.response?.status??404,
+			status: error.response?.status ?? 404,
 			ok: false,
 			headers: error.response?.headers,
 			body: error.response?.data
@@ -206,20 +212,21 @@ export const clickOutside = <F extends () => void>(
 		options?: { resize?: boolean; scroll?: boolean }
 	]
 ) => {
-	const isOutside = (ev: Event) => {
-		const el = (ev as any).path?.find((el: HTMLElement) => el === node);
-		if (!el) {
+
+	const isOutside = (e: Event) => {
+		if (node && !node.contains(e.target as Node) && !e.defaultPrevented) {
 			fn();
 		}
 	};
 
-	document.body.addEventListener('click', isOutside);
+
+	document.body.addEventListener('click', isOutside, true);
 	if (scroll) window.addEventListener('scroll', isOutside);
 	if (resize) window.addEventListener('resize', isOutside);
 	return {
 		destroy() {
 			if (resize) window.removeEventListener('resize', isOutside);
-			document.body.removeEventListener('click', isOutside);
+			document.body.removeEventListener('click', isOutside, true);
 			if (scroll) window.removeEventListener('scroll', isOutside);
 		}
 	};

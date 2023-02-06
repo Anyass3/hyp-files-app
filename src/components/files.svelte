@@ -1,7 +1,7 @@
 <script lang="ts">
 	import store from '$store';
 	import { createEventDispatcher } from 'svelte';
-	import { truncate, doubleTap } from '$lib/utils';
+	import { truncate, doubleTap, getDataElement } from '$lib/utils';
 	import { crossfade } from 'svelte/transition';
 	import _ from 'lodash-es';
 	import { quintOut } from 'svelte/easing';
@@ -26,13 +26,13 @@
 	const dispatch = createEventDispatcher();
 	const selected: Writable<ToolTip> = store.g('selected');
 
-	const mainEvent = (ev, open = true) => {
+	const mainEvent = (ev: Event, open = true) => {
 		onDoubletap(ev);
 		// console.log(ev);
-		const element = ev.path?.find((el) => el?.dataset?.data);
+		const element = getDataElement(ev.target as HTMLElement);
 		if (element) {
 			ev.preventDefault();
-			const data = JSON.parse(element.dataset.data);
+			const data = JSON.parse(element.dataset.data!);
 			if (open)
 				dispatch('open', {
 					...data

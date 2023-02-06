@@ -6,7 +6,7 @@
 	import FilesMenu from '$components/files-menu.svelte';
 	import SortView from '$components/sort-view.svelte';
 	import HomeIcon from 'icons/HomeIcon.svelte';
-	import { getPosition, truncate, InterObserver } from '$lib/utils';
+	import { getPosition, truncate, InterObserver, getDataElement } from '$lib/utils';
 	import Spinner from '$components/spinner.svelte';
 	import type { Writable } from 'svelte/store';
 	const dkey = store.g('dkey');
@@ -62,11 +62,11 @@
 				: options.dir.split('/').reverse()[0];
 			store.dispatch('setupMainMenuItems', { ...options, name });
 		} else {
-			const element = ev.path.find((el: HTMLElement) => el?.dataset?.data);
+			const element = getDataElement(ev.target as HTMLElement);
 			if (element) {
 				ev.preventDefault();
 				$pos = getPosition(ev);
-				const data = JSON.parse(element.dataset.data);
+				const data = JSON.parse(element.dataset.data!);
 				store.dispatch('setupMenuItems', { ...data, ...options });
 				$selected = data;
 			}
