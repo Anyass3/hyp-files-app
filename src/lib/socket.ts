@@ -5,14 +5,14 @@ import { port } from './getAPi';
 export default () => {
 	if (!browser) return;
 
-	const protocol = 'dmtapp/hyp';
+	const protocol = 'dmtapp/hyp-files';
 
 	const connector = connect({ protocol, port });
 	// console.log('store', store);
-	connector.connectionState.subscribe(state=>{
+	connector.connectionState.subscribe(state => {
 		console.log(state)
 	})
-	connector.state.subscribe(state=>{
+	connector.state.subscribe(state => {
 		console.log(state)
 	})
 	return {

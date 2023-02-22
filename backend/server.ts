@@ -2,11 +2,10 @@ import { Connectome, newServerKeypair as newKeypair } from 'connectome/server';
 import type { Channel } from 'connectome/typings';
 import DHT from '@hyperswarm/dht';
 import colors from 'kleur';
-
 import hyperspace from './connection.js';
 import { execChildProcess, handleError, spawnChildProcess } from './utils.js';
 import { getEmitter, getApi } from './state.js';
-import express from 'fastify';
+import express from 'express';
 import http from 'http';
 import endpoints from './endpoints.js';
 
@@ -83,20 +82,20 @@ const manageChildProcess = () => {
 	});
 };
 async function start() {
-	const getBootstrap = ({ address, port, ...rest }) => ({ host: address, port, ...rest });
-	const bootstrapper1 = new DHT({ ephemeral: true });
-	await bootstrapper1.ready();
+	// const getBootstrap = ({ address, port, ...rest }) => ({ host: address, port, ...rest });
+	// const bootstrapper1 = new DHT({ ephemeral: true });
+	// await bootstrapper1.ready();
 
-	const bootstrapper2 = new DHT({
-		bootstrap: [getBootstrap(bootstrapper1.address())],
-		ephemeral: false
-	});
-	await bootstrapper2.ready();
-	api.bootstrap_nodes = [
-		...bootstrapper1.bootstrapNodes,
-		getBootstrap(bootstrapper1.address()),
-		getBootstrap(bootstrapper2.address())
-	];
+	// const bootstrapper2 = new DHT({
+	// 	bootstrap: [getBootstrap(bootstrapper1.address())],
+	// 	ephemeral: false
+	// });
+	// await bootstrapper2.ready();
+	// api.bootstrap_nodes = [
+	// 	...bootstrapper1.bootstrapNodes,
+	// 	getBootstrap(bootstrapper1.address()),
+	// 	getBootstrap(bootstrapper2.address())
+	// ];
 
 	console.log(colors.cyan('bootstrap_nodes'), api.bootstrap_nodes);
 	console.log('starting');
@@ -122,13 +121,13 @@ async function start() {
 	console.log('before onConnect');
 	const onConnect = await hyperspace();
 	console.log('onConnect');
-	const channelList = (connectome as any).dev('dmtapp').registerProtocol('hyp',
+	const channelList = (connectome as any).dev('dmtapp').registerProtocol('hyp-files',
 		async ({ channel }) => onConnect({ channel: enhanceChannel(channel) })
 	);
 	api.protocolStore.sync(channelList);
 
 	channelList.on('new_channel', async (channel: Channel) => {
-		api.syncState(channel)
+		api.syncState(channel);
 		channel.attachObject('dmtapp:hyp', api);
 		emitter.log(colors.cyan(`channel.attachObject => dmtapp:hyp`));
 		// make sure mpv is installed after every new connectome connection

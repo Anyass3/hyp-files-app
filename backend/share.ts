@@ -2,7 +2,7 @@ import DHT from '@hyperswarm/dht';
 import hypercrypto from 'hypercore-crypto';
 import archiver from 'archiver';
 import randomWords from 'random-words';
-import fs, { ReadStream, WriteStream } from 'fs';
+import fs, { } from 'fs';
 import zlib from 'zlib';
 import _ from 'lodash-es';
 import { join } from 'path';
@@ -10,6 +10,7 @@ import { Writable, Transform } from 'stream';
 import { getEmitter, getApi } from './state.js';
 import colors from 'kleur';
 import { Settings } from './settings.js';
+import { fsDrive } from './drive/fs.js';
 
 const config = Settings();
 const api = getApi();
@@ -18,13 +19,11 @@ const emitter = getEmitter();
 const hasPermission = ({ path, dkey, send }) => {
 	if (dkey === 'fs') {
 		try {
-			fs.accessSync(path, send ? fs.constants.R_OK : fs.constants.W_OK);
+			fs.accessSync(fsDrive.resolvePath(path), send ? fs.constants.R_OK : fs.constants.W_OK);
 		} catch (err) {
 			emitter.broadcast(
 				'notify-danger',
-				`sorry you do not have ${send ? 'read' : 'write'} access to '${
-					_.last(path.split('/')) || path
-				}'`
+				`sorry you do not have ${send ? 'read' : 'write'} access to '${_.last(path.split('/')) || path}'`
 			);
 			return false;
 		}
@@ -39,7 +38,7 @@ const handleConnection = async (
 	// remoteStream is E2E between you and the other peer
 	// pipe  it somewhere like any duplex stream
 	stat['name'] = _.last(path.split('/'));
-	path = join(dkey === 'fs' ? config.fs : '', path);
+	path = dkey === 'fs' ? fsDrive.resolvePath(path) : path
 	let localStream;
 
 	const open = { local: true, remote: true };
@@ -47,7 +46,7 @@ const handleConnection = async (
 		if (open.local)
 			try {
 				localStream.end();
-			} catch (error) {}
+			} catch (error) { }
 
 		open.local = false;
 		if (!open.remote && server) {
@@ -58,7 +57,7 @@ const handleConnection = async (
 		if (open.remote)
 			try {
 				remoteStream.end();
-			} catch (error) {}
+			} catch (error) { }
 		open.remote = false;
 		if (!open.local && server) {
 			await server.close();
@@ -96,7 +95,7 @@ const handleConnection = async (
 				stat.name = stat.name + '.zip';
 				localStream.finalize();
 				stat.size = localStream._readableState.length || stat.size;
-			} else localStream = fs.createReadStream(path);
+			} else localStream = fsDrive.createReadStream(path);
 		} else {
 			const drive = api.drives.get(dkey);
 			if (!stat.isFile) {
@@ -105,7 +104,7 @@ const handleConnection = async (
 				});
 				const files = await drive.$listAllFiles(path);
 				for (const name of files) {
-					localStream.append(await drive.$read(name), { name });
+					localStream.append(await drive.read(name), { name });
 				}
 				stat.name = stat.name + '.zip';
 				localStream.finalize();
@@ -126,7 +125,7 @@ const handleConnection = async (
 				emitter.log('recieving::stats', stat, remoteStat);
 				if (!stat.isFile) path = join(path, remoteStat.name);
 				if (dkey === 'fs') {
-					localStream = fs.createWriteStream(path);
+					localStream = fsDrive.createWriteStream(path);
 				} else {
 					const drive = api.drives.get(dkey);
 					localStream = drive.createWriteStream(path);

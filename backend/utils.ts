@@ -17,7 +17,7 @@ mime.define({ 'text/python': ['py'] });
 export { mime };
 export const torAgent = new SocksProxyAgent('socks5://127.0.0.1:9050');
 
-export const handleError = (fn: (...args) => void, emitter) => {
+export const handleError = <RT extends any>(fn: (...args) => RT, emitter) => {
 	return (...args) => {
 		try {
 			return fn(...args);
@@ -125,7 +125,7 @@ export const getFileType = async ({ path, drive }, emitter?) => {
 				stdin: stream
 			});
 			ctype = _.last(data.split(':')).trim();
-		} catch (error) {}
+		} catch (error) { }
 	}
 	return ctype;
 };
@@ -154,11 +154,10 @@ export const checkFilename = (files: string[], filename: string) => {
 	if (files.length == 0) return filename;
 	if (!files.includes(filename)) return filename;
 	if (files.length == 1) return `${name} (1)${ext}`;
-	return `${name} (${
-		Number(
-			_.max(files.map((file) => /.+\((?<num>[0-9]+)\)(\.[\w]+)?$/.exec(file)?.groups?.num || 0))
-		) + 1
-	})${ext}`;
+	return `${name} (${Number(
+		_.max(files.map((file) => /.+\((?<num>[0-9]+)\)(\.[\w]+)?$/.exec(file)?.groups?.num || 0))
+	) + 1
+		})${ext}`;
 };
 export class Downloader {
 	emitter: Emitter;
@@ -305,4 +304,29 @@ export class Downloader {
 		});
 		this.downloadEnd(url);
 	}
+}
+
+export function sort(list, { sorting, ordering }) {
+	if (sorting === 'name') {
+		list.sort((a, b) => {
+			return ordering * a.name.localeCompare(b.name);
+		});
+	} else if (sorting === 'date') {
+		list.sort((a, b) => {
+			return ordering * (a.stat.mtime - b.stat.mtime);
+		});
+	} else if (sorting === 'size') {
+		list.sort((a, b) => {
+			return ordering * (a.stat.size - b.stat.size);
+		});
+	} else if (sorting === 'type') {
+		list.sort((a, b) => {
+			let sort = 0;
+			if (a.stat.isFile && b.stat.isFile) sort = a.stat.ctype.localeCompare(b.stat.ctype);
+			else if (!a.stat.isFile && !b.stat.isFile) a.name.localeCompare(b.name);
+			else sort = a.stat.isFile ? 1 : -1;
+			return ordering * sort;
+		});
+	}
+	return list;
 }

@@ -1,15 +1,15 @@
 import colors from 'kleur';
+// @ts-ignore
+import { Readable, Writable, pipelinePromise } from 'streamx';
 import fs from 'fs';
 import { setupBee, setupCorestore } from './setup.js';
-import { Settings, setSettings } from './settings.js';
+import { Settings } from './settings.js';
 import { getRandomStr } from './utils.js';
-import Drive, { setDriveEvents } from './drive.js';
-import startCore from './core.js';
 import { getEmitter, getBeeState, API, getApi } from './state.js';
-import { Connect, Extention } from './peers.js';
 import { join } from 'path';
 import { initiate, connect } from './share.js';
-import { v4 as uuidV4 } from 'uuid';
+import { randomUUID as uuidV4 } from 'crypto';
+import { fsDrive, setDriveEvents, Drive } from './drive/index.js';
 
 const config = Settings();
 const api = getApi();
@@ -17,12 +17,12 @@ const emitter = getEmitter();
 
 export default async function () {
 	const { bee, cleanup: pcleanup, getNamespace, setNamespace, ...privateHyp } = await setupBee();
-	console.log('setupBee')
+	console.log('setupBee');
 	// const cores = bee.sub('cores');
 	const drivesBee = bee.sub('drives');
 
 	const { cleanup, ...publicHyp } = await setupCorestore();
-	console.log('setupCorestore')
+	console.log('setupCorestore');
 
 	// let publicCoreKey = (await cores.get('public'))?.value;
 	let publicDriveKey = (await drivesBee.get('public'))?.value?.key;
@@ -30,7 +30,7 @@ export default async function () {
 	// let pcore = (await cores.get('private'))?.value?.key;// private core
 	const privateDrivekey = (await drivesBee.get('private'))?.value?.key;
 
-	console.log({publicDriveKey,privateDrivekey})
+	console.log({ publicDriveKey, privateDrivekey })
 
 	//functions
 	async function startDrive(
@@ -109,7 +109,7 @@ export default async function () {
 	// 	);
 	// 	await cores.put('public', core?.key?.toString?.('hex'));
 	// }
-	console.log({publicDriveKey,privateDrivekey})
+	console.log({ publicDriveKey, privateDrivekey })
 	if (!publicDriveKey && publicDrive.writable) {
 		emitter.log(
 			colors.red('!publicDriveKey && publicDrive.writable'),
@@ -392,13 +392,13 @@ export default async function () {
 		channel.on('drive-list', async ({ dkey, dir, ...opts }) => {
 			emitter.log('drive-list', dkey, dir, opts);
 			const drive = await api.drives.get(dkey);
-			const items = await drive?.$list?.(dir, false, { ...opts, filter: true });
+			const items = await drive?.$list?.(dir, { ...opts, filter: true });
 			// emitter.log('drive-listitems', items);
 			channel.signal('folder-items', items);
 		});
 		channel.on('fs-list', async ({ dir, ...opts }) => {
 			emitter.log('fs-list', dir);
-			const items = await privateDrive.$listfs(dir, { ...opts, filter: true });
+			const items = await fsDrive.$list(dir, { ...opts, filter: true });
 			channel.signal('folder-items', items);
 		});
 
@@ -415,19 +415,20 @@ export default async function () {
 		// channel.on('privateDrive:makedir', privateDrive.$makedir);
 		channel.on('paste-copied', async ({ src, dest }) => {
 			emitter.log({ src, dest });
-			publicDrive.$__copy__(
-				{
-					path: src.path,
-					isdrive: !!src.dkey?.match(/[a-z0-9]{64}/),
-					drive: await api.drives.get(src.dkey)
-				},
-				{
-					path: dest.path,
-					isdrive: !!dest.dkey?.match(/[a-z0-9]{64}/),
-					drive: await api.drives.get(dest.dkey)
-				}
-			);
+			let readable, writable;
+			if (src.dkey?.match(/[a-z0-9]{64}/)) {
+				const drive: Drive = await api.drives.get(src.dkey);
+				readable = drive.createFolderReadStream(src.path);
+			} else readable = fsDrive.createFolderReadStream(src.path);
+
+			if (dest.dkey?.match(/[a-z0-9]{64}/)) {
+				const drive: Drive = await api.drives.get(dest.dkey);
+				writable = drive.createFolderWriteStream(dest.path);
+			} else writable = fsDrive.createFolderWriteStream(dest.path);
+
+			await pipelinePromise(readable, writable);
 		});
+
 		channel.on('delete-path-item', async ({ path, dkey, name }) => {
 			if (dkey?.match(/[a-z0-9]{64}/)) {
 				const drive = await api.drives.get(dkey);
@@ -435,7 +436,7 @@ export default async function () {
 				else drive.$remove(path);
 				emitter.broadcast('notify-success', `${name} deleted`);
 			} else {
-				path = join(config.fs, path);
+				path = fsDrive.resolvePath(path)
 				if (fs.statSync(path).isDirectory()) fs.rmSync(path, { recursive: true });
 				else fs.rmSync(path);
 				emitter.broadcast('notify-success', `${name} deleted`);
@@ -444,10 +445,14 @@ export default async function () {
 		});
 		channel.on('rename-item', async ({ oldPath, dkey, name }) => {
 			if (dkey?.match(/[a-z0-9]{64}/)) {
-				// const drive = await api.drives.get(dkey);
-				// if ((await drive.stat(path)).isDirectory()) drive.$removedir(path);
-				// else drive.$remove(path);
-				// emitter.broadcast('notify-success', `${name} deleted`);
+				const drive = await api.drives.get(dkey);
+				if (await drive.isDirectory(oldPath)) {
+					emitter.broadcast('notify-danger', 'Sorry cannot rename hyperdrive folders for now');
+					return;
+				}
+				await drive.move(oldPath, join(oldPath, '../', name))
+				emitter.broadcast('notify-success', `${name} deleted`);
+				emitter.broadcast('storage-updated', dkey);
 			} else {
 				fs.renameSync(join(config.fs, oldPath), join(config.fs, oldPath, '../', name));
 				emitter.broadcast('notify-success', `${name} deleted`);

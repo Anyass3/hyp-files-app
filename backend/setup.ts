@@ -3,8 +3,8 @@ import Corestore from 'corestore';
 import Networker from '@corestore/networker';
 import { Settings, setSettings } from './settings.js';
 import Hyperbee from 'hyperbee';
-import { getEmitter, getBeeState, getApi } from './state.js';
-import { v4 as uuidV4 } from 'uuid';
+import { getEmitter, getApi } from './state.js';
+import { randomUUID as uuidV4 } from 'crypto';
 import { resolve, join } from 'path';
 import { toPromises } from 'hypercore-promisifier';
 import fs from 'fs';
@@ -46,7 +46,7 @@ export const setupCorestore = async (
 	await corestore.ready();
 	if (network) {
 		const networker = new Networker(corestore, {
-			bootstrap: api.bootstrap_nodes
+			// bootstrap: api.bootstrap_nodes
 		})
 		return {
 			corestore,
@@ -82,8 +82,8 @@ export async function setupBee(newbee = false) {
 	if (!newbee) beekey = Settings().beekey || undefined;
 	const mainStore = corestore.namespace('main-feeds-store');
 	console.log('setup mainStore')
-	const feed= mainStore.get({ name: 'awesome-bee-db' })
-	console.log('setup feed',feed)
+	const feed = mainStore.get({ name: 'awesome-bee-db' })
+	console.log('setup feed', feed)
 	// Create a Hyperbee
 	let bee = new Hyperbee(feed, {
 		keyEncoding: 'utf8',
@@ -93,7 +93,7 @@ export async function setupBee(newbee = false) {
 	await bee.ready();
 	if (!bee.feed.writable) {
 		bee.feed.close();
-		bee = new Hyperbee(mainStore.get(beekey,{ name: 'awesome-bee-db' }), {
+		bee = new Hyperbee(mainStore.get(beekey, { name: 'awesome-bee-db' }), {
 			keyEncoding: 'utf8',
 			valueEncoding: 'json'
 		});

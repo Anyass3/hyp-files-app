@@ -12,6 +12,7 @@ const config = {
 		adapter: adapter({ out: 'build/gui' }),
 
 		alias: {
+			typings: resolve('@types/typings'),
 			$store: resolve('src/store'),
 			$components: resolve('src/components'),
 			icons: resolve('node_modules/svelte-feather-icons/src/icons'),

@@ -13,11 +13,11 @@
 		"sourceMap": false,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
-		"forceConsistentCasingInFileNames": true
-		// "paths": {
-		// 	"./dmt.js": ["./.dev/dmt.js"]
-		// }
+		"forceConsistentCasingInFileNames": true,
+		"paths": {
+			"typings": ["../@types/typings"]
+		}
 	},
-	"include": ["*.ts", "**/*.ts"]
+	"include": ["*.ts", "**/*.ts",]
 	// "exclude": ["dmt.ts", "start.ts"]
 }

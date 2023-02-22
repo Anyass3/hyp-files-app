@@ -184,8 +184,7 @@ export default {
 						const link = document.createElement('a');
 						link.href =
 							API +
-							`/download?storage=${storage}&dkey=${dkey}&type=${
-								isFile ? 'file' : 'dir'
+							`/download?storage=${storage}&dkey=${dkey}&type=${isFile ? 'file' : 'dir'
 							}&size=${size}&path=${escape(path)}`;
 						document.body.appendChild(link);
 						link.target = '_blank';
@@ -209,7 +208,7 @@ export default {
 					name: 'paste',
 					action: () => {
 						const src = g('clipboard').get();
-						const dest = { path: !isFile && !path.endsWith('/') ? path + '/' : path, dkey, name };
+						const dest = { path: !isFile && !path.endsWith('/') ? path + '/' + name : path, dkey, name };
 						// console.log('dest', dest);
 						const event = `${src.path}-${dest.path}`;
 						state.socket.signal('paste-copied', { src, dest });
@@ -246,7 +245,7 @@ export default {
 						const url = API + `/${isMedia(ctype, false) ? 'media' : 'file'}` + toQueryString(args);
 						copyToClipboard(url)
 							.then(() => state.snackBar.show('URL Copied'))
-							.catch(() => {});
+							.catch(() => { });
 						dispatch('context_menu', []);
 					},
 					disabled: !isFile,
@@ -274,13 +273,13 @@ export default {
 			const items: ContextMenuItems = [
 				{
 					name: 'new file',
-					action() {},
+					action() { },
 					options: {},
 					disabled: true || !isWritable
 				},
 				{
 					name: 'new folder',
-					action() {},
+					action() { },
 					options: {},
 					disabled: true || !isWritable
 				},
@@ -331,7 +330,7 @@ export default {
 				},
 				{
 					name: 'upload',
-					action() {},
+					action() { },
 					options: {},
 					disabled: true || !isWritable
 				},
@@ -339,7 +338,7 @@ export default {
 					name: 'paste',
 					action: () => {
 						const src = g('clipboard').get();
-						const dest = { path: dir.endsWith('/') ? dir : dir + '/', dkey, name };
+						const dest = { path: dir.endsWith('/') ? dir : dir + '/' + name, dkey, name };
 						// console.log('dest', dest);
 						const event = `${src.path}-${dest.path}`;
 						state.socket.signal('paste-copied', { src, dest });
