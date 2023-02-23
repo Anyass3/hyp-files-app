@@ -71,6 +71,7 @@ export class Drive extends hyperdrive {
 		super(store, dkey, config.fs);
 		emitter.log(colors.cyan('setting up drive'), dkey);
 	}
+
 	get closing(): boolean {
 		return this.core.closing
 	}

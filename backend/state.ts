@@ -53,7 +53,7 @@ export const makeApi = <A extends Store>(
 	} as A
 ) => {
 	// const { state } = protocolStore;
-	const state={} as Store['state']
+	const state = {} as Store['state']
 
 	state.sharing = [];
 	state.downloading = [];
@@ -92,7 +92,7 @@ export const makeApi = <A extends Store>(
 		peersObj,
 
 		syncState(c?: Channel) {
-			console.log(state)
+			// console.log(state)
 			if (c) return c.signal('sync-state', state);
 
 			channels.forEach((c) => {
@@ -102,8 +102,7 @@ export const makeApi = <A extends Store>(
 		async setIsMpvInstalled(val) {
 			if (val !== state.isMpvInstalled) {
 				state.isMpvInstalled = val;
-				//@ts-ignore
-				protocolStore.announceStateChange(); this.syncState();
+				this.syncState();
 			}
 		},
 		get isMpvInstalled() {
@@ -112,21 +111,18 @@ export const makeApi = <A extends Store>(
 
 		async addPeer(peer) {
 			state.peers.push(peer);
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		async setUsername(corekey, username) {
 			const { peer, idx } = await this.getPeer({ corekey }, true);
 			peer['username'] = username;
 			state.peers[idx] = peer;
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		async removePeer(corekey) {
 			const peer = await this.getPeer({ corekey });
 			state.peers = state.peers.filter((peer) => corekey !== peer.corekey);
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 			this.peersObj.delete(corekey);
 			this.peerCores.delete(corekey);
 			this.peerDrives.delete(peer.drivekey);
@@ -145,23 +141,21 @@ export const makeApi = <A extends Store>(
 			{ key, name, _private, saved = false, connected = true, writable = false },
 			drive?
 		) {
-			console.log('addDrive',key,!!drive)
+			console.log('addDrive', key, !!drive)
 			if (drive) {
 				drives.set(key, drive);
 				writable = drive.writable;
 			}
 
 			state.drives.push({ key, name, writable: writable, _private, saved, connected });
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		getDrive(key) {
 			return state.drives.find((drive) => drive.key === key);
 		},
 		async removeDrive(key) {
 			state.drives = state.drives.filter((drive) => drive.key !== key);
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 			drives.delete(key);
 		},
 		getDrives() {
@@ -181,8 +175,7 @@ export const makeApi = <A extends Store>(
 				if (d.key === key) d = { key, name, _private, saved, writable, connected };
 				return d;
 			});
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		doesDriveNameExist(name, connected?) {
 			return state.drives.find((drive) => drive.name === name && drive.connected === connected);
@@ -190,16 +183,14 @@ export const makeApi = <A extends Store>(
 		/// state.child_processes
 		async addChildProcess({ pid, cm }) {
 			state.child_processes.push({ pid, cm });
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		getChildProcess(pid) {
 			return state.child_processes.find((c_p) => c_p.pid === pid);
 		},
 		async removeChildProcess(pid) {
 			state.child_processes = state.child_processes.filter((c_p) => c_p.pid !== pid);
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		getChildProcesses() {
 			return state.child_processes;
@@ -212,19 +203,16 @@ export const makeApi = <A extends Store>(
 			const offlinePending = this.getOfflinePending(dkey);
 			emitter.log('offlinePending,', offlinePending, dkey, state.offlinePending[dkey]);
 			state.offlinePending[dkey] = offlinePending.concat(path);
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		rmOfflinePending(dkey, path) {
 			state.offlinePending[dkey] = this.getOfflinePending(dkey).filter((p) => p !== path);
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		/// state.sharing
 		async addSharing({ send, name, phrase, drive }) {
 			state.sharing.push({ send, name, phrase, drive });
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		getSharing(phrase?, send?) {
 			return phrase
@@ -236,19 +224,16 @@ export const makeApi = <A extends Store>(
 				if (s.phrase === phrase && s.send === send) s.name = name;
 				return s;
 			});
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		async removeSharing(phrase, send) {
 			state.sharing = state.sharing.filter((s) => !(s.phrase === phrase && s.send === send));
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		/// state.downloading
 		async addDownloading({ url, path, filename, dkey }) {
 			state.downloading.push({ url, path, filename, dkey });
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 			console.log(state.downloading);
 		},
 		getDownloading(url) {
@@ -259,13 +244,11 @@ export const makeApi = <A extends Store>(
 				if (file.url == url) file = { ...file, ...rest };
 				return file;
 			});
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		},
 		async removeDownloading(url) {
 			state.downloading = state.downloading.filter((file) => file.url != url);
-			//@ts-ignore
-			protocolStore.announceStateChange(); this.syncState();
+			this.syncState();
 		}
 	};
 };

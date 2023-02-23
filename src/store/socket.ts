@@ -10,7 +10,7 @@ const notifyConnected = _.debounce((notify, settings) => {
 const pathname = () => window.location.pathname;
 
 export default {
-	noStore: ['api','socket'],
+	noStore: ['api', 'socket'],
 	state: {
 		api: null,
 		socket: null,
@@ -32,8 +32,8 @@ export default {
 			const { socket, api, serverStore } = connection();
 			dispatch('socket', socket);
 			dispatch('api', api);
-			
-			socket.on('sync-state',(state)=>{
+
+			socket.on('sync-state', (state) => {
 				dispatch('serverStore', state);
 			})
 			// window['sk'] = socket;
@@ -45,7 +45,7 @@ export default {
 
 			socket.on('folder-items', ({ items = [], page = 0, total = 0 } = {}) => {
 				// if (pathname() !== '/files') return;
-				// console.log('folderItems', { items, page, total });
+				console.log('folderItems', { items, page, total });
 				dispatch('pagination', new Pagination({ total, page }));
 				if (page === 1) {
 					commit('folderItems', items || []);

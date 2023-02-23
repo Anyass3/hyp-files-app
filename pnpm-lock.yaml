@@ -91,8 +91,8 @@ dependencies:
   hypercore-crypto: 3.3.1
   hypercore-promisifier: 1.1.0
   hyperdrive: 11.0.0-alpha.10
-  hyperdrive-fs-api: github.com/Anyass3/hyperdrive-fs-api/32301c4e7c048fd83581fd50b0be1c9fc306307f
-  hyperdrive-x: github.com/Anyass3/hyperdrive-x/32301c4e7c048fd83581fd50b0be1c9fc306307f
+  hyperdrive-fs-api: github.com/Anyass3/hyperdrive-fs-api/f319ec886d051652640cc256f40b8618fd811c4f
+  hyperdrive-x: github.com/Anyass3/hyperdrive-x/f319ec886d051652640cc256f40b8618fd811c4f
   hyperswarm: 4.3.7
   kleur: 4.1.5
   lodash-es: 4.17.21
@@ -4368,19 +4368,19 @@ packages:
       pump: 3.0.0
     dev: false
 
-  github.com/Anyass3/hyperdrive-fs-api/32301c4e7c048fd83581fd50b0be1c9fc306307f:
-    resolution: {commit: 32301c4e7c048fd83581fd50b0be1c9fc306307f, repo: git+ssh://git@github.com/Anyass3/hyperdrive-fs-api.git, type: git}
+  github.com/Anyass3/hyperdrive-fs-api/f319ec886d051652640cc256f40b8618fd811c4f:
+    resolution: {commit: f319ec886d051652640cc256f40b8618fd811c4f, repo: git+ssh://git@github.com/Anyass3/hyperdrive-fs-api.git, type: git}
     name: hyperdrive-x
-    version: 0.0.22
+    version: 0.0.23
     dependencies:
       hyperdrive: 11.0.0-alpha.10
       streamx: 2.13.2
     dev: false
 
-  github.com/Anyass3/hyperdrive-x/32301c4e7c048fd83581fd50b0be1c9fc306307f:
-    resolution: {tarball: https://codeload.github.com/Anyass3/hyperdrive-x/tar.gz/32301c4e7c048fd83581fd50b0be1c9fc306307f}
+  github.com/Anyass3/hyperdrive-x/f319ec886d051652640cc256f40b8618fd811c4f:
+    resolution: {tarball: https://codeload.github.com/Anyass3/hyperdrive-x/tar.gz/f319ec886d051652640cc256f40b8618fd811c4f}
     name: hyperdrive-x
-    version: 0.0.22
+    version: 0.0.23
     dependencies:
       hyperdrive: 11.0.0-alpha.10
       streamx: 2.13.2

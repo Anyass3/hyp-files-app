@@ -168,8 +168,8 @@ const handleConnection = async (
 
 export const initiate = async ({ dkey, path, stat, send = true, phrase }) => {
 	if (!hasPermission({ path, dkey, send })) return;
-	emitter.log({ dkey, path, stat, send, phrase });
-	const node = new DHT({ bootstrap: api.bootstrap_nodes });
+	// emitter.log({ dkey, path, stat, send, phrase });
+	const node = new DHT();
 	if (!phrase) phrase = randomWords({ exactly: 3, join: ' ' });
 	const seed = hypercrypto.data(Buffer.from(phrase));
 	const server = node.createServer();
@@ -249,8 +249,8 @@ export const connect = ({ dkey, path, stat, send = false, phrase }) => {
 	if (!phrase) phrase = randomWords({ exactly: 3, join: ' ' });
 	const seed = hypercrypto.data(Buffer.from(phrase));
 	const keyPair = DHT.keyPair(seed);
-	const node = new DHT({ bootstrap: api.bootstrap_nodes });
-	const remoteStream = node.connect(keyPair.publicKey, { keyPair });
+	const node = new DHT();
+	const remoteStream = node.connect(keyPair.publicKey);
 	let destroyed = false;
 	const cancelShare = async () => {
 		if (destroyed) return;

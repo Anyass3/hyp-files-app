@@ -1,6 +1,6 @@
 import colors from 'kleur';
 // @ts-ignore
-import { Readable, Writable, pipelinePromise } from 'streamx';
+import { pipelinePromise } from 'streamx';
 import fs from 'fs';
 import { setupBee, setupCorestore } from './setup.js';
 import { Settings } from './settings.js';
@@ -24,19 +24,16 @@ export default async function () {
 	const { cleanup, ...publicHyp } = await setupCorestore();
 	console.log('setupCorestore');
 
-	// let publicCoreKey = (await cores.get('public'))?.value;
 	let publicDriveKey = (await drivesBee.get('public'))?.value?.key;
 
-	// let pcore = (await cores.get('private'))?.value?.key;// private core
 	const privateDrivekey = (await drivesBee.get('private'))?.value?.key;
 
 	console.log({ publicDriveKey, privateDrivekey })
 
-	//functions
 	async function startDrive(
 		{ corestore, networker = undefined },
 		dkey,
-		{ _private = false, name }
+		{ name }
 	) {
 		let newNamespace = false;
 		let namespace = await getNamespace(dkey);
@@ -68,47 +65,30 @@ export default async function () {
 		return drive;
 	}
 
-	// let core = await startCore({...publicHyp, key: publicCoreKey});
 	let publicDrive = await startDrive(publicHyp, publicDriveKey, {
-		_private: false,
+		// _private: false,
 		name: 'public'
 	});
 	let privateDrive = await startDrive(privateHyp, privateDrivekey, {
-		_private: true,
+		// _private: true,
 		name: 'private'
 	});
-	// let ext = await Extention(core); // this will be used for chats
-	// let extChanged = false;
-	let startedSignals = false;
 
 	if (!publicDrive.writable) {
-		// || !core.writable
 		const snapshot = bee.snapshot();
 		emitter.log(colors.red('snapshot: '), snapshot._checkouts);
-		// if (!core.writable) {
-		// 	core.close();
-		// 	core = await startCore({...publicHyp});
-		// 	await cores.put('public', core?.key?.toString?.('hex'));
-		// }
+
 		if (!publicDrive.writable) {
 			publicDrive.close();
 			publicDrive = await startDrive(publicHyp, publicDriveKey, {
-				_private: false,
+				// _private: false,
 				name: 'public'
 			});
 			publicDriveKey = publicDrive?.$key;
 			await drivesBee.put('public', { key: publicDriveKey, _private: false });
 		}
 	}
-	// if (!publicCoreKey && core.writable) {
-	// 	emitter.log(
-	// 		colors.red('!publicCoreKey && core.writable'),
-	// 		!publicCoreKey && core.writable,
-	// 		publicCoreKey,
-	// 		core?.key?.toString?.('hex')
-	// 	);
-	// 	await cores.put('public', core?.key?.toString?.('hex'));
-	// }
+
 	console.log({ publicDriveKey, privateDrivekey })
 	if (!publicDriveKey && publicDrive.writable) {
 		emitter.log(
@@ -154,39 +134,18 @@ export default async function () {
 				api.updateDrive({ ...drive, saved: true, connected: true, writable: true }, publicDrive);
 			}
 		}
-		// if (!core?.opened) {
-		// 	emitter.log(colors.blue(`!core?.opened`), !core?.opened, core);
-		// 	core = await startCore({...publicHyp, key: publicCoreKey});
-		// 	ext = await Extention(core);
-		// }
+
 		if (!publicDrive?.opened) {
 			emitter.log(colors.blue(`!publicDrive??.opened`), !publicDrive?.opened);
 			publicDrive = await startDrive(publicHyp, publicDriveKey, {
-				_private: false,
+				// _private: false,
 				name: 'public'
 			});
 			publicDriveKey = publicDrive.$key;
 		}
-		// advertise me
-		// if (!(await core.has(0))) await core.append(publicDrive.$key);
-		// NOTE:: allow to run in background for now
-		// emitter.log(colors.blue('websocket client connected and client network: '), {
-		// 	announce: true,
-		// 	lookup: true
-		// });
+
 		if (!(publicDrive.closed || publicDrive.closing))
 			publicHyp.networker.configure(publicDrive.discoveryKey, { server: true, client: false });
-
-		// async function onmessage(msg, peer) {
-		// 	emitter.log('.onmessage', peer);
-		// 	channel.signal('message', { msg, peer });
-		// }
-
-		// if (!extChanged) {
-		// 	ext.on('info', async ({ corekey, drivekey, username }, peer) => {
-		// 		emitter.log('hi there :: info');
-		// 	});
-		// }
 
 		channel.on('message', async ({ message, peer }) => {
 			emitter.log('channel.onmessage', peer);
@@ -221,7 +180,7 @@ export default async function () {
 				await drive.$ready(name);
 			} else {
 				_private = _private ?? _drive?._private;
-				drive = await startDrive(!_private ? publicHyp : privateHyp, key, { _private, name }); /// TODO: announce, lookup
+				drive = await startDrive(!_private ? publicHyp : privateHyp, key, { /*_private,*/ name }); /// TODO: announce, lookup
 			}
 			if (_drive) {
 				api.updateDrive({ ..._drive, connected: true }, drive);
@@ -287,7 +246,7 @@ export default async function () {
 				return;
 			}
 			const drive = await startDrive(!_private ? publicHyp : privateHyp, undefined, {
-				_private,
+				// _private,
 				name
 			}); /// TODO: announce, lookup
 			api.addDrive({ key: drive.$key, name, _private, saved: true }, drive);
@@ -415,16 +374,17 @@ export default async function () {
 		// channel.on('privateDrive:makedir', privateDrive.$makedir);
 		channel.on('paste-copied', async ({ src, dest }) => {
 			emitter.log({ src, dest });
+
 			let readable, writable;
 			if (src.dkey?.match(/[a-z0-9]{64}/)) {
 				const drive: Drive = await api.drives.get(src.dkey);
-				readable = drive.createFolderReadStream(src.path);
-			} else readable = fsDrive.createFolderReadStream(src.path);
+				readable = src.isFile ? drive.createReadStream(src.path, undefined) : drive.createFolderReadStream(src.path);
+			} else readable = src.isFile ? fsDrive.createReadStream(src.path) : fsDrive.createFolderReadStream(src.path);
 
 			if (dest.dkey?.match(/[a-z0-9]{64}/)) {
 				const drive: Drive = await api.drives.get(dest.dkey);
-				writable = drive.createFolderWriteStream(dest.path);
-			} else writable = fsDrive.createFolderWriteStream(dest.path);
+				writable = src.isFile ? drive.createWriteStream(dest.path) : drive.createFolderWriteStream(dest.path);
+			} else writable = src.isFile ? fsDrive.createWriteStream(dest.path) : fsDrive.createFolderWriteStream(dest.path);
 
 			await pipelinePromise(readable, writable);
 		});
@@ -494,6 +454,6 @@ export default async function () {
 			// 	}
 			// }
 		});
-		startedSignals = true;
+		// startedSignals = true;
 	};
 }

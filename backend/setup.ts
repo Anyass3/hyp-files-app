@@ -8,7 +8,7 @@ import { randomUUID as uuidV4 } from 'crypto';
 import { resolve, join } from 'path';
 import { toPromises } from 'hypercore-promisifier';
 import fs from 'fs';
-// const Networker = {};
+
 // #TODO create a change host name to avoid storage misplacement
 const api = getApi();
 const emitter = getEmitter();
@@ -165,11 +165,5 @@ export async function setupBee(newbee = false) {
 		corestoresBee.put(key, namespace);
 	};
 
-	// for await (const { key, value } of dataUsageBee
-	// 	.sub('server')
-	// 	.sub('download')
-	// 	.createReadStream()) {
-	// 	console.log('data-usage', { key, value });
-	// }
 	return { bee, corestore, cleanup, getNamespace, setNamespace };
 }

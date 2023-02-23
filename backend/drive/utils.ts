@@ -1,4 +1,5 @@
 import { ReadDir } from "hyperdrive-x/lib/typings.js";
+import { join } from "path";
 import { getEmitter } from "../state.js";
 import { getFileType, handleError, sort } from "../utils.js";
 import type { Drive, FsDrive } from "./index.js";
@@ -19,6 +20,7 @@ export const getList = async (self: Drive | FsDrive, readable: any, { filter, so
 
     for await (const item of readable) {
         const isFile = item.stat.isFile();
+        item.path = join('/', item.path);
         items.push({
             name: item.name,
             path: item.path,

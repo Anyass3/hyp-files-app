@@ -1,6 +1,6 @@
 {
 	"name": "hyp-files-app",
-	"version": "1.0.0",
+	"version": "2.0.0",
 	"scripts": {
 		"dev": "vite dev",
 		"build": "npm run ts-build && vite build",

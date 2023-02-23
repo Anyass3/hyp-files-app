@@ -185,7 +185,7 @@ export default {
 						link.href =
 							API +
 							`/download?storage=${storage}&dkey=${dkey}&type=${isFile ? 'file' : 'dir'
-							}&size=${size}&path=${escape(path)}`;
+							}&size=${size}&path=${encodeURIComponent(path)}`;
 						document.body.appendChild(link);
 						link.target = '_blank';
 						link.click();
@@ -197,7 +197,7 @@ export default {
 					action: () => {
 						dispatch('clipboard', {
 							path,
-							dkey,
+							dkey, isFile,
 							name
 						});
 						state.notify.success(`${path.split('/').reverse()[0]} copied`);
@@ -208,8 +208,9 @@ export default {
 					name: 'paste',
 					action: () => {
 						const src = g('clipboard').get();
-						const dest = { path: !isFile && !path.endsWith('/') ? path + '/' + name : path, dkey, name };
-						// console.log('dest', dest);
+						if (isFile && !src.isFile) return state.notify.danger('Cannot paste a folder in a file');
+						const dest = { path: !isFile ? path + '/' + src.name : path, dkey, name };
+						// return console.log('dest', dest);
 						const event = `${src.path}-${dest.path}`;
 						state.socket.signal('paste-copied', { src, dest });
 						dispatch('context_menu', []);
@@ -338,8 +339,8 @@ export default {
 					name: 'paste',
 					action: () => {
 						const src = g('clipboard').get();
-						const dest = { path: dir.endsWith('/') ? dir : dir + '/' + name, dkey, name };
-						// console.log('dest', dest);
+						const dest = { path: dir + '/' + src.name, dkey, name };
+						// return console.log('dest', dest, src);
 						const event = `${src.path}-${dest.path}`;
 						state.socket.signal('paste-copied', { src, dest });
 						dispatch('context_menu', []);
