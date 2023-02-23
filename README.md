@@ -6,7 +6,7 @@
 >
 > Updating to the latest hypercore, hyperdive-next, hyperswarm, @hyperswarm/dht etc
 >
-> Also working on my own custom hyperdrive(to be the similar nodejs fs api) https://github.com/Anyass3/hyperdrive-fs-api
+> Also working on my own custom hyperdrive(to be somewhat similar to old hyperdrive) https://github.com/Anyass3/hyperdrive-x
 >
 > Using a custom [corestore/networker](https://github.com/Anyass3/corestore-networker) so I can use the lastest holepunch modules.
 > 
@@ -45,7 +45,7 @@ npm run serve:dev
 
 ## Production
 
-#### builds frontend and compiles backend typescipt
+#### builds frontend and compiles backend typescript 
 
 ```shell
 npm run build
