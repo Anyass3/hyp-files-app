@@ -24,7 +24,7 @@ const enhanceChannel = (channel: Channel) => {
 			// emitter.log('in emit', args[0]);
 			try {
 				channel.emit(event, data);
-			} catch (error) {
+			} catch (error: any) {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
 				emitter.log(colors.red('error: ' + error.message));
 			}
@@ -34,7 +34,7 @@ const enhanceChannel = (channel: Channel) => {
 			listener = handleError(listener, emitter);
 			try {
 				channel.on(event, listener);
-			} catch (error) {
+			} catch (error: any) {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
 				emitter.log(colors.red('error: ' + error.message));
 			}
@@ -43,7 +43,7 @@ const enhanceChannel = (channel: Channel) => {
 			// emitter.log('in signal', args[0]);
 			try {
 				channel.signal(event, data);
-			} catch (error) {
+			} catch (error: any) {
 				if (emitter) emitter.broadcast('notify-danger', error.message);
 				emitter.log(colors.red('error: ' + error.message));
 			}
@@ -74,7 +74,7 @@ const manageChildProcess = () => {
 	});
 	emitter.on('child-process:kill', async (pid) => {
 		spawnChildProcess('kill -9 ' + pid, { log: true })
-			.then((_) => { })
+			.then((_) => {})
 			.catch((err) => {
 				emitter.log(err);
 				//  emitter.broadcast(err);
@@ -121,9 +121,11 @@ async function start() {
 	console.log('before onConnect');
 	const onConnect = await hyperspace();
 	console.log('onConnect');
-	const channelList = (connectome as any).dev('dmtapp').registerProtocol('hyp-files',
-		async ({ channel }) => onConnect({ channel: enhanceChannel(channel) })
-	);
+	const channelList = (connectome as any)
+		.dev('dmtapp')
+		.registerProtocol('hyp-files', async ({ channel }) =>
+			onConnect({ channel: enhanceChannel(channel) })
+		);
 	api.protocolStore.sync(channelList);
 
 	channelList.on('new_channel', async (channel: Channel) => {

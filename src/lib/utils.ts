@@ -89,7 +89,7 @@ export const getSize = (size: number) => {
 	else return size + ' Bytes';
 };
 
-const intersectingFunc = (() => { }) as (
+const intersectingFunc = (() => {}) as (
 	node?: HTMLElement,
 	entry?: IntersectionObserverEntry,
 	observer?: IntersectionObserver
@@ -153,13 +153,13 @@ export const getDataElement = (el: HTMLElement | null): HTMLElement | null => {
 	if (!el) return el;
 	if (el?.dataset?.data) return el;
 	return getDataElement(el?.parentElement);
-}
+};
 
 export const axiosFetch = async (instance: AxiosInstance, path: string, ...args: any[]) => {
 	console.log('axiosFetch', path);
 	try {
 		const res = await instance(path, ...args);
-		console.log('res', res)
+		console.log('res', res);
 		return { status: res.status, ok: true, headers: res.headers, body: res.data };
 	} catch (error: any) {
 		return {
@@ -212,13 +212,11 @@ export const clickOutside = <F extends () => void>(
 		options?: { resize?: boolean; scroll?: boolean }
 	]
 ) => {
-
 	const isOutside = (e: Event) => {
 		if (node && !node.contains(e.target as Node) && !e.defaultPrevented) {
 			fn();
 		}
 	};
-
 
 	document.body.addEventListener('click', isOutside, true);
 	if (scroll) window.addEventListener('scroll', isOutside);

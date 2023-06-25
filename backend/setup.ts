@@ -15,8 +15,8 @@ const emitter = getEmitter();
 
 export const setupCorestore = async (
 	{ storage = Settings().publicStorage, oldStorage = null, network = true } = {} as {
-		storage?;
-		oldStorage?;
+		storage?: string;
+		oldStorage?: string;
 		network?: boolean;
 	}
 ) => {
@@ -47,7 +47,7 @@ export const setupCorestore = async (
 	if (network) {
 		const networker = new Networker(corestore, {
 			// bootstrap: api.bootstrap_nodes
-		})
+		});
 		return {
 			corestore,
 			networker,
@@ -75,15 +75,15 @@ export async function setupBee(newbee = false) {
 	// for security even our pc cannot access our drive without knowing the storage path
 	setSettings('privateStorage', storage);
 
-	console.log('setup before setupCorestore')
+	console.log('setup before setupCorestore');
 	const { corestore, cleanup } = await setupCorestore({ storage, oldStorage, network: false });
-	console.log('setup setupCorestore')
+	console.log('setup setupCorestore');
 
 	if (!newbee) beekey = Settings().beekey || undefined;
 	const mainStore = corestore.namespace('main-feeds-store');
-	console.log('setup mainStore')
-	const feed = mainStore.get({ name: 'awesome-bee-db' })
-	console.log('setup feed', feed)
+	console.log('setup mainStore');
+	const feed = mainStore.get({ name: 'awesome-bee-db' });
+	console.log('setup feed', feed);
 	// Create a Hyperbee
 	let bee = new Hyperbee(feed, {
 		keyEncoding: 'utf8',

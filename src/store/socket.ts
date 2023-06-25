@@ -1,6 +1,7 @@
 import connection from '$lib/socket';
 import { Pagination } from '$lib/utils';
 import _ from 'lodash-es';
+import type { ReportProgress } from 'typings';
 let connectionMsg = 'connections ready';
 const notifyConnected = _.debounce((notify, settings) => {
 	console.log('settings', settings);
@@ -35,7 +36,7 @@ export default {
 
 			socket.on('sync-state', (state) => {
 				dispatch('serverStore', state);
-			})
+			});
 			// window['sk'] = socket;
 			if (socket.connected) socket.signal('signal-connect');
 			socket.on('ready', () => {
@@ -68,13 +69,12 @@ export default {
 						return folder;
 					});
 			});
-			socket.on('sharing-progress', ({ size, loadedBytes, phrase, send }) => {
+			socket.on('sharing-progress', ({ size, loadedBytes, key }: ReportProgress) => {
 				// if (pathname() !== '/tasks') return;
-				state.sharingProgress.update((sharingProgress) => {
-					sharingProgress[send + phrase] = `${((loadedBytes / size) * 100).toFixed(1)}%`;
+				state.sharingProgress.update((sharingProgress: { [x: string]: string; }) => {
+					sharingProgress[key] = `${((loadedBytes / size) * 100).toFixed(1)}%`;
 					return sharingProgress;
 				});
-				// console.log('loadedBytes / size', loadedBytes, size, (loadedBytes / size) * 100);
 			});
 			socket.on('url-download-progress', ({ url, loaded, total }) => {
 				// if (pathname() !== '/tasks') return;

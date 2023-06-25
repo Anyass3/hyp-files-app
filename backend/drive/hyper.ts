@@ -12,7 +12,6 @@ import { check, getList, getSearch } from './utils.js';
 const config = Settings();
 const emitter = getEmitter();
 
-
 export async function setDriveEvents(drive, driveName = '') {
 	const debouncedUpdateNotify = debounce(
 		() => emitter.broadcast('notify-info', `${driveName} drive updated`),
@@ -72,22 +71,23 @@ export class Drive extends hyperdrive {
 		emitter.log(colors.cyan('setting up drive'), dkey);
 	}
 
-	get closing(): boolean {
-		return this.core.closing
-	}
-
 	async $ready(name) {
 		await check(async () => {
-			await this.ready();
+			try {
+				await this.ready();
+
+			} catch (ev) {
+				console.log(ev)
+			}
 
 			emitter.emit('drive key', this.$key);
 
-			const info = await this.core.info({ storage: true })
-			emitter.log(colors.gray(`${name || ''} drive metadata: `), {
-				...info,
-				key: this.$key,
-				discoveryKey: this.discoveryKey.toString('hex'),
-			});
+			// const info = await this.core.info({ storage: true })
+			// emitter.log(colors.gray(`${name || ''} drive metadata: `), {
+			// 	...info,
+			// 	key: this.$key,
+			// 	discoveryKey: this.discoveryKey.toString('hex'),
+			// });
 
 			// emitter.broadcast('notify-info', 'drive is ready');
 		});
@@ -116,20 +116,29 @@ export class Drive extends hyperdrive {
 		//@ts-ignore
 		const result = await check(async () => {
 			emitter.log('in list', dir);
-			return await getList(this, await this.list(dir, { search: filter ? getSearch(show_hidden, search) : '', recursive, withStats: true, readable: true }), { filter, sorting, ordering, limit, offset, page })
+			return await getList(
+				this,
+				await this.list(dir, {
+					search: filter ? getSearch(show_hidden, search) : '',
+					recursive,
+					withStats: true,
+					readable: true
+				}),
+				{ filter, sorting, ordering, limit, offset, page }
+			);
 		});
 		return result;
 	}
 	async $listAllFiles(dir = '/') {
 		// returns only files
 		const result = await check(async () => {
-			let list = await this.list(dir, { recursive: true, fileOnly: true });
+			const list = await this.list(dir, { recursive: true, fileOnly: true });
 			return list.map((item) => item.path);
 		});
 		return result;
 	}
 
-	async $download(paths = [], { name = '', ...opts } = {}) {
+	async $download(paths: string[] = [], { name = '', ...opts }: any = {}) {
 		if (typeof paths === 'string') paths = [paths];
 		return await check(async () => {
 			if (paths.length === 0) {
@@ -147,6 +156,11 @@ export class Drive extends hyperdrive {
 				`Downloaded ${paths.map((p) => last(p.split('/'))).join(',')} in ${name} drive`
 			);
 		});
+
+	}
+
+	download(arg0: string, opts: any) {
+		throw new Error('Method not implemented.');
 	}
 	async $removedir(...dirs) {
 		return await check(async () => {
@@ -166,5 +180,4 @@ export class Drive extends hyperdrive {
 			return '✓ removed ' + files.join(', ');
 		});
 	}
-
 }

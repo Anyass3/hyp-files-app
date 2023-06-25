@@ -184,7 +184,8 @@ export default {
 						const link = document.createElement('a');
 						link.href =
 							API +
-							`/download?storage=${storage}&dkey=${dkey}&type=${isFile ? 'file' : 'dir'
+							`/download?storage=${storage}&dkey=${dkey}&type=${
+								isFile ? 'file' : 'dir'
 							}&size=${size}&path=${encodeURIComponent(path)}`;
 						document.body.appendChild(link);
 						link.target = '_blank';
@@ -197,7 +198,8 @@ export default {
 					action: () => {
 						dispatch('clipboard', {
 							path,
-							dkey, isFile,
+							dkey,
+							isFile,
 							name
 						});
 						state.notify.success(`${path.split('/').reverse()[0]} copied`);
@@ -208,7 +210,8 @@ export default {
 					name: 'paste',
 					action: () => {
 						const src = g('clipboard').get();
-						if (isFile && !src.isFile) return state.notify.danger('Cannot paste a folder in a file');
+						if (isFile && !src.isFile)
+							return state.notify.danger('Cannot paste a folder in a file');
 						const dest = { path: !isFile ? path + '/' + src.name : path, dkey, name };
 						// return console.log('dest', dest);
 						const event = `${src.path}-${dest.path}`;
@@ -246,7 +249,7 @@ export default {
 						const url = API + `/${isMedia(ctype, false) ? 'media' : 'file'}` + toQueryString(args);
 						copyToClipboard(url)
 							.then(() => state.snackBar.show('URL Copied'))
-							.catch(() => { });
+							.catch(() => {});
 						dispatch('context_menu', []);
 					},
 					disabled: !isFile,
@@ -274,13 +277,13 @@ export default {
 			const items: ContextMenuItems = [
 				{
 					name: 'new file',
-					action() { },
+					action() {},
 					options: {},
 					disabled: true || !isWritable
 				},
 				{
 					name: 'new folder',
-					action() { },
+					action() {},
 					options: {},
 					disabled: true || !isWritable
 				},
@@ -331,7 +334,7 @@ export default {
 				},
 				{
 					name: 'upload',
-					action() { },
+					action() {},
 					options: {},
 					disabled: true || !isWritable
 				},

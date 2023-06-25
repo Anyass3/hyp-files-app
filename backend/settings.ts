@@ -1,7 +1,17 @@
 import fs from 'fs';
 import path from 'path';
 const settingsJsonPath = path.resolve('./settings.json');
-const Settings = (_settings = null) => {
+type SettingsType = {
+	fs: string;
+	beekey: string;
+	username: string;
+	log: boolean;
+	debug: boolean;
+	publicStorage?: string;
+	storage?: string;
+	privateStorage: string;
+};
+const Settings: (_settings?: Partial<SettingsType> | null) => SettingsType = (_settings = null) => {
 	if (!fs.existsSync(settingsJsonPath)) {
 		_settings = {
 			fs: '/',

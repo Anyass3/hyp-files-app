@@ -21,7 +21,7 @@ export const handleError = <RT extends any>(fn: (...args) => RT, emitter) => {
 	return (...args) => {
 		try {
 			return fn(...args);
-		} catch (error) {
+		} catch (error: any) {
 			emitter.broadcast('notify-danger', error.message);
 			emitter.log(colors.red('handleError:'), colors.red(error.stack));
 		}
@@ -66,7 +66,7 @@ export const spawnChildProcess: SpawnChildProcess = async (
 			command = [cm, cms];
 		}
 		//@ts-ignore
-		const child = child_process.spawn(...command, { ...kwargs, shell });
+		const child = child_process.spawn(...command, { ...kwargs, shell }) as child_process.ChildProcessWithoutNullStreams;
 		if (emitter) emitter.log(...command);
 		if (emitter) emitter.emit('child-process:spawn', { cm, pid: child.pid, broadcast });
 
@@ -124,7 +124,7 @@ export const getFileType = async ({ path, drive }, emitter?) => {
 				emitter,
 				stdin: stream
 			});
-			ctype = _.last(data.split(':')).trim();
+			ctype = _.last(data.split(':'))?.trim();
 		} catch (error) { }
 	}
 	return ctype;
@@ -189,7 +189,7 @@ export class Downloader {
 		return { item, total: this.iterationCount };
 	}
 
-	async download(item: { url: string; dkey: string; filename: string; path: string }) {
+	async download(item?: { url: string; dkey: string; filename: string; path: string }) {
 		if (item) {
 			if (
 				this.pending.find((file) => file.url == item.url) ||
@@ -261,7 +261,7 @@ export class Downloader {
 		if (dkey != 'fs') {
 			const drive = this.api.drives.get(dkey);
 			if (drive) {
-				filename = checkFilename(await drive.readdir(path), filename);
+				filename = checkFilename(await drive.readdir(path, {nameOnly: true}), filename);
 				writer = drive?.createWriteStream(Path.join(path, filename));
 			}
 		} else {

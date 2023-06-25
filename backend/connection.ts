@@ -5,11 +5,12 @@ import fs from 'fs';
 import { setupBee, setupCorestore } from './setup.js';
 import { Settings } from './settings.js';
 import { getRandomStr } from './utils.js';
-import { getEmitter, getBeeState, API, getApi } from './state.js';
+import { getEmitter, getBeeState, type API, getApi } from './state.js';
 import { join } from 'path';
-import { initiate, connect } from './share.js';
+import { initiateShare } from './share.js';
 import { randomUUID as uuidV4 } from 'crypto';
 import { fsDrive, setDriveEvents, Drive } from './drive/index.js';
+import CorestoreNetworker from '@corestore/networker';
 
 const config = Settings();
 const api = getApi();
@@ -20,21 +21,24 @@ export default async function () {
 	console.log('setupBee');
 	// const cores = bee.sub('cores');
 	const drivesBee = bee.sub('drives');
+	type Hyp = {
+		corestore: any;
+		networker?: CorestoreNetworker;
+	}
 
-	const { cleanup, ...publicHyp } = await setupCorestore();
+	const { cleanup, ...publicHyp } = await setupCorestore() as {
+		cleanup: () => Promise<void>;
+
+	} & Hyp;
 	console.log('setupCorestore');
 
 	let publicDriveKey = (await drivesBee.get('public'))?.value?.key;
 
 	const privateDrivekey = (await drivesBee.get('private'))?.value?.key;
 
-	console.log({ publicDriveKey, privateDrivekey })
+	console.log({ publicDriveKey, privateDrivekey });
 
-	async function startDrive(
-		{ corestore, networker = undefined },
-		dkey,
-		{ name }
-	) {
+	async function startDrive({ corestore, networker = undefined }: Hyp, dkey, { name }) {
 		let newNamespace = false;
 		let namespace = await getNamespace(dkey);
 		if (!namespace) {
@@ -50,16 +54,16 @@ export default async function () {
 			networker.configure(drive.discoveryKey);
 		}
 
-		drive.on('close', () => {
-			if (networker)
-				networker.configure(drive.discoveryKey, {
-					server: false,
-					client: false
-				});
-			driveStore.close();
-			emitter.broadcast('notify-info', `${name} drive connection closed`);
-			emitter.log(colors.cyan('closed ' + name));
-		});
+		// drive.on('close', () => {
+		// 	if (networker)
+		// 		networker.configure(drive.discoveryKey, {
+		// 			server: false,
+		// 			client: false
+		// 		});
+		// 	driveStore.close();
+		// 	emitter.broadcast('notify-info', `${name} drive connection closed`);
+		// 	emitter.log(colors.cyan('closed ' + name));
+		// });
 
 		setDriveEvents(drive, name);
 		return drive;
@@ -76,7 +80,7 @@ export default async function () {
 
 	if (!publicDrive.writable) {
 		const snapshot = bee.snapshot();
-		emitter.log(colors.red('snapshot: '), snapshot._checkouts);
+		emitter.log(colors.red('snapshot: '), !!snapshot);
 
 		if (!publicDrive.writable) {
 			publicDrive.close();
@@ -89,7 +93,7 @@ export default async function () {
 		}
 	}
 
-	console.log({ publicDriveKey, privateDrivekey })
+	console.log({ publicDriveKey, privateDrivekey });
 	if (!publicDriveKey && publicDrive.writable) {
 		emitter.log(
 			colors.red('!publicDriveKey && publicDrive.writable'),
@@ -119,18 +123,18 @@ export default async function () {
 		const broadcast = (ev, data) => {
 			channel.signal(ev, data);
 		};
-		channel.on('cancel-sharing', ({ send, phrase }) => {
-			emitter.emit('cancel-sharing-' + send + phrase);
+		channel.on('cancel-sharing', ({ key }) => {
+			emitter.emit('cancel-sharing-' + key);
 		});
 		{
 			const drive = api.getDrive(privateDrive.$key);
-			if (!drive.connected && !(privateDrive.closed || privateDrive.closing)) {
+			if (drive && !drive.connected && !(privateDrive.closed || privateDrive.closing)) {
 				api.updateDrive({ ...drive, saved: true, connected: true, writable: true }, privateDrive);
 			}
 		}
 		{
 			const drive = api.getDrive(publicDrive.$key);
-			if (!drive.connected && !(publicDrive.closed || publicDrive.closing)) {
+			if (drive && !drive.connected && !(publicDrive.closed || publicDrive.closing)) {
 				api.updateDrive({ ...drive, saved: true, connected: true, writable: true }, publicDrive);
 			}
 		}
@@ -145,7 +149,7 @@ export default async function () {
 		}
 
 		if (!(publicDrive.closed || publicDrive.closing))
-			publicHyp.networker.configure(publicDrive.discoveryKey, { server: true, client: false });
+			publicHyp.networker?.configure(publicDrive.discoveryKey, { server: true, client: false });
 
 		channel.on('message', async ({ message, peer }) => {
 			emitter.log('channel.onmessage', peer);
@@ -299,6 +303,7 @@ export default async function () {
 			// channel.signal('deleted-drive', drive);
 			emitter.log(`Drive "${colors.red(name)}" deleted`);
 			const drive = api.getDrive(key);
+			if (!drive) return;
 			if (!drive.connected) {
 				api.removeDrive(key);
 				//Todo
@@ -377,47 +382,62 @@ export default async function () {
 
 			let readable, writable;
 			if (src.dkey?.match(/[a-z0-9]{64}/)) {
-				const drive: Drive = await api.drives.get(src.dkey);
-				readable = src.isFile ? drive.createReadStream(src.path, undefined) : drive.createFolderReadStream(src.path);
-			} else readable = src.isFile ? fsDrive.createReadStream(src.path) : fsDrive.createFolderReadStream(src.path);
+				const drive = await api.drives.get(src.dkey);
+
+				readable = src.isFile
+					? drive?.createReadStream(src.path, undefined)
+					: drive?.createFolderReadStream(src.path);
+			} else
+				readable = src.isFile
+					? fsDrive.createReadStream(src.path)
+					: fsDrive.createFolderReadStream(src.path);
 
 			if (dest.dkey?.match(/[a-z0-9]{64}/)) {
-				const drive: Drive = await api.drives.get(dest.dkey);
-				writable = src.isFile ? drive.createWriteStream(dest.path) : drive.createFolderWriteStream(dest.path);
-			} else writable = src.isFile ? fsDrive.createWriteStream(dest.path) : fsDrive.createFolderWriteStream(dest.path);
-
-			await pipelinePromise(readable, writable);
+				const drive = await api.drives.get(dest.dkey);
+				writable = src.isFile
+					? drive?.createWriteStream(dest.path)
+					: drive?.createFolderWriteStream(dest.path);
+			} else
+				writable = src.isFile
+					? fsDrive.createWriteStream(dest.path)
+					: fsDrive.createFolderWriteStream(dest.path);
+			if (readable && writable)
+				await pipelinePromise(readable, writable);
 		});
 
 		channel.on('delete-path-item', async ({ path, dkey, name }) => {
 			if (dkey?.match(/[a-z0-9]{64}/)) {
 				const drive = await api.drives.get(dkey);
+				if (!drive) return;
 				if ((await drive.stat(path)).isDirectory()) drive.$removedir(path);
 				else drive.$remove(path);
 				emitter.broadcast('notify-success', `${name} deleted`);
-			} else {
-				path = fsDrive.resolvePath(path)
-				if (fs.statSync(path).isDirectory()) fs.rmSync(path, { recursive: true });
-				else fs.rmSync(path);
-				emitter.broadcast('notify-success', `${name} deleted`);
-				emitter.broadcast('storage-updated', 'fs');
+				return
 			}
+			path = fsDrive.resolvePath(path);
+			if (fs.statSync(path).isDirectory()) fs.rmSync(path, { recursive: true });
+			else fs.rmSync(path);
+			emitter.broadcast('notify-success', `${name} deleted`);
+			emitter.broadcast('storage-updated', 'fs');
+
 		});
 		channel.on('rename-item', async ({ oldPath, dkey, name }) => {
 			if (dkey?.match(/[a-z0-9]{64}/)) {
 				const drive = await api.drives.get(dkey);
+				if (!drive) return;
 				if (await drive.isDirectory(oldPath)) {
 					emitter.broadcast('notify-danger', 'Sorry cannot rename hyperdrive folders for now');
 					return;
 				}
-				await drive.move(oldPath, join(oldPath, '../', name))
+				await drive.move(oldPath, join(oldPath, '../', name));
 				emitter.broadcast('notify-success', `${name} deleted`);
 				emitter.broadcast('storage-updated', dkey);
-			} else {
-				fs.renameSync(join(config.fs, oldPath), join(config.fs, oldPath, '../', name));
-				emitter.broadcast('notify-success', `${name} deleted`);
-				emitter.broadcast('storage-updated', 'fs');
+				return
 			}
+			fs.renameSync(join(config.fs, oldPath), join(config.fs, oldPath, '../', name));
+			emitter.broadcast('notify-success', `${name} deleted`);
+			emitter.broadcast('storage-updated', 'fs');
+
 		});
 		emitter.on('broadcast', broadcast);
 		channel.on('child-process:kill', (pid) => {
@@ -425,16 +445,16 @@ export default async function () {
 			emitter.emit('child-process:kill', pid);
 		});
 		channel.on('download-from-url', ({ url, dkey, filename, path }) => {
-			api.downloader.download({ url, path, dkey, filename });
+			api.downloader!.download({ url, path, dkey, filename });
 		});
 		channel.on('cancel-download-from-url', ({ url }) => {
-			api.downloader.downloading.find((file) => file.url == url)?.canceler('download cancelled');
+			api.downloader!.downloading.find((file) => file.url == url)?.canceler('download cancelled');
 		});
 		channel.on('share send', ({ phrase, dkey, path, ...stat }) => {
-			initiate({ phrase, dkey, path, stat });
+			initiateShare({ phrase, dkey, path, stat, send: true });
 		});
 		channel.on('share receive', ({ phrase, dkey, path, ...stat }) => {
-			connect({ phrase, dkey, path, stat });
+			initiateShare({ phrase, dkey, path, stat, send: false });
 		});
 		channel.on('disconnect', async () => {
 			// NOTE:: allow to run in background for now

@@ -1,10 +1,6 @@
 import archiver from 'archiver';
 import bodyParser from 'body-parser';
-import {
-	getFileType,
-	spawnChildProcess,
-	mime
-} from './utils.js';
+import { getFileType, spawnChildProcess, mime } from './utils.js';
 import { join, basename } from 'path';
 import { getEmitter, getApi } from './state.js';
 import fs from 'fs';
@@ -69,26 +65,25 @@ export default async function (app) {
 				res.status(404).end();
 				return;
 			}
-		} else {
-			if (!drive || !(drive && (await drive.exists(path)))) {
+		} else if (!drive || !(drive && (await drive.exists(path)))) {
 				showError(storage, path);
 				res.status(404).end();
 				return;
 			}
-		}
+		
 
 		res.setHeader('Content-Length', size);
 
 		if (type === 'file') {
 			try {
 				res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
-			} catch (error) {
+			} catch (error: any) {
 				emitter.broadcast('notify-danger', error.message);
 			}
 			if (storage === 'fs') {
 				fsDrive.createReadStream(path).pipe(res);
 			} else {
-				drive.createReadStream(path).pipe(res);
+				drive?.createReadStream(path).pipe(res);
 			}
 		} else if (type === 'dir') {
 			res.setHeader('Content-Type', 'application/zip');
@@ -99,9 +94,9 @@ export default async function (app) {
 			if (storage === 'fs') {
 				zip.directory(fsDrive.resolvePath(path), '/', { name: filename });
 			} else {
-				const files = await drive.$listAllFiles(path);
-				for (const name of files) {
-					zip.append(await drive.read(name), { name });
+				const files = await drive!.$listAllFiles(path);
+				for (const name of files||[]) {
+					zip.append(await drive!.get(name), { name });
 				}
 			}
 			zip.pipe(res);
@@ -177,6 +172,11 @@ export default async function (app) {
 		const range = String(req.headers.range);
 
 		const drive = api.drives.get(dkey);
+		if (storage === 'drive' && !drive) {
+			showError(storage, mediaPath);
+			res.status(404).end();
+			return;
+		}
 
 		emitter.log('/media', { mediaSize, ctype, range, storage, mediaPath });
 
@@ -190,8 +190,8 @@ export default async function (app) {
 		if (!mediaSize) {
 			try {
 				if (storage === 'fs') mediaSize = fs.statSync(join(config.fs, mediaPath)).size;
-				else mediaSize = await drive.stat(mediaPath).size;
-			} catch (err) {
+				else mediaSize = (await drive!.stat(mediaPath)).size;
+			} catch (err: any) {
 				showError(storage, mediaPath, err.message);
 				return res.end();
 			}
@@ -215,7 +215,7 @@ export default async function (app) {
 		// Partial Content
 		res.writeHead(206, headers);
 		try {
-			const stream = (storage === 'fs' ? fs : drive).createReadStream(mediaPath, { start, end });
+			const stream = (storage === 'fs' ? fs : drive)!.createReadStream(mediaPath, { start, end });
 
 			stream.pipe(res);
 
@@ -224,7 +224,7 @@ export default async function (app) {
 				return res.end();
 			});
 			return;
-		} catch (err) {
+		} catch (err:any) {
 			showError(storage, mediaPath, err.message);
 			return res.end();
 		}
