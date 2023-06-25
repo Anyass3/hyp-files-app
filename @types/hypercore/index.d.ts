@@ -31,9 +31,9 @@ declare class Hypercore extends EventEmitter {
 	snapshot(): any;
 	session(opts?: {}): any;
 	_passCapabilities(o: any): void;
-	_openFromExisting(from: any, opts: any): Promise<void>;
-	_openSession(key: any, storage: any, opts: any): Promise<void>;
-	_openCapabilities(keyPair: any, storage: any, opts: any): Promise<void>;
+	_openFromExisting(from: any, opts?: any): Promise<void>;
+	_openSession(key: any, storage: any, opts?: any): Promise<void>;
+	_openCapabilities(keyPair: any, storage: any, opts?: any): Promise<void>;
 	close(): Promise<void>;
 	_close(): Promise<void>;
 	replicate(isInitiator: any, opts?: {}): any;
@@ -51,13 +51,13 @@ declare class Hypercore extends EventEmitter {
 	setUserData(key: any, value: any): Promise<any>;
 	getUserData(key: any): Promise<any>;
 	findingPeers(): () => void;
-	update(opts: any): Promise<any>;
-	seek(bytes: any, opts: any): Promise<any>;
+	update(opts?: any): Promise<any>;
+	seek(bytes: any, opts?: any): Promise<any>;
 	has(index: any): Promise<any>;
-	get(index: any, opts: any): Promise<any>;
-	_get(index: any, opts: any): Promise<any>;
-	createReadStream(opts: any): ReadStream;
-	createWriteStream(opts: any): WriteStream;
+	get(index: any, opts?: any): Promise<any>;
+	_get(index: any, opts?: any): Promise<any>;
+	createReadStream(opts?: any): ReadStream;
+	createWriteStream(opts?: any): WriteStream;
 	download(range: any): {
 		downloaded(): Promise<any>;
 		destroy(): void;
@@ -71,7 +71,7 @@ declare class Hypercore extends EventEmitter {
 	registerExtension(name: any, handlers?: {}): any;
 	_encode(enc: any, val: any): any;
 	_decode(enc: any, block: any): any;
-	[inspect](depth: any, opts: any): string;
+	[inspect](depth: any, opts?: any): string;
 	[promises]: boolean;
 }
 

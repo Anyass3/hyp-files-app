@@ -1,4 +1,4 @@
-export class ReadStream extends Readable<any, any, any, true, false, import("streamx").ReadableEvents<any>> {
+export class ReadStream extends Readable {
     constructor(core: any, opts?: {});
     core: any;
     start: any;
@@ -8,10 +8,9 @@ export class ReadStream extends Readable<any, any, any, true, false, import("str
     _openP(): Promise<void>;
     _readP(): Promise<void>;
 }
-export class WriteStream extends Writable<any, any, any, false, true, import("streamx").WritableEvents<any>> {
+export class WriteStream extends Writable {
     constructor(core: any);
     core: any;
     _writevP(batch: any): Promise<void>;
 }
-import { Readable } from "streamx";
-import { Writable } from "streamx";
+import type { Readable, Writable } from "stream";

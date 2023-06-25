@@ -1,15 +1,6 @@
-
-import type { Duplex } from 'streamx';
-import Handshake = require('@hyperswarm/secret-stream/lib/handshake');
-declare class NoiseSecretStream extends Duplex<
-	any,
-	any,
-	any,
-	any,
-	true,
-	true,
-	import('streamx').DuplexEvents<any, any>
-> {
+import type { Duplex } from '../streamx';
+import Handshake = require('./lib/handshake');
+declare class NoiseSecretStream extends Duplex {
 	static keyPair(seed: any): {
 		publicKey: any;
 		secretKey: any;

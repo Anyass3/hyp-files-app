@@ -1,133 +1,159 @@
-export = HyperBee;
-declare class HyperBee {
-	constructor(feed: Hypercore, opts?: {});
-	_feed: Hypercore;
-	keyEncoding: any;
-	valueEncoding: any;
-	extension: any;
-	metadata: any;
-	lock: {
-		(): Promise<any>;
-		readonly locked: any;
-	};
-	sep: any;
-	readonly: boolean;
-	prefix: any;
-	_unprefixedKeyEncoding: any;
-	_sub: boolean;
-	_checkout: any;
-	_ready: any;
-	get feed(): Hypercore;
-	ready(): any;
-	get version(): number;
-	update(): any;
-	getRoot(ensureHeader: any, opts: any, batch?: HyperBee): Promise<TreeNode>;
-	getKey(seq: any): Promise<any>;
-	getBlock(seq: any, opts: any, batch?: HyperBee): Promise<BlockEntry>;
-	peek(opts: any): Promise<any>;
-	createRangeIterator(opts?: {}, active?: any): RangeIterator;
-	createReadStream(
-		opts: any
-	): Readable<any, any, any, true, false, import('streamx').ReadableEvents<any>>;
-	createHistoryStream(
-		opts: any
-	): Readable<any, any, any, true, false, import('streamx').ReadableEvents<any>>;
-	createDiffStream(
-		right: any,
-		opts: any
-	): Readable<any, any, any, true, false, import('streamx').ReadableEvents<any>>;
-	get(key: any, opts: any): Promise<any>;
-	put(key: any, value: any, opts: any): Promise<void>;
-	batch(opts: any): Batch;
-	del(key: any, opts: any): Promise<void>;
-	checkout(version: any): HyperBee;
-	snapshot(): HyperBee;
-	sub(prefix: any, opts?: {}): HyperBee;
-}
-declare class TreeNode {
-	static create(block: any): TreeNode;
-	constructor(block: any, keys: any, children: any, offset: any);
-	block: any;
-	offset: any;
-	keys: any;
-	children: any;
-	changed: boolean;
-	insertKey(key: any, child?: any, overwrite?: boolean): Promise<boolean>;
-	removeKey(index: any): void;
-	siblings(parent: any): Promise<{
-		left: any;
-		index: number;
-		right: any;
-	}>;
-	merge(node: any, median: any): void;
-	split(): Promise<{
-		left: TreeNode;
-		median: any;
-		right: TreeNode;
-	}>;
-	getChildNode(index: any): Promise<any>;
-	setKey(index: any, key: any): void;
-	getKey(index: any): Promise<any>;
-	indexChanges(index: any, seq: any): number;
-}
-declare class BlockEntry {
-	constructor(seq: any, tree: any, entry: any);
-	seq: any;
-	tree: any;
-	index: Pointers;
-	indexBuffer: any;
-	key: any;
-	value: any;
-	isDeletion(): boolean;
-	final(): {
-		seq: any;
-		key: any;
-		value: any;
-	};
-	getTreeNode(offset: any): TreeNode;
-}
-declare class Batch {
-	constructor(tree: any, batchLock: any, cache: any, options?: {});
-	tree: any;
-	keyEncoding: any;
-	valueEncoding: any;
-	blocks: Map<any, any>;
-	autoFlush: boolean;
-	rootSeq: number;
-	root: any;
-	length: number;
-	options: {};
-	overwrite: boolean;
-	locked: any;
-	batchLock: any;
-	onseq: any;
-	ready(): any;
-	lock(): Promise<void>;
-	get version(): any;
-	getRoot(ensureHeader: any): any;
-	getKey(seq: any): Promise<any>;
-	getBlock(seq: any): Promise<any>;
-	_onwait(key: any): void;
-	peek(range: any): Promise<any>;
-	get(key: any): Promise<any>;
-	put(key: any, value: any): Promise<void>;
-	_put(key: any, value: any): Promise<void>;
-	del(key: any): Promise<void>;
-	_del(key: any): Promise<void>;
-	destroy(): void;
-	flush(): Promise<void>;
-	_unlockMaybe(): void;
-	_unlock(): void;
-	_append(root: any, seq: any, key: any, value: any): Promise<void>;
-	_appendBatch(raw: any): Promise<void>;
-}
-declare class Pointers {
-	constructor(buf: any);
-	levels: any;
-	get(i: any): any;
-	hasKey(seq: any): boolean;
-}
 
-import { Readable } from 'streamx';
-import Hypercore from 'hypercore';
-import RangeIterator from './iterators/range';
+import Hypercore from '../hypercore';
+export = Hyperbee;
+declare class Hyperbee extends ReadyResource {
+    static isHyperbee(core: Hypercore, opts?: any): Promise<boolean>;
+    constructor(core: Hypercore, opts?: {});
+    feed: any;
+    core: Hypercore;
+    keyEncoding: any;
+    valueEncoding: any;
+    extension: any;
+    metadata: any;
+    lock: any;
+    sep: any;
+    readonly: boolean;
+    prefix: any;
+    _unprefixedKeyEncoding: any;
+    _sub: boolean;
+    _checkout: any;
+    _view: boolean;
+    _onappendBound: any;
+    _ontruncateBound: any;
+    _watchers: any[];
+    _entryWatchers: any[];
+    _batches: any[];
+    _open(): any;
+    get version(): number;
+    update(): any;
+    peek(range: any, opts?: any): Promise<any>;
+    createRangeIterator(range: any, opts?: {}): RangeIterator;
+    createReadStream(range: any, opts?: any): Readable;
+    createHistoryStream(opts?: any): Readable;
+    createDiffStream(right: any, range: any, opts?: any): Readable;
+    get(key: any, opts?: any): Promise<any>;
+    put(key: any, value: any, opts?: any): Promise<void>;
+    batch(opts?: any): Batch;
+    del(key: any, opts?: any): Promise<void>;
+    watch(range: any, opts?: any): Watcher;
+    getAndWatch(key: any, opts?: any): Promise<EntryWatcher>;
+    _onappend(): void;
+    _ontruncate(): void;
+    _makeSnapshot(): any;
+    checkout(version: any, opts?: {}): Hyperbee;
+    snapshot(opts?: any): Hyperbee;
+    sub(prefix: any, opts?: {}): Hyperbee;
+    getHeader(opts?: any): Promise<any>;
+    _close(): Promise<any>;
+}
+import ReadyResource = require("../ready-resource");
+import RangeIterator = require("./iterators/range");
+import { Readable } from "streamx";
+declare class Batch {
+    constructor(tree: any, core: any, batchLock: any, cache: any, options?: {});
+    tree: any;
+    feed: any;
+    core: Hypercore;
+    index: number;
+    blocks: Map<any, any>;
+    autoFlush: boolean;
+    rootSeq: number;
+    root: any;
+    length: number;
+    options: {};
+    locked: any;
+    batchLock: any;
+    onseq: any;
+    appending: any[];
+    isSnapshot: boolean;
+    shouldUpdate: boolean;
+    encoding: {
+        key: any;
+        value: any;
+    };
+    ready(): any;
+    lock(): Promise<void>;
+    get version(): number;
+    getRoot(ensureHeader: any): Promise<any>;
+    getKey(seq: any): Promise<any>;
+    getBlock(seq: any): Promise<any>;
+    _onwait(key: any): void;
+    _getEncoding(opts?: any): {
+        key: any;
+        value: any;
+    };
+    peek(range: any, opts?: any): Promise<any>;
+    createRangeIterator(range: any, opts?: {}): RangeIterator;
+    createReadStream(range: any, opts?: any): Readable;
+    get(key: any, opts?: any): Promise<any>;
+    _get(key: any, encoding: any): Promise<any>;
+    put(key: any, value: any, opts?: any): Promise<void>;
+    _put(key: any, value: any, encoding: any, cas: any): Promise<void>;
+    del(key: any, opts?: any): Promise<void>;
+    _del(key: any, encoding: any, cas: any): Promise<void>;
+    _closeSnapshot(): Promise<void>;
+    close(): Promise<void>;
+    destroy(): void;
+    toBlocks(): any[];
+    flush(): Promise<void>;
+    _unlockMaybe(): void;
+    _unlock(): void;
+    _finalize(): void;
+    _append(root: any, seq: any, key: any, value: any): Promise<void>;
+    _appendBatch(raw: any): Promise<void>;
+}
+declare class Watcher extends ReadyResource {
+    constructor(bee: any, range: any, opts?: {});
+    keyEncoding: any;
+    valueEncoding: any;
+    index: number;
+    bee: Hyperbee;
+    core: Hypercore;
+    latestDiff: number;
+    range: any;
+    map: any;
+    current: any;
+    previous: any;
+    currentMapped: any;
+    previousMapped: any;
+    stream: any;
+    _lock: any;
+    _flowing: boolean;
+    _resolveOnChange: (value: any) => void;
+    _differ: any;
+    _eager: boolean;
+    _consume(): Promise<void>;
+    _ontruncate(): void;
+    _onappend(): void;
+    _waitForChanges(): Promise<void>;
+    next(): Promise<{
+        done: boolean;
+        value: any[];
+    }>;
+    _next(): Promise<{
+        done: boolean;
+        value: any[];
+    }>;
+    return(): Promise<{
+        done: boolean;
+    }>;
+    destroy(): Promise<void>;
+    _closeCurrent(): Promise<void>;
+    _closePrevious(): Promise<void>;
+    [Symbol.asyncIterator](): Watcher;
+}
+declare class EntryWatcher extends ReadyResource {
+    constructor(bee: any, key: any, opts?: {});
+    keyEncoding: any;
+    valueEncoding: any;
+    index: number;
+    bee: any;
+    key: any;
+    node: any;
+    _forceUpdate: boolean;
+    _debouncedUpdate: any;
+    _close(): Promise<void>;
+    _onappend(): void;
+    _ontruncate(): void;
+    _processUpdate(): Promise<void>;
+}

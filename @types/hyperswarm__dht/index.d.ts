@@ -2,7 +2,8 @@ export = HyperDHT;
 
 type Opts = { ephemeral: boolean; bootstrap: ({ host: string; port: number } | string)[] };
 declare class HyperDHT extends DHT {
-	constructor(opts: Partial<Opts>): void;
+	// @ts-ignore
+	constructor(opts?: Partial<Opts>): void;
 	static keyPair(seed: any): {
 		publicKey: any;
 		secretKey: any;
@@ -13,11 +14,11 @@ declare class HyperDHT extends DHT {
 	_router: Router;
 	_sockets: any;
 	_persistent: Persistent;
-	bootstrapNodes: Opts[bootstrap];
+	bootstrapNodes: Opts['bootstrap'];
 	address(): { address: string; port: number };
 	ready(): Promise<void>;
-	connect(remotePublicKey: any, opts: any): any;
-	createServer(opts: any, onconnection: any): any;
+	connect(remotePublicKey: any, opts?: any): any;
+	createServer(opts?: any, onconnection?: any): any;
 	findPeer(publicKey: any, opts?: Record<string, unknown>): any;
 	lookup(target: any, opts?: Record<string, unknown>): any;
 	lookupAndUnannounce(target: any, keyPair: any, opts?: Record<string, unknown>): any;
@@ -65,7 +66,7 @@ declare namespace HyperDHT {
 	export { FIREWALL };
 	export { PROTOCOL };
 }
-import DHT from 'dht-rpc';
+import DHT from '../dht-rpc';
 import Router from './lib/router';
 import Persistent from './lib/persistent';
 import { BOOTSTRAP_NODES } from './lib/constants';

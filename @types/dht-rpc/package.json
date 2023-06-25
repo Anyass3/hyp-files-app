@@ -1,4 +1,4 @@
 {
-    "name": "dht-rpc",
-    "types": "index.d.ts"
+	"name": "dht-rpc",
+	"types": "index.d.ts"
 }

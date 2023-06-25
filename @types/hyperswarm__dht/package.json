@@ -1,4 +1,4 @@
 {
-    "name": "@hyperswarm/dht",
-    "types": "index.d.ts"
+	"name": "@hyperswarm/dht",
+	"types": "index.d.ts"
 }

@@ -8,7 +8,7 @@ declare class Core {
         sign: any;
         verify(signable: any, signature: any): any;
     };
-    static resume(oplogFile: any, treeFile: any, bitfieldFile: any, dataFile: any, opts: any): Promise<import("./core")>;
+    static resume(oplogFile: any, treeFile: any, bitfieldFile: any, dataFile: any, opts?: any): Promise<import("./core")>;
     constructor(header: any, crypto: any, oplog: any, tree: any, blocks: any, bitfield: any, auth: any, legacy: any, onupdate: any);
     onupdate: any;
     header: any;

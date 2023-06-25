@@ -1,5 +1,4 @@
-
-export=CorestoreNetworker;
+export = CorestoreNetworker;
 
 declare class CorestoreNetworker {
 	constructor(corestore: any, opts?: Record<string, any>);

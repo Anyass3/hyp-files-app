@@ -1,7 +1,7 @@
 {
-    "name": "@hyperswarm/secret-stream",
-    "types": "index.d.ts",
-    "dependencies": {
-        "streamx": "^2.12.5"
-    }
+	"name": "@hyperswarm/secret-stream",
+	"types": "index.d.ts",
+	"dependencies": {
+		"streamx": "^2.12.5"
+	}
 }

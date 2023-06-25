@@ -1,9 +1,10 @@
 export = RangeIterator;
 declare class RangeIterator {
-    constructor(db: any, opts?: {});
-    db: any;
+    constructor(batch: any, encoding: any, opts?: {});
+    batch: any;
     stack: any[];
     opened: boolean;
+    encoding: any;
     _limit: any;
     _gIncl: boolean;
     _gKey: any;
@@ -27,4 +28,5 @@ declare class RangeIterator {
     open(): Promise<void>;
     _open(): Promise<void>;
     next(): Promise<any>;
+    close(): any;
 }

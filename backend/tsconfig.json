@@ -3,21 +3,28 @@
 		"baseUrl": ".",
 		// "allowJs": true,
 		// "checkJs": true,
-
 		"moduleResolution": "node",
 		"module": "esnext",
-		"lib": ["esnext"],
+		"lib": [
+			"esnext"
+		],
 		"target": "esnext",
 		"isolatedModules": true,
-		"resolveJsonModule": true,
-		"sourceMap": false,
 		"esModuleInterop": true,
-		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
+		"resolveJsonModule": true,
+		"skipLibCheck": true,
+		"noImplicitAny": false,
+		"strict": true,
 		"paths": {
-			"typings": ["../@types/typings"]
+			"typings": [
+				"../@types/typings"
+			]
 		}
 	},
-	"include": ["*.ts", "**/*.ts",]
+	"include": [
+		"*.ts",
+		"**/*.ts"
+	]
 	// "exclude": ["dmt.ts", "start.ts"]
 }
