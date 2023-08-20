@@ -62,3 +62,6 @@ npm run preview -- --host
 ```shell
 npm run serve -- --host
 ```
+
+# Contact
+please feel free to open a pr
