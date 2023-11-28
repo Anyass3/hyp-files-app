@@ -35,7 +35,7 @@
 
 	$: dirs = store.g('dirs', $dkey);
 
-	$: dir = $dirs[$dkey];
+	$: dir = $dirs[$dkey] || '/';
 	$: storage = $dkey !== 'fs' ? 'drive' : 'fs';
 
 	$: options = { dkey: $dkey, dir, storage };

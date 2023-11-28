@@ -261,7 +261,7 @@ export class Downloader {
 		if (dkey != 'fs') {
 			const drive = this.api.drives.get(dkey);
 			if (drive) {
-				filename = checkFilename(await drive.readdir(path, {nameOnly: true}), filename);
+				filename = checkFilename(await drive.readdir(path, { nameOnly: true }), filename);
 				writer = drive?.createWriteStream(Path.join(path, filename));
 			}
 		} else {
@@ -279,13 +279,14 @@ export class Downloader {
 		let loaded = 0;
 		const filesize = response.headers['content-length'];
 		const reportProgress = _.throttle(async () => {
-			console.log('reporting progress', { loaded });
+			// console.log('reporting progress', { loaded });
 			this.emitter.broadcast('url-download-progress', { url, loaded, total: filesize });
 		});
 		const streamTransform = new Transform({
 			transform(chunk, encoding, callback) {
 				loaded += chunk.length;
-				reportProgress();
+				if (loaded % 3 == 0)
+					reportProgress();
 				callback(null, chunk);
 			}
 		});

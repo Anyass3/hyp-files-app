@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 dependencies:
   '@beyonk/svelte-notifications':
     specifier: ^3.1.0
@@ -7,6 +11,9 @@ dependencies:
   '@corestore/networker':
     specifier: github:Anyass3/corestore-networker
     version: github.com/Anyass3/corestore-networker/c8008648a88070c2f555372745e9537c8493b12e
+  '@hono/node-server':
+    specifier: ^1.3.0
+    version: 1.3.0
   '@hyperswarm/dht':
     specifier: ^6.5.1
     version: 6.5.1
@@ -43,6 +50,9 @@ dependencies:
   highlight.js:
     specifier: ^11.7.0
     version: 11.7.0
+  hono:
+    specifier: ^3.10.2
+    version: 3.10.2
   hyperbee:
     specifier: ^2.13.1
     version: 2.13.1
@@ -57,7 +67,7 @@ dependencies:
     version: 11.2.0
   hyperdrive-x:
     specifier: github:Anyass3/hyperdrive-x
-    version: github.com/Anyass3/hyperdrive-x/0851211591a6ceeb12d317422ec863c9314c9684
+    version: github.com/Anyass3/hyperdrive-x/8b525bd26141986d2dc983928c2f6a08f2755399
   hyperswarm:
     specifier: ^4.5.1
     version: 4.5.1
@@ -88,6 +98,9 @@ dependencies:
   sidebar-swipe:
     specifier: ^0.8.83
     version: 0.8.83
+  simple-thumbnail:
+    specifier: ^1.6.5
+    version: 1.6.5
   socks-proxy-agent:
     specifier: ^7.0.0
     version: 7.0.0
@@ -479,6 +492,11 @@ packages:
     resolution: {integrity: sha512-bxUnRP8xptGRo8YXeY073DSpfK74XpSb0ZyRNpHV9WvLnJ7TwPOjZll8hTMin7zLC6iOp59pDZ8EQDj1gzgAQQ==}
     dev: true
 
+  /@hono/node-server@1.3.0:
+    resolution: {integrity: sha512-jkTle7wEy/TxK4Xvh8DHPYQFyO9dk9DpTzzEdFeA8G2jaoQnO23To5FyNQMUYdN9u7oSuy9l8G+BrDDV1XERBw==}
+    engines: {node: '>=18.14.1'}
+    dev: false
+
   /@humanwhocodes/config-array@0.11.8:
     resolution: {integrity: sha512-UybHIJzJnR5Qc/MsD9Kr+RpO2h+/P1GhOwdiLPXK5TWk5sgTdu88bTD9UP+CKbPPh5Rni1u0GjAdYQLemG8g+g==}
     engines: {node: '>=10.10.0'}
@@ -523,13 +541,13 @@ packages:
   /@hyperswarm/secret-stream@6.1.1:
     resolution: {integrity: sha512-xkdE6PfUT1bzBNp9oZU4hHGHb/zDgHte5kJju1qLWxr8k4NJJkVxa6jTPAcOipxIbXt4uT0fedVFT/iFg+R/MQ==}
     dependencies:
-      b4a: 1.6.1
+      b4a: 1.6.4
       hypercore-crypto: 3.3.1
       noise-curve-ed: 2.0.0
       noise-handshake: 3.0.0
       sodium-secretstream: 1.0.2
       sodium-universal: 3.1.0
-      streamx: 2.13.2
+      streamx: 2.15.0
       timeout-refresh: 2.0.1
     dev: false
 
@@ -1449,7 +1467,7 @@ packages:
   /codecs@3.0.0:
     resolution: {integrity: sha512-tYnev/H2/q+dedb6/sDDvJLwzD2GqYIe8d7fKnyM2KxUKJ3xf/D7xG0nO/4WCT1yU1HQTvTq1o43QSQGmHcEmA==}
     dependencies:
-      b4a: 1.6.1
+      b4a: 1.6.4
     dev: false
 
   /codecs@3.1.0:
@@ -1662,7 +1680,7 @@ packages:
   /debugging-stream@2.0.0:
     resolution: {integrity: sha512-xwfl6wB/3xc553uwtGnSa94jFxnGOc02C0WU2Nmzwr80gzeqn1FX4VcbvoKIhe8L/lPq4BTQttAbrTN94uN8rA==}
     dependencies:
-      streamx: 2.13.2
+      streamx: 2.15.0
     dev: false
 
   /deep-eql@4.1.3:
@@ -1722,7 +1740,7 @@ packages:
   /dht-rpc@6.7.0:
     resolution: {integrity: sha512-owzv0fEPFD+5xkkm5fpD9i1tRcpxY8SbAhM+JHnDlcICuNMaPWvzUI+2fg4su6YteKXlShshsAEGy//vfT7pHg==}
     dependencies:
-      b4a: 1.6.1
+      b4a: 1.6.4
       compact-encoding: 2.11.0
       compact-encoding-net: 1.2.0
       events: 3.3.0
@@ -1730,7 +1748,7 @@ packages:
       kademlia-routing-table: 1.0.1
       nat-sampler: 1.0.1
       sodium-universal: 4.0.0
-      streamx: 2.13.2
+      streamx: 2.15.0
       time-ordered-set: 1.0.2
       udx-native: 1.6.1
     dev: false
@@ -1756,6 +1774,15 @@ packages:
     dependencies:
       esutils: 2.0.3
     dev: true
+
+  /duplexify@4.1.2:
+    resolution: {integrity: sha512-fz3OjcNCHmRP12MJoZMPglx8m4rrFP8rovnk4vT8Fs+aonZoCwGg10dSsQsfP/E62eZcPTMSMP6686fu9Qlqtw==}
+    dependencies:
+      end-of-stream: 1.4.4
+      inherits: 2.0.4
+      readable-stream: 3.6.0
+      stream-shift: 1.0.1
+    dev: false
 
   /ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
@@ -2392,6 +2419,11 @@ packages:
       sodium-universal: 3.1.0
     dev: false
 
+  /hono@3.10.2:
+    resolution: {integrity: sha512-QwJLjWs3e+nZ3b5nQrrdJpYCJqiTK744jeYhX7yhZdxwcQ3KIohBfzI2dA8gSF6HEZkmFUdiKL1BelJ8utIm4w==}
+    engines: {node: '>=16.0.0'}
+    dev: false
+
   /http-errors@2.0.0:
     resolution: {integrity: sha512-FtwrG/euBzaEjYeRqOgly7G0qviiXoJWnvEH2Z1plBdXgbyjv34pHTSb9zoeHMyDy33+DWy5Wt9Wo+TURtOYSQ==}
     engines: {node: '>= 0.8'}
@@ -2419,7 +2451,7 @@ packages:
   /hyperblobs@2.3.0:
     resolution: {integrity: sha512-iBCLVEo6FK+Xd7cpLM3DQ6cTfuMmKPfDZNj5/JqKEgziBEuI0ZGGyMM5dqaVvtRX4s71y8BhrgsDi2p0pWdSmg==}
     dependencies:
-      b4a: 1.6.1
+      b4a: 1.6.4
       mutexify: 1.4.0
       streamx: 2.15.0
     dev: false
@@ -2443,7 +2475,7 @@ packages:
     resolution: {integrity: sha512-0WeaZ9Cu6YRBoEiCitj8usKnhFvYvovztSziPcBTSpzNrdUNy8nQz/aMRYiyw6siu2FDpjInJxH1us0EIPMnGQ==}
     dependencies:
       '@hyperswarm/secret-stream': 6.1.1
-      b4a: 1.6.1
+      b4a: 1.6.4
       big-sparse-array: 1.0.3
       compact-encoding: 2.11.0
       crc-universal: 1.0.2
@@ -2467,7 +2499,7 @@ packages:
     hasBin: true
     dependencies:
       '@hyperswarm/secret-stream': 6.1.1
-      b4a: 1.6.1
+      b4a: 1.6.4
       bogon: 1.1.0
       compact-encoding: 2.11.0
       compact-encoding-net: 1.2.0
@@ -2605,7 +2637,7 @@ packages:
   /is-options@1.0.2:
     resolution: {integrity: sha512-u+Ai74c8Q74aS8BuHwPdI1jptGOT1FQXgCq8/zv0xRuE+wRgSMEJLj8lVO8Zp9BeGb29BXY6AsNPinfqjkr7Fg==}
     dependencies:
-      b4a: 1.6.1
+      b4a: 1.6.4
     dev: false
 
   /is-path-inside@3.0.3:
@@ -3354,7 +3386,7 @@ packages:
   /protocol-buffers-encodings@1.2.0:
     resolution: {integrity: sha512-daeNPuKh1NlLD1uDfbLpD+xyUTc07nEtfHwmBZmt/vH0B7VOM+JOCOpDcx9ZRpqHjAiIkGqyTDi+wfGSl17R9w==}
     dependencies:
-      b4a: 1.6.1
+      b4a: 1.6.4
       signed-varint: 2.0.1
       varint: 5.0.0
     dev: false
@@ -3821,6 +3853,12 @@ packages:
       node-gyp-build: 4.5.0
     dev: false
 
+  /simple-thumbnail@1.6.5:
+    resolution: {integrity: sha512-HWN6oNyfvMWrwCW6CiVW5k1LUyl8neiim4Tx7v5FjvGEZM3rZpoKy3xEywrdEGvVlSzHQsaINp18eP7A7YYRiA==}
+    dependencies:
+      duplexify: 4.1.2
+    dev: false
+
   /simple-update-notifier@1.0.7:
     resolution: {integrity: sha512-BBKgR84BJQJm6WjWFMHgLVuo61FBDSj1z/xSFUIozqO6wO7ii0JxCqlIud7Enr/+LhlbNI0whErq96P2qHNWew==}
     engines: {node: '>=8.10.0'}
@@ -3979,6 +4017,10 @@ packages:
     resolution: {integrity: sha512-bSIeeb5rVsr84shfkZ+swtj+fdUGHiiUWLccft7AHxxewV8OzCiOHy+CiNpb9TB/2NpKxp2Z9BaiCfiAmJt6eA==}
     dev: false
 
+  /stream-shift@1.0.1:
+    resolution: {integrity: sha512-AiisoFqQ0vbGcZgQPY1cdP2I76glaVA/RauYR4G4thNFgkTqr90yXTo4LYX60Jl+sIlPNHHdGSwo01AvbKUSVQ==}
+    dev: false
+
   /streamsearch@1.1.0:
     resolution: {integrity: sha512-Mcc5wHehp9aXz1ax6bZUyY5afg9u2rv5cqQI3mRrYkGC8rW2hM02jWuwjtL++LS5qinSyhj2QfLyNsuc+VsExg==}
     engines: {node: '>=10.0.0'}
@@ -4053,7 +4095,7 @@ packages:
   /sub-encoder@2.1.1:
     resolution: {integrity: sha512-Xfza05u5b26tYB0uiTZLPvKis0gSf8VaX8IZNgtRSHzXiYW7SWHJe6vfRVP+wuK8GAqwhGJQwQ03E5HX7W5+YA==}
     dependencies:
-      b4a: 1.6.1
+      b4a: 1.6.4
       codecs: 3.1.0
     dev: false
 
@@ -4631,10 +4673,10 @@ packages:
       pump: 3.0.0
     dev: false
 
-  github.com/Anyass3/hyperdrive-x/0851211591a6ceeb12d317422ec863c9314c9684:
-    resolution: {tarball: https://codeload.github.com/Anyass3/hyperdrive-x/tar.gz/0851211591a6ceeb12d317422ec863c9314c9684}
+  github.com/Anyass3/hyperdrive-x/8b525bd26141986d2dc983928c2f6a08f2755399:
+    resolution: {tarball: https://codeload.github.com/Anyass3/hyperdrive-x/tar.gz/8b525bd26141986d2dc983928c2f6a08f2755399}
     name: hyperdrive-x
-    version: 0.0.28
+    version: 0.0.29
     dependencies:
       hyperdrive: 11.2.0
       streamx: 2.15.0

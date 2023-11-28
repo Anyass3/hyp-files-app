@@ -1,4 +1,6 @@
 import { Connectome, newServerKeypair as newKeypair } from 'connectome/server';
+import { createAdaptorServer } from '@hono/node-server'
+import { Hono } from 'hono'
 import type { Channel } from 'connectome/typings';
 import DHT from '@hyperswarm/dht';
 import colors from 'kleur';
@@ -74,7 +76,7 @@ const manageChildProcess = () => {
 	});
 	emitter.on('child-process:kill', async (pid) => {
 		spawnChildProcess('kill -9 ' + pid, { log: true })
-			.then((_) => {})
+			.then((_) => { })
 			.catch((err) => {
 				emitter.log(err);
 				//  emitter.broadcast(err);
@@ -104,13 +106,13 @@ async function start() {
 	console.log('manageChildProcess');
 	//@ts-ignore
 	const port: number = process.env.PORT || 3788;
-	const app = express();
-
+	const app = new Hono();
 	endpoints(app);
 	console.log('endpoints');
-	//@ts-ignore
-	const server = new http.Server(app);
+
+	const server = createAdaptorServer(app)
 	const keypair = newKeypair();
+	// @ts-ignore
 	const connectome = new Connectome({ port, server, keypair });
 	console.log('Connectome');
 
