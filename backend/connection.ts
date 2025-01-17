@@ -1,4 +1,5 @@
 import colors from 'kleur';
+import Corestore from 'corestore';
 // @ts-ignore
 import { pipelinePromise } from 'streamx';
 import fs from 'fs';
@@ -16,9 +17,7 @@ const config = Settings();
 const api = getApi();
 const emitter = getEmitter();
 
-export default async function () {
-	const { bee, cleanup: pcleanup, getNamespace, setNamespace, ...privateHyp } = await setupBee();
-	console.log('setupBee');
+export default async function ({ bee, cleanup: pcleanup, getNamespace, setNamespace, ...privateHyp }: Awaited<ReturnType<typeof setupBee>>) {
 	// const cores = bee.sub('cores');
 	const drivesBee = bee.sub('drives');
 	type Hyp = {
@@ -168,9 +167,13 @@ export default async function () {
 			// const { peerCore, peerDrive, peerExt } = await Connect(publicHyp, corekey, api);
 		});
 		channel.on('connect-drive', async ({ name, key, _private, storage }) => {
+			let validKey = true
 			if (!key?.match(/^[a-z0-9]{64}$/)) {
-				emitter.broadcast('notify-warn', 'Please input a valid drive key');
-				return;
+				if (!storage) {
+					emitter.broadcast('notify-warn', 'Please input a valid drive key');
+					return;
+				}
+				validKey = false
 			}
 			const _drive = api.getDrive(key);
 			if (_drive?.connected) {
@@ -180,8 +183,12 @@ export default async function () {
 			name = _drive?.name || name || getRandomStr();
 			let drive: Drive;
 			if (storage) {
-				drive = new Drive(storage, key);
+				// private
+				const otherDriveBee = await bee.sub('other-drives').sub(storage);
+				const vKey = (await otherDriveBee.get(key))?.value
+				drive = new Drive(new Corestore(storage), validKey ? key : vKey || { name: key || 'db' });
 				await drive.$ready(name);
+				otherDriveBee.put(key, drive.$key);
 			} else {
 				_private = _private ?? _drive?._private;
 				drive = await startDrive(!_private ? publicHyp : privateHyp, key, { /*_private,*/ name }); /// TODO: announce, lookup

@@ -27,7 +27,8 @@
 		$instruction = 'abort';
 	}
 
-	$: filename = _.last(decodeURIComponent($page.url.searchParams.get('path') || '').split('/'));
+	$: filename = _.last(decodeURIComponent($page.data.path || '').split('/'));
+	$: console.log($page.data);
 </script>
 
 <svelte:head>

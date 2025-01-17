@@ -5,7 +5,7 @@
 	import { toQueryString } from '$lib/utils';
 	import { API } from '$lib/getAPi';
 
-	let embedUrl: string | null = API + '/file' + toQueryString(data);
+	let embedUrl: string | null = API + '/file' + toQueryString({ hex: data.hex });
 	onDestroy(() => {
 		embedUrl = null;
 		if (node) (node.src as any) = null;

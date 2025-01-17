@@ -1,7 +1,7 @@
 <script lang="ts">
 	import store from '$store';
 	import { createEventDispatcher } from 'svelte';
-	import { truncate, doubleTap, getDataElement } from '$lib/utils';
+	import { truncate, doubleTap, getDataElement, toQueryString } from '$lib/utils';
 	import { crossfade } from 'svelte/transition';
 	import _ from 'lodash-es';
 	import { quintOut } from 'svelte/easing';
@@ -18,6 +18,7 @@
 	import FilmIcon from 'icons/FilmIcon.svelte';
 	import type { Writable } from 'svelte/store';
 	import { extractLang } from '$lib/md-hljs';
+	import { API } from '$lib/getAPi';
 
 	const files = store.g('folderItems');
 
@@ -25,6 +26,7 @@
 
 	const dispatch = createEventDispatcher();
 	const selected: Writable<ToolTip> = store.g('selected');
+	const dkey = store.g('dkey');
 
 	const mainEvent = (ev: Event, open = true) => {
 		onDoubletap(ev);
@@ -60,9 +62,10 @@
 		}
 	});
 	$: if ($files) $loading = false;
-	// $: console.log($files);
+	$: console.log({ $files });
 </script>
 
+<!-- svelte-ignore a11y-click-events-have-key-events -->
 <div data-files={true} class="flex-grow" on:click={(ev) => mainEvent(ev, false)}>
 	{#if $loading === 'load-page'}
 		<div class="grid place-items-center w-full pt-10">
@@ -74,13 +77,13 @@
 		class:hidden={$loading === 'load-page'}
 		data-files={true}
 	>
-		{#each $files || [] as { name, path, stat } (path + stat.isFile)}
+		{#each $files || [] as { name, path, stat, hex } (path + stat.isFile)}
 			<div
 				class:selected={$selected?.path === path}
 				in:receive={{ key: path }}
 				class="group anchor-tooltip context-menu__item border border-no-color bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-white group-hover:bg-gray-300 rounded-[3px]  dark:group-hover:bg-gray-500"
 				tabindex="-1"
-				data-data={JSON.stringify({ ...stat, path, name })}
+				data-data={JSON.stringify({ ...stat, path, name, hex })}
 			>
 				<div class="relative">
 					<!-- <div class="tooltip -top-8 h-[min-content]">
@@ -99,7 +102,26 @@
 								{#if stat.ctype.includes('audio')}
 									<MusicIcon size="4x" />
 								{:else if stat.ctype.includes('video')}
-									<FilmIcon size="4x" />
+									{@const args = {
+										// ctype: stat.ctype,
+										// path: encodeURIComponent(path),
+										// dkey: $dkey,
+										// storage: $dkey === 'fs' ? 'fs' : 'drive',
+										// size: stat.size,
+										// thumbnail: 1,
+										hex
+									}};
+									{@const url =
+										API +
+										'/thumbnail?url=' +
+										encodeURIComponent(API + `/file` + toQueryString(args))}
+									<!-- <FilmIcon size="4x" /> -->
+									<img
+										src={url}
+										alt={name}
+										class="w-full h-full object-cover object-center"
+										loading="lazy"
+									/>
 								{:else if stat.ctype.includes('image')}
 									<ImageIcon size="4x" />
 								{:else if extractLang(stat.ctype, path)}

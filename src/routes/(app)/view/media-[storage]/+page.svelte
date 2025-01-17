@@ -11,7 +11,7 @@
 	$: if (!data.ctype) data.ctype = 'video';
 
 	const mediaUrl =
-		API + `/${data.ctype?.includes('image') ? 'file' : 'media'}` + toQueryString(data);
+		API + `/${data.ctype?.includes('image') ? 'file' : 'media'}` + toQueryString({ hex: data.hex });
 	const filename = decodeURIComponent(data.path).split('/').reverse()[0];
 
 	onDestroy(async () => {

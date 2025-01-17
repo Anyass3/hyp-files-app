@@ -110,6 +110,13 @@ export const spawnChildProcess: SpawnChildProcess = async (
 export const getRandomStr = () => {
 	return Math.floor(2147483648 * Math.random()).toString(36);
 };
+export function toArrayBuffer(buffer: Buffer) {
+	return buffer.buffer.slice(buffer.byteOffset, buffer.byteOffset + buffer.byteLength);
+}
+
+export function toBuffer(byteArray) {
+	return Buffer.from(byteArray);
+}
 
 export const getFileType = async ({ path, drive }, emitter?) => {
 	let ctype = mime.getType(Path.extname(path));
@@ -261,7 +268,7 @@ export class Downloader {
 		if (dkey != 'fs') {
 			const drive = this.api.drives.get(dkey);
 			if (drive) {
-				filename = checkFilename(await drive.readdir(path, {nameOnly: true}), filename);
+				filename = checkFilename(await drive.readdir(path, { nameOnly: true }), filename);
 				writer = drive?.createWriteStream(Path.join(path, filename));
 			}
 		} else {

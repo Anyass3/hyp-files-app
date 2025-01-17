@@ -1,5 +1,9 @@
 lockfileVersion: '6.0'
 
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
 dependencies:
   '@beyonk/svelte-notifications':
     specifier: ^3.1.0
@@ -88,6 +92,9 @@ dependencies:
   sidebar-swipe:
     specifier: ^0.8.83
     version: 0.8.83
+  simple-thumbnail:
+    specifier: ^1.6.5
+    version: 1.6.5
   socks-proxy-agent:
     specifier: ^7.0.0
     version: 7.0.0
@@ -1756,6 +1763,15 @@ packages:
     dependencies:
       esutils: 2.0.3
     dev: true
+
+  /duplexify@4.1.2:
+    resolution: {integrity: sha512-fz3OjcNCHmRP12MJoZMPglx8m4rrFP8rovnk4vT8Fs+aonZoCwGg10dSsQsfP/E62eZcPTMSMP6686fu9Qlqtw==}
+    dependencies:
+      end-of-stream: 1.4.4
+      inherits: 2.0.4
+      readable-stream: 3.6.0
+      stream-shift: 1.0.1
+    dev: false
 
   /ee-first@1.1.1:
     resolution: {integrity: sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==}
@@ -3821,6 +3837,12 @@ packages:
       node-gyp-build: 4.5.0
     dev: false
 
+  /simple-thumbnail@1.6.5:
+    resolution: {integrity: sha512-HWN6oNyfvMWrwCW6CiVW5k1LUyl8neiim4Tx7v5FjvGEZM3rZpoKy3xEywrdEGvVlSzHQsaINp18eP7A7YYRiA==}
+    dependencies:
+      duplexify: 4.1.2
+    dev: false
+
   /simple-update-notifier@1.0.7:
     resolution: {integrity: sha512-BBKgR84BJQJm6WjWFMHgLVuo61FBDSj1z/xSFUIozqO6wO7ii0JxCqlIud7Enr/+LhlbNI0whErq96P2qHNWew==}
     engines: {node: '>=8.10.0'}
@@ -3977,6 +3999,10 @@ packages:
 
   /stores-x@0.0.872:
     resolution: {integrity: sha512-bSIeeb5rVsr84shfkZ+swtj+fdUGHiiUWLccft7AHxxewV8OzCiOHy+CiNpb9TB/2NpKxp2Z9BaiCfiAmJt6eA==}
+    dev: false
+
+  /stream-shift@1.0.1:
+    resolution: {integrity: sha512-AiisoFqQ0vbGcZgQPY1cdP2I76glaVA/RauYR4G4thNFgkTqr90yXTo4LYX60Jl+sIlPNHHdGSwo01AvbKUSVQ==}
     dev: false
 
   /streamsearch@1.1.0:

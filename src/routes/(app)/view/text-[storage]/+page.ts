@@ -9,9 +9,8 @@ const filterPath = (_path: string[]) =>
 
 export const load: PageLoad = async ({ url, parent }) => {
 	const args = await parent();
-
-	let pathList = url.searchParams.getAll('path').map((v) => decodeURIComponent(v));
-
+	const _paths = url.searchParams.getAll('path')
+	let pathList = (_paths.length ? _paths : [args.path]).map((v) => decodeURIComponent(v));
 	pathList = filterPath(pathList);
 
 	let [lastPath, ...dirs] = [...pathList].reverse();

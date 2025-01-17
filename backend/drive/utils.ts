@@ -21,6 +21,7 @@ export const getList = async (
 	let items: {
 		name: string;
 		path: string;
+		hex: string;
 		stat: {
 			isFile: boolean;
 			ctype: string | false;
@@ -34,14 +35,17 @@ export const getList = async (
 	for await (const item of readable) {
 		const isFile = item.stat.isFile();
 		item.path = join('/', item.path);
+		const ctype = isFile ? await getFileType({ path: item.path, drive: self }) : false
 		items.push({
 			name: item.name,
 			path: item.path,
+			hex: Buffer.from(JSON.stringify({ path: (item.path), ctype, type: isFile ? 'file' : 'dir', size: item.stat.size, dkey: (self as any)?.$key, storage: (self as any)?.$key ? 'drive' : 'fs' }), 'utf-8').toString('hex'),
 			stat: {
 				isFile,
-				ctype: isFile ? await getFileType({ path: item.path, drive: self }) : false,
+				ctype,
 				mtime: item.stat.mtimeMs,
 				size: item.stat.size
+
 				// items: item.stat.itemsCount
 				// offline: stats.blocks === stats.downloadedBlocks
 			}

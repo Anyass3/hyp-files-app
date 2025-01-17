@@ -43,22 +43,22 @@ export default {
 	actions: {
 		open(
 			{ dispatch },
-			{ path, isFile, size, storage, dkey, dir, ctype, inBrowser, silent, offline }
+			{ path, isFile, size, storage, dkey, dir, ctype, inBrowser, silent, hex, offline }
 		) {
 			if (browser)
 				if (isFile) {
-					dispatch('openFile', { path, size, storage, dkey, ctype, inBrowser });
+					dispatch('openFile', { path, size, storage, dkey, ctype, hex, inBrowser });
 				} else {
-					dispatch('openFolder', { dir, path, dkey, silent, storage, offline, size });
+					dispatch('openFolder', { dir, path, dkey, silent, storage, hex, offline, size });
 				}
 		},
 		async openFile(
 			{ state, g },
-			{ path, size, storage, dkey, ctype, inBrowser = false }: any = {}
+			{ path, size, storage, dkey, ctype, inBrowser = false, hex }: any = {}
 		) {
 			ctype = await g('fileType', { ctype, path, dkey, storage });
 			const view_args =
-				storage + toQueryString({ path: encodeURIComponent(path), dkey, ctype, size });
+				storage + toQueryString({ ctype, hex });
 			if (isMedia(ctype, true)) {
 				// state.socket.signal('offline-access', {
 				// 	path,
@@ -70,7 +70,7 @@ export default {
 					const url =
 						API +
 						'/media' +
-						toQueryString({ storage, path: encodeURIComponent(path), dkey, ctype, size });
+						toQueryString({ hex });
 					api.post('/mpv_stream', {
 						url
 					});
@@ -121,7 +121,7 @@ export default {
 		},
 		setupMenuItems(
 			{ dispatch, g, state },
-			{ size, storage, dkey, isFile, path, dir, name, ctype, offline = true }
+			{ size, storage, dkey, isFile, path, dir, name, ctype, hex, offline = true }
 		) {
 			const offlinePending = state.serverStore.get().offlinePending[dkey] || [];
 			const isWritable = g('drives', dkey)?.writable ?? true;
@@ -130,7 +130,7 @@ export default {
 					name: 'open',
 					action: () => {
 						// console.log('open', { size, storage, dkey, isFile, dir, path });
-						dispatch('open', { size, storage, dkey, isFile, dir, path, ctype });
+						dispatch('open', { size, storage, dkey, hex, isFile, dir, path, ctype });
 						dispatch('context_menu', []);
 					}
 				},
@@ -171,7 +171,7 @@ export default {
 				{
 					name: 'play in browser',
 					action: () => {
-						dispatch('openFile', { size, storage, dkey, isFile, path, ctype, inBrowser: true });
+						dispatch('openFile', { size, storage, dkey, isFile, path, ctype, hex, inBrowser: true });
 						dispatch('context_menu', []);
 					},
 					disabled: !isMedia(ctype, false),
@@ -184,9 +184,7 @@ export default {
 						const link = document.createElement('a');
 						link.href =
 							API +
-							`/download?storage=${storage}&dkey=${dkey}&type=${
-								isFile ? 'file' : 'dir'
-							}&size=${size}&path=${encodeURIComponent(path)}`;
+							`/download?hex=${hex}`;
 						document.body.appendChild(link);
 						link.target = '_blank';
 						link.click();
@@ -245,11 +243,11 @@ export default {
 					name: 'copy url',
 					action: async () => {
 						ctype = await g('fileType', { ctype, path, dkey, storage });
-						const args = { ctype, path: encodeURIComponent(path), dkey, storage, size };
+						const args = { hex };
 						const url = API + `/${isMedia(ctype, false) ? 'media' : 'file'}` + toQueryString(args);
 						copyToClipboard(url)
 							.then(() => state.snackBar.show('URL Copied'))
-							.catch(() => {});
+							.catch(() => { });
 						dispatch('context_menu', []);
 					},
 					disabled: !isFile,
@@ -277,13 +275,13 @@ export default {
 			const items: ContextMenuItems = [
 				{
 					name: 'new file',
-					action() {},
+					action() { },
 					options: {},
 					disabled: true || !isWritable
 				},
 				{
 					name: 'new folder',
-					action() {},
+					action() { },
 					options: {},
 					disabled: true || !isWritable
 				},
@@ -334,7 +332,7 @@ export default {
 				},
 				{
 					name: 'upload',
-					action() {},
+					action() { },
 					options: {},
 					disabled: true || !isWritable
 				},

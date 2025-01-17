@@ -8,6 +8,7 @@ import { getEmitter, getApi } from './state.js';
 import express from 'express';
 import http from 'http';
 import endpoints from './endpoints.js';
+import { setupBee } from './setup.js';
 
 const stdin = process.stdin;
 stdin.resume();
@@ -74,7 +75,7 @@ const manageChildProcess = () => {
 	});
 	emitter.on('child-process:kill', async (pid) => {
 		spawnChildProcess('kill -9 ' + pid, { log: true })
-			.then((_) => {})
+			.then((_) => { })
 			.catch((err) => {
 				emitter.log(err);
 				//  emitter.broadcast(err);
@@ -106,7 +107,10 @@ async function start() {
 	const port: number = process.env.PORT || 3788;
 	const app = express();
 
-	endpoints(app);
+	const setupData = await setupBee();
+	console.log('setupBee');
+
+	endpoints(app, setupData.bee);
 	console.log('endpoints');
 	//@ts-ignore
 	const server = new http.Server(app);
@@ -119,7 +123,7 @@ async function start() {
 		// emitter.log('connectome', connectome);
 	});
 	console.log('before onConnect');
-	const onConnect = await hyperspace();
+	const onConnect = await hyperspace(setupData);
 	console.log('onConnect');
 	const channelList = (connectome as any)
 		.dev('dmtapp')
@@ -158,7 +162,7 @@ async function start() {
 	connectome.start();
 
 	emitter.log(
-		colors.green(`Connectome → Running websocket connections connectome on port ${port} ...`)
+		colors.green(`Connectome → Running websocket connections connectome on ${HOST}:${port} ...`)
 	);
 	//@ts-ignore
 	server.listen(port, HOST);
@@ -196,7 +200,7 @@ process.on('uncaughtException', async (err, origin) => {
 	clearTimeout(uncaughtExceptionsTimeoutId);
 	emitter.log(colors.red('uncaughtException'), err, origin);
 	emitter.broadcast('notify-danger', err.message);
-	if (uncaughtExceptions > 5) {
+	if (uncaughtExceptions > 100) {
 		emitter.broadcast(
 			'notify-danger',
 			uncaughtExceptions + ' uncaughtException in 30 secs. closing server ...'
